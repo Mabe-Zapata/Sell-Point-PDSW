@@ -3,12 +3,12 @@ import {
   IsNotEmpty,
   IsInt,
   IsPositive,
-  IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class InvoiceItemDto {
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
   productId: string;
 
   @IsInt()

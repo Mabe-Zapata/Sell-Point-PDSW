@@ -1,16 +1,18 @@
 import {
-  IsUUID,
+  IsString,
   IsArray,
   ValidateNested,
   IsOptional,
   IsNumber,
   IsPositive,
+  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { InvoiceItemDto } from './invoice-item.dto';
 
 export class CreateInvoiceDto {
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
   customerId: string;
 
   @IsArray()
