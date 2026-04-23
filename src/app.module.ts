@@ -52,14 +52,19 @@ import { CustomerRepository } from './infrastructure/repositories/customer.repos
 import { ProductRepository } from './infrastructure/repositories/product.repository';
 import { InvoiceRepository } from './infrastructure/repositories/invoice.repository';
 import { InvoiceItemRepository } from './infrastructure/repositories/invoice-item.repository';
+import { DashboardRepository } from './infrastructure/repositories/dashboard.repository';
 
 // Infrastructure - Services
 import { PdfService } from './infrastructure/services/pdf.service';
+
+// Application - Use Cases
+import { GetDashboardStatsUseCase } from './application/use-cases/dashboard/get-dashboard-stats.use-case';
 
 // Presentation - Controllers
 import { CustomerController } from './presentation/controllers/customer.controller';
 import { ProductController } from './presentation/controllers/product.controller';
 import { InvoiceController } from './presentation/controllers/invoice.controller';
+import { DashboardController } from './presentation/controllers/dashboard.controller';
 
 // Presentation - Filters and Interceptors
 import { GlobalExceptionFilter } from './presentation/filters/global-exception.filter';
@@ -146,6 +151,7 @@ const QueryHandlers = [
     CustomerController,
     ProductController,
     InvoiceController,
+    DashboardController,
   ],
   providers: [
     AppService,
@@ -166,8 +172,11 @@ const QueryHandlers = [
     ProductRepository,
     InvoiceRepository,
     InvoiceItemRepository,
+    DashboardRepository,
     // Infrastructure - Services
     PdfService,
+    // Application - Use Cases
+    GetDashboardStatsUseCase,
     // DataSource for transactions
     // Global Filters and Interceptors
     {
@@ -192,6 +201,7 @@ export class AppModule {
       .addTag('customers', 'Customer management operations')
       .addTag('products', 'Product management operations')
       .addTag('invoices', 'Invoice and sales operations')
+      .addTag('dashboard', 'Dashboard and statistics operations')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

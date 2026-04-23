@@ -142,6 +142,12 @@ export class InvoiceController {
     required: false,
     type: String,
   })
+  @ApiQuery({
+    name: 'num_fac',
+    description: 'Filter by invoice number (partial LIKE match)',
+    required: false,
+    type: String,
+  })
   @ApiResponse({
     status: 200,
     description: 'List of invoices retrieved successfully',
@@ -151,6 +157,7 @@ export class InvoiceController {
     @Query('limit') limit?: string,
     @Query('id') id?: string,
     @Query('cliente') customer?: string,
+    @Query('num_fac') invoiceNumber?: string,
   ): Promise<{
     data: InvoiceResponseDto[];
     total: number;
@@ -165,6 +172,7 @@ export class InvoiceController {
     const filters: InvoiceFilters = {
       id,
       customer,
+      invoiceNumber,
     };
 
     const result = await this.queryBus.execute(

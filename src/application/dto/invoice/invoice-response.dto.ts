@@ -35,6 +35,8 @@ export class InvoiceResponseDto {
 
   customerId: string;
 
+  customerName?: string;
+
   subtotal: number;
 
   iva: number;
@@ -52,6 +54,7 @@ export class InvoiceResponseDto {
     this.invoiceNumber = invoice.invoiceNumber;
     this.invoiceDate = invoice.invoiceDate;
     this.customerId = invoice.customerId;
+    this.customerName = invoice.customerName;
     this.subtotal = invoice.subtotal;
     this.iva = invoice.iva;
     this.total = invoice.total;

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InvoiceTypeOrmEntity } from '../database/entities/invoice.typeorm.entity';
 import { Invoice } from '../../domain/entities/invoice.entity';
+import { InvoiceItem } from '../../domain/entities/invoice-item.entity';
 import {
   IInvoiceRepository,
   InvoiceFilters,
@@ -28,6 +29,19 @@ export class InvoiceRepository implements IInvoiceRepository {
       subtotal: Number(entity.subtotal),
       iva: Number(entity.iva),
       total: Number(entity.total),
+      items: entity.items
+        ? entity.items.map(
+            (item) =>
+              new InvoiceItem({
+                id: item.id,
+                invoiceId: item.invoiceId,
+                productId: item.productId,
+                productName: item.product?.name ?? undefined,
+                quantity: item.quantity,
+                unitPrice: Number(item.unitPrice),
+              }),
+          )
+        : undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       deletedAt: entity.deletedAt ?? undefined,
@@ -48,7 +62,7 @@ export class InvoiceRepository implements IInvoiceRepository {
     filters: InvoiceFilters = {},
   ): Promise<PaginatedResult<Invoice>> {
     const { page, limit } = pagination;
-    const { id, customer } = filters;
+    const { id, customer, invoiceNumber } = filters;
 
     const queryBuilder = this.invoiceRepository
       .createQueryBuilder('invoice')
@@ -67,6 +81,13 @@ export class InvoiceRepository implements IInvoiceRepository {
         '(customer.name LIKE :customer OR customer.lastName LIKE :customer)',
         { customer: `%${customer}%` },
       );
+    }
+
+    // Apply invoiceNumber filter if provided (partial LIKE match)
+    if (invoiceNumber) {
+      queryBuilder.andWhere('invoice.invoiceNumber LIKE :invoiceNumber', {
+        invoiceNumber: `%${invoiceNumber}%`,
+      });
     }
 
     // Get total count

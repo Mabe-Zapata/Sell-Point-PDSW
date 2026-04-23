@@ -13,6 +13,7 @@ export type {
 export interface InvoiceFilters {
   id?: string;
   customer?: string;
+  invoiceNumber?: string;
 }
 
 /**

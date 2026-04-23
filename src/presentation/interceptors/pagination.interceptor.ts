@@ -20,17 +20,32 @@ export interface PaginatedResponse<T> {
   pagination: PaginationMetadata;
 }
 
+function isPaginatedResult(result: any): result is PaginatedResult<any> {
+  return (
+    result !== null &&
+    typeof result === 'object' &&
+    Array.isArray(result.data) &&
+    typeof result.total === 'number' &&
+    typeof result.limit === 'number'
+  );
+}
+
 @Injectable()
 export class PaginationInterceptor<T> implements NestInterceptor<
   PaginatedResult<T>,
-  PaginatedResponse<T>
+  PaginatedResponse<T> | T
 > {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<PaginatedResponse<T>> {
+  ): Observable<PaginatedResponse<T> | T> {
     return next.handle().pipe(
-      map((result: PaginatedResult<T>) => {
+      map((result: any) => {
+        if (!isPaginatedResult(result)) {
+          // No es un resultado paginado — devolver tal cual
+          return result;
+        }
+
         const totalPages = Math.ceil(result.total / result.limit);
 
         return {
