@@ -11,6 +11,8 @@ export class ProductResponseDto {
 
   unitPrice: number;
 
+  price: number;
+
   availableQuantity: number;
 
   createdAt: Date;
@@ -23,6 +25,7 @@ export class ProductResponseDto {
     this.name = product.name;
     this.description = product.description;
     this.unitPrice = product.unitPrice;
+    this.price = product.unitPrice;
     this.availableQuantity = product.availableQuantity;
     this.createdAt = product.createdAt;
     this.updatedAt = product.updatedAt;

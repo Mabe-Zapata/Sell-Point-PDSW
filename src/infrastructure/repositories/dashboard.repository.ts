@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -43,7 +46,8 @@ export class DashboardRepository implements IDashboardRepository {
       .createQueryBuilder('invoice')
       .select('SUM(invoice.total)', 'total')
       .where('invoice.deletedAt IS NULL')
-      .andWhere('DATE(invoice.invoiceDate) = :date', { date })
+      .andWhere('invoice.invoiceDate >= CURDATE()')
+      .andWhere('invoice.invoiceDate < DATE_ADD(CURDATE(), INTERVAL 1 DAY)')
       .getRawOne();
 
     return Number(result?.total) || 0;

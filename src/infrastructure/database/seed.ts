@@ -118,29 +118,43 @@ const startOfCurrentWeek = () => {
   return date;
 };
 
-const buildInvoiceDates = () => {
+const buildDateRange = (start: Date, end: Date) => {
   const dates: Date[] = [];
-  const year = new Date().getFullYear();
-  const weekStart = startOfCurrentWeek();
+  const cursor = new Date(start);
 
-  for (let i = 0; i < 30; i += 1) {
-    const weekday = i % 7;
-    const cycle = Math.floor(i / 7);
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + weekday);
-    date.setHours(9 + cycle, (weekday * 11 + cycle * 7) % 60, (weekday * 17 + cycle * 13) % 60, 0);
-    dates.push(date);
+  while (cursor <= end) {
+    dates.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
   }
 
-  for (let round = 0; round < 10; round += 1) {
-    for (let month = 0; month < 12; month += 1) {
-      const monthDays = new Date(year, month + 1, 0).getDate();
-      const day = 1 + ((round * 5 + month * 3) % monthDays);
-      const date = new Date(year, month, day);
-      date.setHours(8 + ((round + month) % 10), (round * 13 + month * 7) % 60, (round * 17 + month * 11) % 60, 0);
-      dates.push(date);
-      if (dates.length === TARGET_COUNTS.invoices) return dates;
-    }
+  return dates;
+};
+
+const withInvoiceTime = (date: Date, index: number) => {
+  const result = new Date(date);
+  result.setHours(8 + (index % 10), (index * 13) % 60, (index * 17) % 60, 0);
+  return result;
+};
+
+const buildInvoiceDates = () => {
+  const dates: Date[] = [];
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const year = today.getFullYear();
+  const todayPool = Array.from({ length: 12 }, (_, index) => withInvoiceTime(today, index));
+  dates.push(...todayPool);
+
+  const historyPool = buildDateRange(new Date(year, 0, 1, 12, 0, 0, 0), new Date(year, today.getMonth(), today.getDate(), 12, 0, 0, 0))
+    .filter((date) => date.getTime() < todayPool[0].getTime());
+
+  const remaining = TARGET_COUNTS.invoices - dates.length;
+  for (let i = 0; i < remaining; i += 1) {
+    const ratio = (i + 1) / (remaining + 1);
+    const position = Math.min(
+      historyPool.length - 1,
+      Math.floor(Math.pow(ratio, 1.2) * historyPool.length),
+    );
+    dates.push(withInvoiceTime(historyPool[position], i + todayPool.length));
   }
 
   return dates.slice(0, TARGET_COUNTS.invoices);
