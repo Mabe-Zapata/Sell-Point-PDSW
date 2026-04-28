@@ -42,12 +42,18 @@ export class DashboardRepository implements IDashboardRepository {
   }
 
   async sumSalesByDate(date: Date): Promise<number> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const result = await this.invoiceRepository
       .createQueryBuilder('invoice')
       .select('SUM(invoice.total)', 'total')
       .where('invoice.deletedAt IS NULL')
-      .andWhere('invoice.invoiceDate >= CURDATE()')
-      .andWhere('invoice.invoiceDate < DATE_ADD(CURDATE(), INTERVAL 1 DAY)')
+      .andWhere('invoice.invoiceDate >= :startOfDay', { startOfDay })
+      .andWhere('invoice.invoiceDate <= :endOfDay', { endOfDay })
       .getRawOne();
 
     return Number(result?.total) || 0;
