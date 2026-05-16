@@ -76,6 +76,14 @@ La API cuenta con una interfaz gráfica interactiva para explorar y probar todos
 👉 **`http://localhost:3000/api/docs`**
 
 
+=======
+## 🏗️ Arquitectura
+
+
 El proyecto sigue una arquitectura en capas limpias (Clean Architecture):
 - **`domain/`**: Entidades del negocio, interfaces de repositorios, value objects y reglas pura (ej: la calculadora de IVA).
 - **`application/`**: Casos de uso (separados en Commands y Queries por CQRS) y los DTOs de transferencia.
+
+=======
+- **`infrastructure/`**: Implementación dura de repositorios (TypeORM), integraciones externas (PDFKit) y migraciones.
+- **`presentation/`**: Endpoints (Controladores REST), filtros de excepciones e interceptores.
