@@ -56,6 +56,10 @@ import { DashboardRepository } from './infrastructure/repositories/dashboard.rep
 
 // Infrastructure - Services
 import { PdfService } from './infrastructure/services/pdf.service';
+import { AuthService } from './infrastructure/services/auth.service';
+
+// Infrastructure - Repositories (Auth)
+import { UserRepository } from './infrastructure/repositories/user.repository';
 
 // Application - Use Cases
 import { GetDashboardStatsUseCase } from './application/use-cases/dashboard/get-dashboard-stats.use-case';
@@ -65,6 +69,7 @@ import { CustomerController } from './presentation/controllers/customer.controll
 import { ProductController } from './presentation/controllers/product.controller';
 import { InvoiceController } from './presentation/controllers/invoice.controller';
 import { DashboardController } from './presentation/controllers/dashboard.controller';
+import { AuthController } from './presentation/controllers/auth.controller';
 
 // Presentation - Filters and Interceptors
 import { GlobalExceptionFilter } from './presentation/filters/global-exception.filter';
@@ -75,6 +80,7 @@ import { CustomerTypeOrmEntity } from './infrastructure/database/entities/custom
 import { ProductTypeOrmEntity } from './infrastructure/database/entities/product.typeorm.entity';
 import { InvoiceTypeOrmEntity } from './infrastructure/database/entities/invoice.typeorm.entity';
 import { InvoiceItemTypeOrmEntity } from './infrastructure/database/entities/invoice-item.typeorm.entity';
+import { UserTypeOrmEntity } from './infrastructure/database/entities/user.typeorm.entity';
 
 // CQRS Handlers and Validators
 const CommandHandlers = [
@@ -133,6 +139,7 @@ const QueryHandlers = [
           ProductTypeOrmEntity,
           InvoiceTypeOrmEntity,
           InvoiceItemTypeOrmEntity,
+          UserTypeOrmEntity,
         ],
         synchronize: typeormConfig.synchronize,
         logging: typeormConfig.logging,
@@ -144,6 +151,7 @@ const QueryHandlers = [
       ProductTypeOrmEntity,
       InvoiceTypeOrmEntity,
       InvoiceItemTypeOrmEntity,
+      UserTypeOrmEntity,
     ]),
   ],
   controllers: [
@@ -152,6 +160,7 @@ const QueryHandlers = [
     ProductController,
     InvoiceController,
     DashboardController,
+    AuthController,
   ],
   providers: [
     AppService,
@@ -173,6 +182,9 @@ const QueryHandlers = [
     InvoiceRepository,
     InvoiceItemRepository,
     DashboardRepository,
+    UserRepository,
+    // Infrastructure - Services (Auth)
+    AuthService,
     // Infrastructure - Services
     PdfService,
     // Application - Use Cases
