@@ -65,15 +65,14 @@ export class CustomerRepository implements ICustomerRepository {
       );
     }
 
-    // Get total count
+    // Order by creation date descending
+    queryBuilder.orderBy('customer.createdAt', 'DESC');
+
+    // Get total count (with all filters applied, before pagination)
     const total = await queryBuilder.getCount();
 
     // Apply pagination
-    const skip = (page - 1) * limit;
-    queryBuilder.skip(skip).take(limit);
-
-    // Order by creation date descending
-    queryBuilder.orderBy('customer.createdAt', 'DESC');
+    queryBuilder.skip((page - 1) * limit).take(limit);
 
     const entities = await queryBuilder.getMany();
 

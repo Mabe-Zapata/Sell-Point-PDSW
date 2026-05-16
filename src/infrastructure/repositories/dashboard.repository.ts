@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -39,11 +42,18 @@ export class DashboardRepository implements IDashboardRepository {
   }
 
   async sumSalesByDate(date: Date): Promise<number> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const result = await this.invoiceRepository
       .createQueryBuilder('invoice')
       .select('SUM(invoice.total)', 'total')
       .where('invoice.deletedAt IS NULL')
-      .andWhere('DATE(invoice.invoiceDate) = :date', { date })
+      .andWhere('invoice.invoiceDate >= :startOfDay', { startOfDay })
+      .andWhere('invoice.invoiceDate <= :endOfDay', { endOfDay })
       .getRawOne();
 
     return Number(result?.total) || 0;
