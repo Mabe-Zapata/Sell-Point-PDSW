@@ -87,3 +87,14 @@ El proyecto sigue una arquitectura en capas limpias (Clean Architecture):
 =======
 - **`infrastructure/`**: Implementación dura de repositorios (TypeORM), integraciones externas (PDFKit) y migraciones.
 - **`presentation/`**: Endpoints (Controladores REST), filtros de excepciones e interceptores.
+
+---
+
+## 📁 Documentación
+
+El proyecto incluye documentación adicional en la carpeta `docs/`:
+
+| Archivo | Descripción |
+|---------|-------------|
+| [Diagrama_ER.pdf](docs/Diagrama_ER.pdf) | Diagrama Entidad-Relación del modelo de datos |
+| [tablas.md](docs/tablas.md) | Descripción detallada de todas las tablas, campos, índices y relaciones |
