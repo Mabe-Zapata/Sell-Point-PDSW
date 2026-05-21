@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
@@ -57,6 +58,7 @@ import { DashboardRepository } from './infrastructure/repositories/dashboard.rep
 // Infrastructure - Services
 import { PdfService } from './infrastructure/services/pdf.service';
 import { AuthService } from './infrastructure/services/auth.service';
+import { RedisModule } from './infrastructure/redis/redis.module';
 
 // Infrastructure - Repositories (Auth)
 import { UserRepository } from './infrastructure/repositories/user.repository';
@@ -124,6 +126,15 @@ const QueryHandlers = [
       load: [configuration],
       envFilePath: '.env',
     }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secret'),
+        signOptions: { expiresIn: 900 },
+      }),
+      inject: [ConfigService],
+    }),
+    RedisModule,
     CqrsModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
