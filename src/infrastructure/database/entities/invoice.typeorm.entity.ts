@@ -17,50 +17,50 @@ import { InvoiceItemTypeOrmEntity } from './invoice-item.typeorm.entity';
 export class InvoiceTypeOrmEntity {
   @ApiProperty({ description: 'Invoice unique identifier' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ApiProperty({ description: 'Invoice number' })
   @Column({ name: 'NUM_INV', length: 20, unique: true })
-  invoiceNumber: string;
+  invoiceNumber!: string;
 
   @ApiProperty({ description: 'Invoice date (server-generated)' })
   @Column({ name: 'FEC_INV', type: 'timestamp' })
-  invoiceDate: Date;
+  invoiceDate!: Date;
 
   @ApiProperty({ description: 'Customer ID' })
   @Column({ name: 'ID_CUS_INV', type: 'uuid' })
-  customerId: string;
+  customerId!: string;
 
   @ApiProperty({ description: 'Customer relationship' })
   @ManyToOne(() => CustomerTypeOrmEntity)
   @JoinColumn({ name: 'ID_CUS_INV' })
-  customer: CustomerTypeOrmEntity;
+  customer!: CustomerTypeOrmEntity;
 
   @ApiProperty({ description: 'Subtotal amount' })
   @Column({ name: 'SUB_TOT', type: 'decimal', precision: 12, scale: 2 })
-  subtotal: number;
+  subtotal!: number;
 
   @ApiProperty({ description: 'IVA amount' })
   @Column({ name: 'IVA_TOT', type: 'decimal', precision: 12, scale: 2 })
-  iva: number;
+  iva!: number;
 
   @ApiProperty({ description: 'Total amount' })
   @Column({ name: 'TOT_INV', type: 'decimal', precision: 12, scale: 2 })
-  total: number;
+  total!: number;
 
   @ApiProperty({ description: 'Invoice items' })
   @OneToMany(() => InvoiceItemTypeOrmEntity, (item) => item.invoice, {
     cascade: true,
   })
-  items: InvoiceItemTypeOrmEntity[];
+  items!: InvoiceItemTypeOrmEntity[];
 
   @ApiProperty({ description: 'Creation timestamp' })
   @CreateDateColumn({ name: 'CRE_AT' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({ description: 'Last update timestamp' })
   @UpdateDateColumn({ name: 'UPD_AT' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({ description: 'Soft delete timestamp' })
   @DeleteDateColumn({ name: 'DEL_AT' })

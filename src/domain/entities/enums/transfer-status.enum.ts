@@ -1,0 +1,7 @@
+export enum TransferStatus {
+  REQUESTED = 'REQUESTED',
+  APPROVED = 'APPROVED',
+  SENT = 'SENT',
+  RECEIVED = 'RECEIVED',
+  CANCELLED = 'CANCELLED',
+}

@@ -8,7 +8,7 @@ import { configuration } from './configuration';
 const config = configuration();
 
 export const typeormConfig: TypeOrmModuleOptions = {
-  type: 'mysql',
+  type: 'postgres',
   host: config.database.host,
   port: config.database.port,
   username: config.database.username,
@@ -21,7 +21,7 @@ export const typeormConfig: TypeOrmModuleOptions = {
 };
 
 export const dataSource = new DataSource({
-  type: 'mysql',
+  type: 'postgres',
   host: config.database.host,
   port: config.database.port,
   username: config.database.username,

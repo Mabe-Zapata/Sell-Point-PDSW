@@ -1,29 +1,23 @@
-import { InvoiceItem } from './invoice-item.entity';
+import { InvoiceStatus } from './enums';
 
 export class Invoice {
-  id: string;
+  id!: string;
 
-  invoiceNumber: string;
+  saleId!: string;
 
-  invoiceDate: Date;
+  seriesId!: string;
 
-  customerId: string;
+  invoiceNumber!: string;
 
-  customerName?: string;
+  authorizationNumber?: string;
 
-  subtotal: number;
+  issueDate!: Date;
 
-  iva: number;
+  status!: InvoiceStatus;
 
-  total: number;
+  cancelledAt?: Date;
 
-  items?: InvoiceItem[];
-
-  createdAt: Date;
-
-  updatedAt: Date;
-
-  deletedAt?: Date;
+  createdAt!: Date;
 
   constructor(partial: Partial<Invoice>) {
     Object.assign(this, partial);

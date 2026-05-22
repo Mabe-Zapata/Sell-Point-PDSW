@@ -1,19 +1,23 @@
 export class Product {
-  id: string;
+  id!: string;
 
-  code: string;
+  categoryId!: string;
 
-  name: string;
+  code!: string;
+
+  name!: string;
 
   description?: string;
 
-  unitPrice: number;
+  salePrice!: number;
 
-  availableQuantity: number;
+  costPrice!: number;
 
-  createdAt: Date;
+  isActive!: boolean;
 
-  updatedAt: Date;
+  createdAt!: Date;
+
+  updatedAt!: Date;
 
   deletedAt?: Date;
 

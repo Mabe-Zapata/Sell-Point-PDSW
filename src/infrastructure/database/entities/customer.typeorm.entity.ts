@@ -12,19 +12,19 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CustomerTypeOrmEntity {
   @ApiProperty({ description: 'Customer unique identifier' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ApiProperty({ description: 'Customer name' })
   @Column({ name: 'NAM_CUS', length: 100 })
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Customer last name' })
   @Column({ name: 'LAS_NAM_CUS', length: 100 })
-  lastName: string;
+  lastName!: string;
 
   @ApiProperty({ description: 'Customer identification number' })
   @Column({ name: 'ID_CUS', length: 20, unique: true })
-  cedula: string;
+  cedula!: string;
 
   @ApiProperty({ description: 'Customer email address' })
   @Column({ name: 'EMA_CUS', length: 255, nullable: true })
@@ -40,11 +40,11 @@ export class CustomerTypeOrmEntity {
 
   @ApiProperty({ description: 'Creation timestamp' })
   @CreateDateColumn({ name: 'CRE_AT' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({ description: 'Last update timestamp' })
   @UpdateDateColumn({ name: 'UPD_AT' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({ description: 'Soft delete timestamp' })
   @DeleteDateColumn({ name: 'DEL_AT' })

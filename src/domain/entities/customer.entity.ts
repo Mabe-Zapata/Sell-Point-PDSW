@@ -1,11 +1,13 @@
+import { IdentificationType } from './enums';
+
 export class Customer {
-  id: string;
+  id!: string;
 
-  name: string;
+  identificationType!: IdentificationType;
 
-  lastName: string;
+  identificationNumber!: string;
 
-  cedula: string;
+  names!: string;
 
   email?: string;
 
@@ -13,9 +15,9 @@ export class Customer {
 
   address?: string;
 
-  createdAt: Date;
+  createdAt!: Date;
 
-  updatedAt: Date;
+  updatedAt!: Date;
 
   deletedAt?: Date;
 

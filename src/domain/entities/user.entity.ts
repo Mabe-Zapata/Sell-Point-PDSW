@@ -1,19 +1,25 @@
-export class User {
-  id: string;
+import { UserStatus } from './enums';
 
-  employeeId: string;
+export class User {
+  id!: string;
+
+  employeeId!: string;
 
   email?: string;
 
-  passwordHash: string;
+  passwordHash!: string;
 
-  role: string;
+  role!: string;
 
-  isActive: boolean;
+  status!: UserStatus;
 
-  createdAt: Date;
+  defaultBranchId?: string;
 
-  updatedAt: Date;
+  failedLoginAttempts!: number;
+
+  createdAt!: Date;
+
+  updatedAt!: Date;
 
   deletedAt?: Date;
 

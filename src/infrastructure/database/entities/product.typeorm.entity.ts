@@ -14,15 +14,15 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ProductTypeOrmEntity {
   @ApiProperty({ description: 'Product unique identifier' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ApiProperty({ description: 'Product code' })
   @Column({ name: 'COD_PRO', length: 50, unique: true })
-  code: string;
+  code!: string;
 
   @ApiProperty({ description: 'Product name' })
   @Column({ name: 'NAM_PRO', length: 255 })
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Product description' })
   @Column({ name: 'DES_PRO', type: 'text', nullable: true })
@@ -30,19 +30,19 @@ export class ProductTypeOrmEntity {
 
   @ApiProperty({ description: 'Product unit price' })
   @Column({ name: 'PRI_UNI_PRO', type: 'decimal', precision: 10, scale: 2 })
-  unitPrice: number;
+  unitPrice!: number;
 
   @ApiProperty({ description: 'Available stock quantity' })
   @Column({ name: 'QTY_DIS_PRO', type: 'int' })
-  availableQuantity: number;
+  availableQuantity!: number;
 
   @ApiProperty({ description: 'Creation timestamp' })
   @CreateDateColumn({ name: 'CRE_AT' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({ description: 'Last update timestamp' })
   @UpdateDateColumn({ name: 'UPD_AT' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({ description: 'Soft delete timestamp' })
   @DeleteDateColumn({ name: 'DEL_AT' })

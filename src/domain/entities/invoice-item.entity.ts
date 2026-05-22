@@ -1,15 +1,15 @@
 export class InvoiceItem {
-  id: string;
+  id!: string;
 
-  invoiceId: string;
+  invoiceId!: string;
 
-  productId: string;
+  productId!: string;
 
   productName?: string;
 
-  quantity: number;
+  quantity!: number;
 
-  unitPrice: number;
+  unitPrice!: number;
 
   constructor(partial: Partial<InvoiceItem>) {
     Object.assign(this, partial);
