@@ -3,17 +3,19 @@ import { Product } from '../../../domain/entities/product.entity';
 export class ProductResponseDto {
   id: string;
 
+  categoryId: string;
+
   code: string;
 
   name: string;
 
   description?: string;
 
-  unitPrice: number;
+  salePrice: number;
 
-  price: number;
+  costPrice: number;
 
-  availableQuantity: number;
+  isActive: boolean;
 
   createdAt: Date;
 
@@ -21,12 +23,13 @@ export class ProductResponseDto {
 
   constructor(product: Product) {
     this.id = product.id;
+    this.categoryId = product.categoryId;
     this.code = product.code;
     this.name = product.name;
     this.description = product.description;
-    this.unitPrice = product.unitPrice;
-    this.price = product.unitPrice;
-    this.availableQuantity = product.availableQuantity;
+    this.salePrice = product.salePrice;
+    this.costPrice = product.costPrice;
+    this.isActive = product.isActive;
     this.createdAt = product.createdAt;
     this.updatedAt = product.updatedAt;
   }

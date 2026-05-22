@@ -21,12 +21,15 @@ export class UpdateCustomerHandler implements ICommandHandler<UpdateCustomerComm
       throw new EntityNotFoundException('Customer', command.id);
     }
 
-    if (validated.cedula && validated.cedula !== existingCustomer.identificationNumber) {
+    if (
+      validated.identificationNumber &&
+      validated.identificationNumber !== existingCustomer.identificationNumber
+    ) {
       const customerWithCedula = await this.customerRepository.findByIdentificationNumber(
-        validated.cedula,
+        validated.identificationNumber,
       );
       if (customerWithCedula) {
-        throw new DuplicateCedulaException(validated.cedula);
+        throw new DuplicateCedulaException(validated.identificationNumber);
       }
     }
 
@@ -35,7 +38,7 @@ export class UpdateCustomerHandler implements ICommandHandler<UpdateCustomerComm
     const updatedCustomer = new Customer({
       id: existingCustomer.id,
       identificationType: payload.identificationType ?? existingCustomer.identificationType,
-      identificationNumber: payload.cedula ?? existingCustomer.identificationNumber,
+      identificationNumber: payload.identificationNumber ?? existingCustomer.identificationNumber,
       names: payload.names ?? existingCustomer.names,
       email: payload.email !== undefined ? payload.email : existingCustomer.email,
       phone: payload.phone !== undefined ? payload.phone : existingCustomer.phone,

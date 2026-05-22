@@ -23,15 +23,16 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
 
     const updatedProduct = new Product({
       id: existingProduct.id,
+      categoryId: payload.categoryId ?? existingProduct.categoryId,
       code: payload.code ?? existingProduct.code,
       name: payload.name ?? existingProduct.name,
       description:
         payload.description !== undefined
           ? payload.description
           : existingProduct.description,
-      unitPrice: payload.unitPrice ?? existingProduct.unitPrice,
-      availableQuantity:
-        payload.availableQuantity ?? existingProduct.availableQuantity,
+      salePrice: payload.salePrice ?? existingProduct.salePrice,
+      costPrice: payload.costPrice ?? existingProduct.costPrice,
+      isActive: payload.isActive ?? existingProduct.isActive,
       createdAt: existingProduct.createdAt,
       updatedAt: new Date(),
     });

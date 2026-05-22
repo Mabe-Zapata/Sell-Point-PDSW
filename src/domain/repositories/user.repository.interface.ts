@@ -8,6 +8,7 @@ export interface UserFilters {
 
 export interface IUserRepository {
   findById(id: string): Promise<User | null>;
+  findByEmployeeId(employeeId: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   findAll(

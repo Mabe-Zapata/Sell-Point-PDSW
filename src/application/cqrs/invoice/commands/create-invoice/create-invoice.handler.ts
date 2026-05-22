@@ -1,17 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { DataSource } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
 import { CreateInvoiceCommand } from './create-invoice.command';
 import { CreateInvoiceValidator } from './create-invoice.validator';
 import { InvoiceRepository } from '../../../../../infrastructure/repositories/invoice.repository';
 import { InvoiceItemRepository } from '../../../../../infrastructure/repositories/invoice-item.repository';
-import { CustomerRepository } from '../../../../../infrastructure/repositories/customer.repository';
 import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
 import { TaxCalculator } from '../../../../../domain/services/tax-calculator.service';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
-import { InsufficientStockException } from '../../../../../domain/exceptions/insufficient-stock.exception';
 import { Invoice } from '../../../../../domain/entities/invoice.entity';
 import { InvoiceItem } from '../../../../../domain/entities/invoice-item.entity';
 import { Product } from '../../../../../domain/entities/product.entity';
+import { InvoiceStatus } from '../../../../../domain/entities/enums/invoice-status.enum';
 
 @CommandHandler(CreateInvoiceCommand)
 export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceCommand> {
@@ -19,19 +18,12 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
     private readonly validator: CreateInvoiceValidator,
     private readonly invoiceRepository: InvoiceRepository,
     private readonly invoiceItemRepository: InvoiceItemRepository,
-    private readonly customerRepository: CustomerRepository,
     private readonly productRepository: ProductRepository,
     private readonly taxCalculator: TaxCalculator,
-    private readonly dataSource: DataSource,
   ) {}
 
   async execute(command: CreateInvoiceCommand): Promise<Invoice> {
     const validated = this.validator.validate(command.payload);
-
-    const customer = await this.customerRepository.findById(validated.customerId);
-    if (!customer) {
-      throw new EntityNotFoundException('Customer', validated.customerId);
-    }
 
     const productMap = new Map<string, Product>();
     for (const item of validated.items) {
@@ -41,13 +33,6 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
       }
       if (product.isActive === false) {
         throw new BadRequestException(`Product ${product.name} is not active`);
-      }
-      if (product.currentStock < item.quantity) {
-        throw new InsufficientStockException(
-          product.name,
-          item.quantity,
-          product.currentStock,
-        );
       }
       productMap.set(item.productId, product);
     }
@@ -64,18 +49,15 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
       });
     });
 
-    const { subtotal, taxAmount, total } =
+    const { subtotal, iva, total } =
       this.taxCalculator.calculateAll(invoiceItems);
 
     const invoice = new Invoice({
-      saleId: command.payload.saleId,
-      seriesId: command.payload.seriesId,
+      saleId: validated.saleId,
+      seriesId: validated.seriesId,
       invoiceNumber,
       issueDate: invoiceDate,
-      status: 'ISSUED',
-      subtotal,
-      taxAmount,
-      total,
+      status: InvoiceStatus.ISSUED,
     });
 
     const savedInvoice = await this.invoiceRepository.create(invoice);
@@ -85,13 +67,6 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
     });
 
     await this.invoiceItemRepository.createMany(invoiceItems);
-
-    for (const itemDto of validated.items) {
-      await this.productRepository.decrementStock(
-        itemDto.productId,
-        itemDto.quantity,
-      );
-    }
 
     const completeInvoice = await this.invoiceRepository.findById(
       savedInvoice.id,

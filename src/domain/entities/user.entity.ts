@@ -3,6 +3,8 @@ import { UserStatus } from './enums';
 export class User {
   id!: string;
 
+  username?: string;
+
   employeeId!: string;
 
   email?: string;

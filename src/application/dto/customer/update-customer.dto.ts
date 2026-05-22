@@ -1,24 +1,23 @@
-import { IsString, IsEmail, MaxLength, IsOptional } from 'class-validator';
+import { IsString, IsEmail, MaxLength, IsOptional, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IdentificationType } from '../../../domain/entities/enums/identification-type.enum';
 
 export class UpdateCustomerDto {
   @IsString()
   @IsOptional()
   @MaxLength(100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  name?: string;
+  identificationNumber?: string;
 
   @IsString()
   @IsOptional()
   @MaxLength(100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  lastName?: string;
+  names?: string;
 
-  @IsString()
+  @IsEnum(IdentificationType)
   @IsOptional()
-  @MaxLength(20)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  cedula?: string;
+  identificationType?: IdentificationType;
 
   @IsEmail({}, { message: 'Invalid email format' })
   @IsOptional()

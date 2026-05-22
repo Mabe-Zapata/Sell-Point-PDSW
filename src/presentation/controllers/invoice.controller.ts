@@ -42,8 +42,7 @@ export class InvoiceController {
   @Post()
   @ApiOperation({
     summary: 'Create a new invoice',
-    description:
-      'Generates a new invoice, automatically calculates totals (subtotal, IVA, total), and atomically decrements product stock. Rolls back transaction if stock is insufficient.',
+    description: 'Generates a new invoice for a sale and persists its item lines.',
   })
   @ApiBody({ type: CreateInvoiceDto })
   @ApiResponse({
@@ -52,7 +51,7 @@ export class InvoiceController {
     type: InvoiceResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error' })
-  @ApiResponse({ status: 404, description: 'Customer or Product not found' })
+  @ApiResponse({ status: 404, description: 'Sale or Product not found' })
   @ApiResponse({
     status: 422,
     description: 'Insufficient stock or transaction error',
@@ -114,7 +113,7 @@ export class InvoiceController {
   @Get()
   @ApiOperation({
     summary: 'List invoices with pagination and filters',
-    description: 'Retrieves a paginated list of invoices. Allows generic search by exact invoice ID and partial match on customer name or last name.',
+    description: 'Retrieves a paginated list of invoices.',
   })
   @ApiQuery({
     name: 'page',
@@ -129,20 +128,26 @@ export class InvoiceController {
     type: Number,
   })
   @ApiQuery({
-    name: 'id',
-    description: 'Filter by invoice ID',
+    name: 'saleId',
+    description: 'Filter by sale ID',
     required: false,
     type: String,
   })
   @ApiQuery({
-    name: 'cliente',
-    description: 'Filter by customer name or lastName',
+    name: 'seriesId',
+    description: 'Filter by series ID',
     required: false,
     type: String,
   })
   @ApiQuery({
-    name: 'num_fac',
-    description: 'Filter by invoice number (partial LIKE match)',
+    name: 'status',
+    description: 'Filter by status',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'authorizationNumber',
+    description: 'Filter by authorization number',
     required: false,
     type: String,
   })
@@ -153,9 +158,10 @@ export class InvoiceController {
   async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('id') id?: string,
-    @Query('cliente') customer?: string,
-    @Query('num_fac') invoiceNumber?: string,
+    @Query('saleId') saleId?: string,
+    @Query('seriesId') seriesId?: string,
+    @Query('status') status?: string,
+    @Query('authorizationNumber') authorizationNumber?: string,
   ): Promise<{
     data: InvoiceResponseDto[];
     total: number;
@@ -168,9 +174,10 @@ export class InvoiceController {
     };
 
     const filters: InvoiceFilters = {
-      id,
-      customer,
-      invoiceNumber,
+      saleId,
+      seriesId,
+      status,
+      authorizationNumber,
     };
 
     const result = await this.queryBus.execute(

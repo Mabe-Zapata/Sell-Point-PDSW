@@ -1,22 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateInvoiceDto } from '../../../../dto/invoice/create-invoice.dto';
 
 export interface ValidatedInvoiceItems {
   productId: string;
   quantity: number;
-  unitPrice: number;
 }
 
 export interface ValidatedCreateInvoice {
-  customerId: string;
+  saleId: string;
+  seriesId: string;
   items: ValidatedInvoiceItems[];
 }
 
 @Injectable()
 export class CreateInvoiceValidator {
   validate(payload: CreateInvoiceDto): ValidatedCreateInvoice {
-    if (!payload.customerId || payload.customerId.trim().length === 0) {
-      throw new BadRequestException('Customer id is required');
+    if (!payload.saleId || payload.saleId.trim().length === 0) {
+      throw new BadRequestException('Sale id is required');
+    }
+    if (!payload.seriesId || payload.seriesId.trim().length === 0) {
+      throw new BadRequestException('Series id is required');
     }
     if (!payload.items || payload.items.length === 0) {
       throw new BadRequestException('Invoice must have at least one item');
@@ -30,7 +33,8 @@ export class CreateInvoiceValidator {
       }
     }
     return {
-      customerId: payload.customerId,
+      saleId: payload.saleId,
+      seriesId: payload.seriesId,
       items: payload.items,
     };
   }

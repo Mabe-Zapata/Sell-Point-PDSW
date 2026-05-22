@@ -3,66 +3,69 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
+  Index,
   ManyToOne,
-  OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { CustomerTypeOrmEntity } from './customer.typeorm.entity';
-import { InvoiceItemTypeOrmEntity } from './invoice-item.typeorm.entity';
+import { InvoiceStatusDb } from './enums/invoice-status.db-enum';
+import { SaleTypeOrmEntity } from './sale.typeorm.entity';
+import { InvoiceSeriesTypeOrmEntity } from './invoice-series.typeorm.entity';
 
 @Entity('INVOICES')
 export class InvoiceTypeOrmEntity {
-  @ApiProperty({ description: 'Invoice unique identifier' })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ApiProperty({ description: 'Invoice number' })
-  @Column({ name: 'NUM_INV', length: 20, unique: true })
+  // Legacy compatibility fields used by older seed/application code
+  customerId?: string;
+
+  invoiceDate?: Date;
+
+  subtotal?: number;
+
+  iva?: number;
+
+  total?: number;
+
+  items?: any[];
+
+  @Column({ name: 'SAL_ID', type: 'uuid', unique: true })
+  saleId!: string;
+
+  @ManyToOne(() => SaleTypeOrmEntity)
+  @JoinColumn({ name: 'SAL_ID' })
+  sale!: SaleTypeOrmEntity;
+
+  @Column({ name: 'SER_ID', type: 'uuid' })
+  seriesId!: string;
+
+  @ManyToOne(() => InvoiceSeriesTypeOrmEntity)
+  @JoinColumn({ name: 'SER_ID' })
+  series!: InvoiceSeriesTypeOrmEntity;
+
+  @Column({ name: 'INV_NUM', length: 20 })
   invoiceNumber!: string;
 
-  @ApiProperty({ description: 'Invoice date (server-generated)' })
-  @Column({ name: 'FEC_INV', type: 'timestamp' })
-  invoiceDate!: Date;
+  @Column({ name: 'AUT_NUM', length: 100 })
+  authorizationNumber!: string;
 
-  @ApiProperty({ description: 'Customer ID' })
-  @Column({ name: 'ID_CUS_INV', type: 'uuid' })
-  customerId!: string;
+  @Column({ name: 'ISS_DAT_INV', type: 'timestamp' })
+  issueDate!: Date;
 
-  @ApiProperty({ description: 'Customer relationship' })
-  @ManyToOne(() => CustomerTypeOrmEntity)
-  @JoinColumn({ name: 'ID_CUS_INV' })
-  customer!: CustomerTypeOrmEntity;
-
-  @ApiProperty({ description: 'Subtotal amount' })
-  @Column({ name: 'SUB_TOT', type: 'decimal', precision: 12, scale: 2 })
-  subtotal!: number;
-
-  @ApiProperty({ description: 'IVA amount' })
-  @Column({ name: 'IVA_TOT', type: 'decimal', precision: 12, scale: 2 })
-  iva!: number;
-
-  @ApiProperty({ description: 'Total amount' })
-  @Column({ name: 'TOT_INV', type: 'decimal', precision: 12, scale: 2 })
-  total!: number;
-
-  @ApiProperty({ description: 'Invoice items' })
-  @OneToMany(() => InvoiceItemTypeOrmEntity, (item) => item.invoice, {
-    cascade: true,
+  @Index('IDX_INV_STA')
+  @Column({
+    name: 'STA_INV',
+    type: 'enum',
+    enum: InvoiceStatusDb,
+    default: InvoiceStatusDb.ISSUED,
   })
-  items!: InvoiceItemTypeOrmEntity[];
+  status!: InvoiceStatusDb;
 
-  @ApiProperty({ description: 'Creation timestamp' })
+  @Column({ name: 'CAN_AT_INV', type: 'timestamp', nullable: true })
+  cancelledAt?: Date;
+
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;
 
-  @ApiProperty({ description: 'Last update timestamp' })
-  @UpdateDateColumn({ name: 'UPD_AT' })
-  updatedAt!: Date;
-
-  @ApiProperty({ description: 'Soft delete timestamp' })
-  @DeleteDateColumn({ name: 'DEL_AT' })
-  deletedAt?: Date;
+  updatedAt?: Date;
 }

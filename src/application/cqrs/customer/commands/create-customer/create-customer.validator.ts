@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateCustomerDto } from '../../../../dto/customer/create-customer.dto';
 
 @Injectable()
@@ -9,6 +9,9 @@ export class CreateCustomerValidator {
     }
     if (!payload.names || payload.names.trim().length === 0) {
       throw new BadRequestException('Customer names are required');
+    }
+    if (!payload.identificationType) {
+      throw new BadRequestException('Identification type is required');
     }
   }
 }

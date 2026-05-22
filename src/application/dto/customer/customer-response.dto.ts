@@ -1,13 +1,14 @@
 import { Customer } from '../../../domain/entities/customer.entity';
+import { IdentificationType } from '../../../domain/entities/enums/identification-type.enum';
 
 export class CustomerResponseDto {
   id: string;
 
-  name: string;
+  identificationType: IdentificationType;
 
-  lastName: string;
+  identificationNumber: string;
 
-  cedula: string;
+  names: string;
 
   email?: string;
 
@@ -21,9 +22,9 @@ export class CustomerResponseDto {
 
   constructor(customer: Customer) {
     this.id = customer.id;
-    this.name = customer.name;
-    this.lastName = customer.lastName;
-    this.cedula = customer.cedula;
+    this.identificationType = customer.identificationType;
+    this.identificationNumber = customer.identificationNumber;
+    this.names = customer.names;
     this.email = customer.email;
     this.phone = customer.phone;
     this.address = customer.address;

@@ -3,6 +3,13 @@ import { IdentificationType } from './enums';
 export class Customer {
   id!: string;
 
+  // Legacy compatibility fields used by application/presentation layer
+  name?: string;
+
+  lastName?: string;
+
+  cedula?: string;
+
   identificationType!: IdentificationType;
 
   identificationNumber!: string;

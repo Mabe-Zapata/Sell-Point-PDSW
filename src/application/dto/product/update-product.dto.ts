@@ -12,6 +12,12 @@ import { Transform, Type } from 'class-transformer';
 export class UpdateProductDto {
   @IsString()
   @IsOptional()
+  @MaxLength(36)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  categoryId?: string;
+
+  @IsString()
+  @IsOptional()
   @MaxLength(50)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   code?: string;
@@ -31,11 +37,15 @@ export class UpdateProductDto {
   @IsPositive()
   @Max(99999999.99)
   @Type(() => Number)
-  unitPrice?: number;
+  salePrice?: number;
 
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @IsOptional()
   @IsPositive()
+  @Max(99999999.99)
   @Type(() => Number)
-  availableQuantity?: number;
+  costPrice?: number;
+
+  @IsOptional()
+  isActive?: boolean;
 }

@@ -15,6 +15,7 @@ export interface IInvoiceRepository {
     pagination?: PaginationParams,
     filters?: InvoiceFilters,
   ): Promise<PaginatedResult<Invoice>>;
+  countByInvoiceNumberPrefix(prefix: string): Promise<number>;
   create(invoice: Invoice): Promise<Invoice>;
   update(invoice: Invoice): Promise<Invoice>;
 }

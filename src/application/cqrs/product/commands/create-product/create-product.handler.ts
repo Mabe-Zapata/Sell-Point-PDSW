@@ -15,11 +15,13 @@ export class CreateProductHandler implements ICommandHandler<CreateProductComman
     await this.validator.validate(command.payload);
 
     const product = new Product({
+      categoryId: command.payload.categoryId,
       code: command.payload.code,
       name: command.payload.name,
       description: command.payload.description,
-      unitPrice: command.payload.unitPrice,
-      availableQuantity: command.payload.availableQuantity,
+      salePrice: command.payload.salePrice,
+      costPrice: command.payload.costPrice,
+      isActive: command.payload.isActive ?? true,
     });
 
     return this.productRepository.create(product);

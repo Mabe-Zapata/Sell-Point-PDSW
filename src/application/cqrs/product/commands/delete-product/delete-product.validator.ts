@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class DeleteProductValidator {

@@ -4,45 +4,48 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { UserStatusDb } from './enums/user-status.db-enum';
 
 @Entity('USERS')
 export class UserTypeOrmEntity {
-  @ApiProperty({ description: 'User unique identifier' })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ApiProperty({ description: 'Employee identifier' })
-  @Column({ name: 'EMP_ID', length: 50 })
+  isActive?: boolean;
+
+  @Column({ name: 'ROL_USR', length: 50, nullable: true })
+  role?: string;
+
+  @Column({ name: 'EMP_ID', length: 50, unique: true })
   employeeId!: string;
 
-  @ApiProperty({ description: 'User email address' })
-  @Column({ name: 'EMA_USR', length: 255, nullable: true })
-  email?: string;
+  @Column({ name: 'USR_USR', length: 100, unique: true })
+  username!: string;
 
-  @ApiProperty({ description: 'Hashed password' })
+  @Column({ name: 'EMA_USR', length: 255, unique: true })
+  email!: string;
+
   @Column({ name: 'PAS_HASH', length: 255 })
   passwordHash!: string;
 
-  @ApiProperty({ description: 'User role', default: 'ADMIN' })
-  @Column({ name: 'ROL_USR', length: 30, default: 'ADMIN' })
-  role!: string;
+  @Column({
+    name: 'STA_USR',
+    type: 'enum',
+    enum: UserStatusDb,
+    default: UserStatusDb.ACTIVE,
+  })
+  status!: UserStatusDb;
 
-  @ApiProperty({ description: 'Whether the user is active', default: true })
-  @Column({ name: 'ACT_USR', type: 'tinyint', default: 1 })
-  isActive!: boolean;
+  @Column({ name: 'DEF_BRA_ID', type: 'uuid', nullable: true })
+  defaultBranchId?: string;
 
-  @ApiProperty({ description: 'Creation timestamp' })
+  @Column({ name: 'FAI_LOG_ATT', type: 'int', default: 0 })
+  failedLoginAttempts!: number;
+
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;
 
-  @ApiProperty({ description: 'Last update timestamp' })
   @UpdateDateColumn({ name: 'UPD_AT' })
   updatedAt!: Date;
-
-  @ApiProperty({ description: 'Soft delete timestamp' })
-  @DeleteDateColumn({ name: 'DEL_AT' })
-  deletedAt?: Date;
 }

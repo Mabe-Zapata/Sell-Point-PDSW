@@ -3,7 +3,7 @@ import { UpdateCustomerDto } from '../../../../dto/customer/update-customer.dto'
 
 export interface ValidatedUpdateCustomer {
   id: string;
-  cedula?: string;
+  identificationNumber?: string;
 }
 
 @Injectable()
@@ -12,6 +12,6 @@ export class UpdateCustomerValidator {
     if (!id || id.trim().length === 0) {
       throw new BadRequestException('Customer id is required');
     }
-    return { id, cedula: payload.cedula };
+    return { id, identificationNumber: payload.identificationNumber };
   }
 }
