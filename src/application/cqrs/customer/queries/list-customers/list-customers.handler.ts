@@ -2,7 +2,7 @@ import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { ListCustomersQuery } from './list-customers.query';
 import { ListCustomersValidator } from './list-customers.validator';
 import { CustomerRepository } from '../../../../../infrastructure/repositories/customer.repository';
-import { PaginatedResult } from '../../../../../domain/repositories/customer.repository.interface';
+import { PaginatedResult } from '../../../../../domain/repositories/pagination.types';
 import { Customer } from '../../../../../domain/entities/customer.entity';
 
 @QueryHandler(ListCustomersQuery)

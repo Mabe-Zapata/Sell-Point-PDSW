@@ -8,7 +8,7 @@ import {
   IInvoiceRepository,
   InvoiceFilters,
 } from '../../domain/repositories/invoice.repository.interface';
-import { PaginatedResult } from '../../domain/repositories/customer.repository.interface';
+import { PaginatedResult } from '../../domain/repositories/pagination.types';
 
 @Injectable()
 export class InvoiceRepository implements IInvoiceRepository {

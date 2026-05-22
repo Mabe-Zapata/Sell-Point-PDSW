@@ -29,10 +29,8 @@ import { DeleteProductCommand } from '../../application/cqrs/product/commands/de
 import { CreateProductDto } from '../../application/dto/product/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/product/update-product.dto';
 import { ProductResponseDto } from '../../application/dto/product/product-response.dto';
-import {
-  PaginationParams,
-  ProductFilters,
-} from '../../domain/repositories/product.repository.interface';
+import { ProductFilters } from '../../domain/repositories/product.repository.interface';
+import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('products')
 @Controller('products')

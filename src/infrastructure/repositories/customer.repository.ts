@@ -5,10 +5,9 @@ import { CustomerTypeOrmEntity } from '../database/entities/customer.typeorm.ent
 import { Customer } from '../../domain/entities/customer.entity';
 import {
   ICustomerRepository,
-  PaginationParams,
   CustomerFilters,
-  PaginatedResult,
 } from '../../domain/repositories/customer.repository.interface';
+import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
 
 @Injectable()
 export class CustomerRepository implements ICustomerRepository {

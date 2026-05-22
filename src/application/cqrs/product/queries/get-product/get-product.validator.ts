@@ -1,17 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
-import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
-import { Product } from '../../../../../domain/entities/product.entity';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class GetProductValidator {
-  constructor(private readonly productRepository: ProductRepository) {}
-
-  async validate(id: string): Promise<Product> {
-    const product = await this.productRepository.findById(id);
-    if (!product) {
-      throw new EntityNotFoundException('Product', id);
+  validate(id: string): string {
+    if (!id || id.trim().length === 0) {
+      throw new BadRequestException('Product id is required');
     }
-    return product;
+    return id;
   }
 }

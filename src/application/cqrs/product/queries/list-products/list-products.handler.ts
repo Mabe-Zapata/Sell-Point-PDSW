@@ -2,10 +2,8 @@ import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { ListProductsQuery } from './list-products.query';
 import { ListProductsValidator } from './list-products.validator';
 import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
-import {
-  ProductFilters,
-  PaginatedResult,
-} from '../../../../../domain/repositories/product.repository.interface';
+import { ProductFilters } from '../../../../../domain/repositories/product.repository.interface';
+import { PaginatedResult } from '../../../../../domain/repositories/pagination.types';
 import { Product } from '../../../../../domain/entities/product.entity';
 
 @QueryHandler(ListProductsQuery)

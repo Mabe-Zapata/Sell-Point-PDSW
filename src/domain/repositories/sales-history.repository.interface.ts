@@ -1,5 +1,4 @@
 import { SalesHistory } from '../entities';
-import { PaginationParams, PaginatedResult } from './customer.repository.interface';
 
 export interface ISalesHistoryRepository {
   findById(id: string): Promise<SalesHistory | null>;

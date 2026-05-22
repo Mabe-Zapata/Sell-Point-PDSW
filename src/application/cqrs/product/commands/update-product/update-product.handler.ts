@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateProductCommand } from './update-product.command';
 import { UpdateProductValidator } from './update-product.validator';
 import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { Product } from '../../../../../domain/entities/product.entity';
 
 @CommandHandler(UpdateProductCommand)
@@ -12,7 +13,12 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
   ) {}
 
   async execute(command: UpdateProductCommand): Promise<Product> {
-    const existingProduct = await this.validator.validate(command.id);
+    const id = this.validator.validate(command.id);
+    const existingProduct = await this.productRepository.findById(id);
+    if (!existingProduct) {
+      throw new EntityNotFoundException('Product', id);
+    }
+
     const { payload } = command;
 
     const updatedProduct = new Product({

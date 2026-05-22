@@ -1,17 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { InvoiceRepository } from '../../../../../infrastructure/repositories/invoice.repository';
-import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
-import { Invoice } from '../../../../../domain/entities/invoice.entity';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class GetInvoiceValidator {
-  constructor(private readonly invoiceRepository: InvoiceRepository) {}
-
-  async validate(id: string): Promise<Invoice> {
-    const invoice = await this.invoiceRepository.findById(id);
-    if (!invoice) {
-      throw new EntityNotFoundException('Invoice', id);
+  validate(id: string): string {
+    if (!id || id.trim().length === 0) {
+      throw new BadRequestException('Invoice id is required');
     }
-    return invoice;
+    return id;
   }
 }

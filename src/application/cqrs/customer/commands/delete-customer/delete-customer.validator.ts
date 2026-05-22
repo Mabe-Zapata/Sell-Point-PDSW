@@ -1,15 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { CustomerRepository } from '../../../../../infrastructure/repositories/customer.repository';
-import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class DeleteCustomerValidator {
-  constructor(private readonly customerRepository: CustomerRepository) {}
-
-  async validate(id: string): Promise<void> {
-    const customer = await this.customerRepository.findById(id);
-    if (!customer) {
-      throw new EntityNotFoundException('Customer', id);
+  validate(id: string): string {
+    if (!id || id.trim().length === 0) {
+      throw new BadRequestException('Customer id is required');
     }
+    return id;
   }
 }

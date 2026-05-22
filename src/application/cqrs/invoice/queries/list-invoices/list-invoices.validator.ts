@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PaginationParams } from '../../../../../domain/repositories/customer.repository.interface';
+import { PaginationParams } from '../../../../../domain/repositories/pagination.types';
 
 @Injectable()
 export class ListInvoicesValidator {

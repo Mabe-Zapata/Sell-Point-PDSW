@@ -2,7 +2,7 @@ import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { ListInvoicesQuery } from './list-invoices.query';
 import { ListInvoicesValidator } from './list-invoices.validator';
 import { InvoiceRepository } from '../../../../../infrastructure/repositories/invoice.repository';
-import { PaginatedResult } from '../../../../../domain/repositories/invoice.repository.interface';
+import { PaginatedResult } from '../../../../../domain/repositories/pagination.types';
 import { Invoice } from '../../../../../domain/entities/invoice.entity';
 
 @QueryHandler(ListInvoicesQuery)

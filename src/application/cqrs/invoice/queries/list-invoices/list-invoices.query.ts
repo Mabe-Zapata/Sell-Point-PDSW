@@ -1,8 +1,7 @@
 import {
   InvoiceFilters,
-  PaginatedResult,
 } from '../../../../../domain/repositories/invoice.repository.interface';
-import { PaginationParams } from '../../../../../domain/repositories/customer.repository.interface';
+import { PaginationParams } from '../../../../../domain/repositories/pagination.types';
 
 export class ListInvoicesQuery {
   constructor(

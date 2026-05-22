@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteProductCommand } from './delete-product.command';
 import { DeleteProductValidator } from './delete-product.validator';
 import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 
 @CommandHandler(DeleteProductCommand)
 export class DeleteProductHandler implements ICommandHandler<DeleteProductCommand> {
@@ -11,7 +12,11 @@ export class DeleteProductHandler implements ICommandHandler<DeleteProductComman
   ) {}
 
   async execute(command: DeleteProductCommand): Promise<void> {
-    await this.validator.validate(command.id);
-    await this.productRepository.softDelete(command.id);
+    const id = this.validator.validate(command.id);
+    const product = await this.productRepository.findById(id);
+    if (!product) {
+      throw new EntityNotFoundException('Product', id);
+    }
+    await this.productRepository.softDelete(id);
   }
 }

@@ -8,7 +8,7 @@ import {
   ProductFilters,
 } from '../../domain/repositories/product.repository.interface';
 import { InsufficientStockException } from '../../domain/exceptions/insufficient-stock.exception';
-import { PaginatedResult } from '../../domain/repositories/customer.repository.interface';
+import { PaginatedResult } from '../../domain/repositories/pagination.types';
 
 @Injectable()
 export class ProductRepository implements IProductRepository {

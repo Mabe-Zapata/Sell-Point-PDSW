@@ -29,10 +29,8 @@ import { DeleteCustomerCommand } from '../../application/cqrs/customer/commands/
 import { CreateCustomerDto } from '../../application/dto/customer/create-customer.dto';
 import { UpdateCustomerDto } from '../../application/dto/customer/update-customer.dto';
 import { CustomerResponseDto } from '../../application/dto/customer/customer-response.dto';
-import {
-  PaginationParams,
-  CustomerFilters,
-} from '../../domain/repositories/customer.repository.interface';
+import { CustomerFilters } from '../../domain/repositories/customer.repository.interface';
+import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('customers')
 @Controller('customers')

@@ -28,10 +28,8 @@ import { GenerateInvoicePdfQuery } from '../../application/cqrs/invoice/queries/
 
 import { CreateInvoiceDto } from '../../application/dto/invoice/create-invoice.dto';
 import { InvoiceResponseDto } from '../../application/dto/invoice/invoice-response.dto';
-import {
-  PaginationParams,
-  InvoiceFilters,
-} from '../../domain/repositories/invoice.repository.interface';
+import { InvoiceFilters } from '../../domain/repositories/invoice.repository.interface';
+import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('invoices')
 @Controller('invoices')

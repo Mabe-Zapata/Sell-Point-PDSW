@@ -1,5 +1,5 @@
 import { InvoiceSeries } from '../entities';
-import { PaginationParams, PaginatedResult } from './customer.repository.interface';
+import { PaginationParams, PaginatedResult } from './pagination.types';
 
 export interface InvoiceSeriesFilters {
   branchId?: string;
