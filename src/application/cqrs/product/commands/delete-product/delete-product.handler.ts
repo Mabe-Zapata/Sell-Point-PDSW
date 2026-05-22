@@ -1,14 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { DeleteProductCommand } from './delete-product.command';
 import { DeleteProductValidator } from './delete-product.validator';
-import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { PRODUCT_REPOSITORY } from '../../../../tokens';
+import type { IProductRepository } from '../../../../../domain/repositories';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 
 @CommandHandler(DeleteProductCommand)
 export class DeleteProductHandler implements ICommandHandler<DeleteProductCommand> {
   constructor(
     private readonly validator: DeleteProductValidator,
-    private readonly productRepository: ProductRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
   ) {}
 
   async execute(command: DeleteProductCommand): Promise<void> {

@@ -1,7 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { UpdateProductCommand } from './update-product.command';
 import { UpdateProductValidator } from './update-product.validator';
-import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { PRODUCT_REPOSITORY } from '../../../../tokens';
+import type { IProductRepository } from '../../../../../domain/repositories';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { Product } from '../../../../../domain/entities/product.entity';
 
@@ -9,7 +11,7 @@ import { Product } from '../../../../../domain/entities/product.entity';
 export class UpdateProductHandler implements ICommandHandler<UpdateProductCommand> {
   constructor(
     private readonly validator: UpdateProductValidator,
-    private readonly productRepository: ProductRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
   ) {}
 
   async execute(command: UpdateProductCommand): Promise<Product> {

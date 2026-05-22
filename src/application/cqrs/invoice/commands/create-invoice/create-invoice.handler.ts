@@ -1,10 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import { CreateInvoiceCommand } from './create-invoice.command';
 import { CreateInvoiceValidator } from './create-invoice.validator';
-import { InvoiceRepository } from '../../../../../infrastructure/repositories/invoice.repository';
-import { InvoiceItemRepository } from '../../../../../infrastructure/repositories/invoice-item.repository';
-import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY, PRODUCT_REPOSITORY, TAX_CALCULATOR } from '../../../../tokens';
+import type { IInvoiceRepository, IInvoiceItemRepository, IProductRepository } from '../../../../../domain/repositories';
 import { TaxCalculator } from '../../../../../domain/services/tax-calculator.service';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { Invoice } from '../../../../../domain/entities/invoice.entity';
@@ -16,10 +16,10 @@ import { InvoiceStatus } from '../../../../../domain/entities/enums/invoice-stat
 export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceCommand> {
   constructor(
     private readonly validator: CreateInvoiceValidator,
-    private readonly invoiceRepository: InvoiceRepository,
-    private readonly invoiceItemRepository: InvoiceItemRepository,
-    private readonly productRepository: ProductRepository,
-    private readonly taxCalculator: TaxCalculator,
+    @Inject(INVOICE_REPOSITORY) private readonly invoiceRepository: IInvoiceRepository,
+    @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
+    @Inject(TAX_CALCULATOR) private readonly taxCalculator: TaxCalculator,
   ) {}
 
   async execute(command: CreateInvoiceCommand): Promise<Invoice> {

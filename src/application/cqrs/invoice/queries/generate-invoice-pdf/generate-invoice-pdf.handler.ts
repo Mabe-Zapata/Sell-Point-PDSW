@@ -1,8 +1,10 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { GenerateInvoicePdfQuery } from './generate-invoice-pdf.query';
 import { GenerateInvoicePdfValidator } from './generate-invoice-pdf.validator';
-import { InvoiceRepository } from '../../../../../infrastructure/repositories/invoice.repository';
-import { InvoiceItemRepository } from '../../../../../infrastructure/repositories/invoice-item.repository';
+import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY } from '../../../../tokens';
+import type { IInvoiceRepository, IInvoiceItemRepository } from '../../../../../domain/repositories';
+import { PDF_SERVICE } from '../../../../services/pdf-service.interface';
 import { PdfService } from '../../../../../infrastructure/services/pdf.service';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 
@@ -10,9 +12,9 @@ import { EntityNotFoundException } from '../../../../../domain/exceptions/entity
 export class GenerateInvoicePdfHandler implements IQueryHandler<GenerateInvoicePdfQuery> {
   constructor(
     private readonly validator: GenerateInvoicePdfValidator,
-    private readonly invoiceRepository: InvoiceRepository,
-    private readonly invoiceItemRepository: InvoiceItemRepository,
-    private readonly pdfService: PdfService,
+    @Inject(INVOICE_REPOSITORY) private readonly invoiceRepository: IInvoiceRepository,
+    @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
+    @Inject(PDF_SERVICE) private readonly pdfService: PdfService,
   ) {}
 
   async execute(query: GenerateInvoicePdfQuery): Promise<Buffer> {

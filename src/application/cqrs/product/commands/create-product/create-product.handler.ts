@@ -1,14 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { CreateProductCommand } from './create-product.command';
 import { CreateProductValidator } from './create-product.validator';
-import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { PRODUCT_REPOSITORY } from '../../../../tokens';
+import type { IProductRepository } from '../../../../../domain/repositories';
 import { Product } from '../../../../../domain/entities/product.entity';
 
 @CommandHandler(CreateProductCommand)
 export class CreateProductHandler implements ICommandHandler<CreateProductCommand> {
   constructor(
     private readonly validator: CreateProductValidator,
-    private readonly productRepository: ProductRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
   ) {}
 
   async execute(command: CreateProductCommand): Promise<Product> {

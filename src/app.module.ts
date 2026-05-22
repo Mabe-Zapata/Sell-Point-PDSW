@@ -1,15 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configuration } from './config/configuration';
 import { typeormConfig } from './config/typeorm.config';
+
+// Application - DI Tokens
+import {
+  CUSTOMER_REPOSITORY,
+  PRODUCT_REPOSITORY,
+  INVOICE_REPOSITORY,
+  INVOICE_ITEM_REPOSITORY,
+  USER_REPOSITORY,
+  DASHBOARD_REPOSITORY,
+  TAX_CALCULATOR,
+} from './application/tokens';
+import { PDF_SERVICE } from './application/services/pdf-service.interface';
 
 // Domain
 import { TaxCalculator } from './domain/services/tax-calculator.service';
@@ -177,7 +189,7 @@ const QueryHandlers = [
     AppService,
     // Domain Services
     {
-      provide: TaxCalculator,
+      provide: TAX_CALCULATOR,
       useFactory: (configService: ConfigService) => {
         const taxPercentage = configService.get<number>('tax.percentage');
         if (taxPercentage === undefined) {
@@ -187,17 +199,37 @@ const QueryHandlers = [
       },
       inject: [ConfigService],
     },
-    // Infrastructure - Repositories
-    CustomerRepository,
-    ProductRepository,
-    InvoiceRepository,
-    InvoiceItemRepository,
-    DashboardRepository,
-    UserRepository,
-    // Infrastructure - Services (Auth)
-    AuthService,
+    // Infrastructure - Repositories (token-mapped)
+    {
+      provide: CUSTOMER_REPOSITORY,
+      useClass: CustomerRepository,
+    },
+    {
+      provide: PRODUCT_REPOSITORY,
+      useClass: ProductRepository,
+    },
+    {
+      provide: INVOICE_REPOSITORY,
+      useClass: InvoiceRepository,
+    },
+    {
+      provide: INVOICE_ITEM_REPOSITORY,
+      useClass: InvoiceItemRepository,
+    },
+    {
+      provide: DASHBOARD_REPOSITORY,
+      useClass: DashboardRepository,
+    },
+    {
+      provide: USER_REPOSITORY,
+      useClass: UserRepository,
+    },
     // Infrastructure - Services
-    PdfService,
+    {
+      provide: PDF_SERVICE,
+      useClass: PdfService,
+    },
+    AuthService,
     // Application - Use Cases
     GetDashboardStatsUseCase,
     // DataSource for transactions
@@ -216,6 +248,7 @@ const QueryHandlers = [
   ],
 })
 export class AppModule {
+  // eslint-disable-next-line @typescript-eslint/require-await
   static async setupSwagger(app: any): Promise<void> {
     const config = new DocumentBuilder()
       .setTitle('Sell Point Backend API')

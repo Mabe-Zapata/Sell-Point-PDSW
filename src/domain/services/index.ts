@@ -1,0 +1,1 @@
+export { TaxCalculator, IVA_CONFIG } from './tax-calculator.service';

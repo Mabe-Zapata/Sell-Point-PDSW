@@ -1,7 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { UpdateCustomerCommand } from './update-customer.command';
 import { UpdateCustomerValidator } from './update-customer.validator';
-import { CustomerRepository } from '../../../../../infrastructure/repositories/customer.repository';
+import { CUSTOMER_REPOSITORY } from '../../../../tokens';
+import type { ICustomerRepository } from '../../../../../domain/repositories';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
 import { Customer } from '../../../../../domain/entities/customer.entity';
@@ -10,7 +12,7 @@ import { Customer } from '../../../../../domain/entities/customer.entity';
 export class UpdateCustomerHandler implements ICommandHandler<UpdateCustomerCommand> {
   constructor(
     private readonly validator: UpdateCustomerValidator,
-    private readonly customerRepository: CustomerRepository,
+    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
   ) {}
 
   async execute(command: UpdateCustomerCommand): Promise<Customer> {

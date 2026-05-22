@@ -1,7 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { CreateCustomerCommand } from './create-customer.command';
 import { CreateCustomerValidator } from './create-customer.validator';
-import { CustomerRepository } from '../../../../../infrastructure/repositories/customer.repository';
+import { CUSTOMER_REPOSITORY } from '../../../../tokens';
+import type { ICustomerRepository } from '../../../../../domain/repositories';
 import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
 import { Customer } from '../../../../../domain/entities/customer.entity';
 
@@ -9,7 +11,7 @@ import { Customer } from '../../../../../domain/entities/customer.entity';
 export class CreateCustomerHandler implements ICommandHandler<CreateCustomerCommand> {
   constructor(
     private readonly validator: CreateCustomerValidator,
-    private readonly customerRepository: CustomerRepository,
+    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
   ) {}
 
   async execute(command: CreateCustomerCommand): Promise<Customer> {
