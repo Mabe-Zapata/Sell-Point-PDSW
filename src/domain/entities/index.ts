@@ -18,6 +18,7 @@ export { SalesHistory } from './sales-history.entity';
 export { Payment } from './payment.entity';
 export { InvoiceSeries } from './invoice-series.entity';
 export { Invoice } from './invoice.entity';
+export { InvoiceItem } from './invoice-item.entity';
 export { Customer } from './customer.entity';
 
 export * from './enums';
