@@ -31,6 +31,12 @@ export class ErrorLogTypeOrmEntity {
   @Column({ name: 'SRC_ERR', length: 100, nullable: true })
   source?: string;
 
+  @Column({ name: 'SRC_SCR_ERR', length: 100, nullable: true })
+  sourceScreen?: string;
+
+  @Column({ name: 'SRC_EVT_ERR', length: 100, nullable: true })
+  sourceEvent?: string;
+
   @Column({ name: 'USR_ID', type: 'uuid', nullable: true })
   userId?: string;
 

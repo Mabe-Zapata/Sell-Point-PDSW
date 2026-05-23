@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ConfirmSaleCommand } from './confirm-sale.command';
 import { ConfirmSaleValidator } from './confirm-sale.validator';
-import { SALE_REPOSITORY, SALE_DETAIL_REPOSITORY, INVENTORY_REPOSITORY, STOCK_MOVEMENT_REPOSITORY, WAREHOUSE_REPOSITORY } from '../../../../tokens';
-import type { ISaleRepository, ISaleDetailRepository, IInventoryRepository, IStockMovementRepository, IWarehouseRepository } from '../../../../../domain/repositories';
+import { SALE_REPOSITORY, SALE_DETAIL_REPOSITORY, STOCK_MOVEMENT_REPOSITORY, PRODUCT_REPOSITORY } from '../../../../tokens';
+import type { ISaleRepository, ISaleDetailRepository, IStockMovementRepository, IProductRepository } from '../../../../../domain/repositories';
 import { SaleStatus, StockMovement, StockMovementType } from '../../../../../domain/entities';
 import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
@@ -13,9 +13,8 @@ export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
     private readonly validator: ConfirmSaleValidator,
     @Inject(SALE_REPOSITORY) private readonly saleRepository: ISaleRepository,
     @Inject(SALE_DETAIL_REPOSITORY) private readonly saleDetailRepository: ISaleDetailRepository,
-    @Inject(INVENTORY_REPOSITORY) private readonly inventoryRepository: IInventoryRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
     @Inject(STOCK_MOVEMENT_REPOSITORY) private readonly stockMovementRepository: IStockMovementRepository,
-    @Inject(WAREHOUSE_REPOSITORY) private readonly warehouseRepository: IWarehouseRepository,
   ) {}
 
   async execute(command: ConfirmSaleCommand): Promise<void> {
@@ -34,43 +33,33 @@ export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
       }
     }
 
-    // Find main warehouse for the branch
-    const mainWarehouse = await this.warehouseRepository.findMainByBranchId(sale.branchId);
-    if (!mainWarehouse) {
-      throw new Error(`No main warehouse found for branch '${sale.branchId}'`);
-    }
-
     // R16: Stock cannot go negative - check stock levels before deducting
     for (const detail of saleDetails) {
-      const inventory = await this.inventoryRepository.findByWarehouseAndProduct(
-        mainWarehouse.id,
-        detail.productId,
-      );
+      const product = await this.productRepository.findById(detail.productId);
+      if (!product) {
+        throw new BusinessRuleException(`Product ${detail.productId} not found`);
+      }
 
-      if (inventory && inventory.currentStock < detail.quantity) {
-        throw new BusinessRuleException(`Insufficient stock for product ${detail.productName}. Available: ${inventory.currentStock}, Requested: ${detail.quantity}`);
+      const currentStock = product.currentStock ?? 0;
+      if (currentStock < detail.quantity) {
+        throw new BusinessRuleException(`Insufficient stock for product ${detail.productName}. Available: ${currentStock}, Requested: ${detail.quantity}`);
       }
     }
 
-    // Deduct inventory per sale_details
+    // Deduct stock per sale_details
     for (const detail of saleDetails) {
-      const inventory = await this.inventoryRepository.findByWarehouseAndProduct(
-        mainWarehouse.id,
-        detail.productId,
-      );
-
-      if (inventory) {
-        const stockBefore = inventory.currentStock;
-        const stockAfter = stockBefore - detail.quantity;
+      const product = await this.productRepository.findById(detail.productId);
+      if (product) {
+        const previousStock = product.currentStock ?? 0;
+        const newStock = previousStock - detail.quantity;
 
         // Create stock movement for SALE
         const movement = new StockMovement({
-          warehouseId: mainWarehouse.id,
           productId: detail.productId,
           type: StockMovementType.SALE,
           quantity: detail.quantity,
-          stockBefore,
-          stockAfter,
+          previousStock,
+          newStock,
           referenceType: 'SALE',
           referenceId: sale.id,
           description: `Sale ${sale.saleNumber}`,
@@ -78,8 +67,9 @@ export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
 
         await this.stockMovementRepository.create(movement);
 
-        // Update inventory stock
-        await this.inventoryRepository.updateStock(inventory.id, stockAfter);
+        // Update product stock
+        product.currentStock = newStock;
+        await this.productRepository.update(product);
       }
     }
 

@@ -34,37 +34,37 @@ export class SaleQueryService implements ISaleQueryService {
 
     const countQuery = `
       SELECT COUNT(*)::integer AS total
-      FROM sales sal
-      WHERE ($1::uuid IS NULL OR sal.bra_id = $1)
-        AND ($2::uuid IS NULL OR sal.cus_id = $2)
-        AND ($3::varchar IS NULL OR sal.sta_sal = $3)
-        AND ($4::timestamp IS NULL OR sal.cre_at >= $4)
-        AND ($5::timestamp IS NULL OR sal.cre_at <= $5);
+      FROM "SALES" sal
+      WHERE ($1::uuid IS NULL OR sal."BRA_ID" = $1)
+        AND ($2::uuid IS NULL OR sal."CUS_ID" = $2)
+        AND ($3::varchar IS NULL OR sal."STA_SAL" = $3)
+        AND ($4::timestamp IS NULL OR sal."CRE_AT" >= $4)
+        AND ($5::timestamp IS NULL OR sal."CRE_AT" <= $5);
     `;
 
     const listQuery = `
       SELECT
         sal.id,
-        sal.sal_num AS "saleNumber",
-        sal.sta_sal AS "status",
-        sal.sub_sal AS subtotal,
-        sal.tax_amo_sal AS "taxAmount",
-        sal.dis_amo_sal AS "discountAmount",
-        sal.tot_sal AS total,
-        sal.cre_at AS "createdAt",
-        sal.bra_id AS "branchId",
-        sal.cus_id AS "customerId",
-        cus.nam_cus AS "customerName",
-        usr.usr_usr AS "cashierUsername"
-      FROM sales sal
-      INNER JOIN customers cus ON sal.cus_id = cus.id
-      INNER JOIN users usr ON sal.cas_usr_id = usr.id
-      WHERE ($1::uuid IS NULL OR sal.bra_id = $1)
-        AND ($2::uuid IS NULL OR sal.cus_id = $2)
-        AND ($3::varchar IS NULL OR sal.sta_sal = $3)
-        AND ($4::timestamp IS NULL OR sal.cre_at >= $4)
-        AND ($5::timestamp IS NULL OR sal.cre_at <= $5)
-      ORDER BY sal.cre_at DESC
+        sal."SAL_NUM" AS "saleNumber",
+        sal."STA_SAL" AS "status",
+        sal."SUB_SAL" AS subtotal,
+        sal."TAX_AMO_SAL" AS "taxAmount",
+        sal."DIS_AMO_SAL" AS "discountAmount",
+        sal."TOT_SAL" AS total,
+        sal."CRE_AT" AS "createdAt",
+        sal."BRA_ID" AS "branchId",
+        sal."CUS_ID" AS "customerId",
+        cus."NAM_CUS" AS "customerName",
+        usr."USR_USR" AS "cashierUsername"
+      FROM "SALES" sal
+      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
+      INNER JOIN "USERS" usr ON sal."CAS_USR_ID" = usr.id
+      WHERE ($1::uuid IS NULL OR sal."BRA_ID" = $1)
+        AND ($2::uuid IS NULL OR sal."CUS_ID" = $2)
+        AND ($3::varchar IS NULL OR sal."STA_SAL" = $3)
+        AND ($4::timestamp IS NULL OR sal."CRE_AT" >= $4)
+        AND ($5::timestamp IS NULL OR sal."CRE_AT" <= $5)
+      ORDER BY sal."CRE_AT" DESC
       LIMIT $6 OFFSET $7;
     `;
 
@@ -95,43 +95,43 @@ export class SaleQueryService implements ISaleQueryService {
   }
 
   async getSaleWithDetails(id: string): Promise<SaleWithDetails | null> {
+    // Note: customerIdentificationType/Number replaced by cedula (simplify-schema-uta SDD)
     const saleQuery = `
       SELECT
         sal.id,
-        sal.sal_num AS "saleNumber",
-        sal.sta_sal AS "status",
-        sal.sub_sal AS subtotal,
-        sal.tax_amo_sal AS "taxAmount",
-        sal.dis_amo_sal AS "discountAmount",
-        sal.tot_sal AS total,
-        sal.cre_at AS "createdAt",
-        sal.upd_at AS "updatedAt",
-        sal.bra_id AS "branchId",
-        sal.cus_id AS "customerId",
-        sal.cas_usr_id AS "cashierUserId",
-        sal.tax_rat_id AS "taxRateId",
-        cus.nam_cus AS "customerName",
-        cus.idt_typ AS "customerIdentificationType",
-        cus.idt_num AS "customerIdentificationNumber",
-        usr.usr_usr AS "cashierUsername"
-      FROM sales sal
-      INNER JOIN customers cus ON sal.cus_id = cus.id
-      INNER JOIN users usr ON sal.cas_usr_id = usr.id
+        sal."SAL_NUM" AS "saleNumber",
+        sal."STA_SAL" AS "status",
+        sal."SUB_SAL" AS subtotal,
+        sal."TAX_AMO_SAL" AS "taxAmount",
+        sal."DIS_AMO_SAL" AS "discountAmount",
+        sal."TOT_SAL" AS total,
+        sal."CRE_AT" AS "createdAt",
+        sal."UPD_AT" AS "updatedAt",
+        sal."BRA_ID" AS "branchId",
+        sal."CUS_ID" AS "customerId",
+        sal."CAS_USR_ID" AS "cashierUserId",
+        sal."TAX_RAT_ID" AS "taxRateId",
+        cus."NAM_CUS" AS "customerName",
+        cus."CED_CUS" AS "customerCedula",
+        usr."USR_USR" AS "cashierUsername"
+      FROM "SALES" sal
+      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
+      INNER JOIN "USERS" usr ON sal."CAS_USR_ID" = usr.id
       WHERE sal.id = $1;
     `;
 
     const detailsQuery = `
       SELECT
         sd.id,
-        sd.sal_id AS "saleId",
-        sd.pro_id AS "productId",
-        sd.pro_nam_sal AS "productName",
-        sd.pro_cod_sal AS "productCode",
-        sd.qty_sal_det AS quantity,
-        sd.unt_pri_sal AS "unitPrice",
-        sd.cre_at AS "createdAt"
-      FROM sale_details sd
-      WHERE sd.sal_id = $1;
+        sd."SAL_ID" AS "saleId",
+        sd."PRO_ID" AS "productId",
+        sd."PRO_NAM_SAL" AS "productName",
+        sd."PRO_COD_SAL" AS "productCode",
+        sd."QTY_SAL_DET" AS quantity,
+        sd."UNT_PRI_SAL" AS "unitPrice",
+        sd."CRE_AT" AS "createdAt"
+      FROM "SALE_DETAILS" sd
+      WHERE sd."SAL_ID" = $1;
     `;
 
     const saleResult = await this.pool.query(saleQuery, [id]);

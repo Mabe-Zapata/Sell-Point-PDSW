@@ -1,14 +1,15 @@
 import { Customer } from '../entities';
 import { PaginationParams, PaginatedResult } from './pagination.types';
 
+// identificationType removed — replaced by cedula (simplify-schema-uta SDD)
 export interface CustomerFilters {
   q?: string;
-  identificationType?: string;
+  cedula?: string;
 }
 
 export interface ICustomerRepository {
   findById(id: string): Promise<Customer | null>;
-  findByIdentificationNumber(identificationNumber: string): Promise<Customer | null>;
+  findByIdentificationNumber(cedula: string): Promise<Customer | null>;
   findAll(
     pagination?: PaginationParams,
     filters?: CustomerFilters,

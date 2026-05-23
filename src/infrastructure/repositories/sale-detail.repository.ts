@@ -17,8 +17,8 @@ export class SaleDetailRepository {
       id: entity.id,
       saleId: entity.saleId,
       productId: entity.productId,
-      productName: entity.productName,
-      productCode: entity.productCode,
+      productName: entity.productNameSnapshot,
+      productCode: entity.productCodeSnapshot,
       quantity: Number(entity.quantity),
       unitPrice: Number(entity.unitPrice),
       createdAt: entity.createdAt,
@@ -29,8 +29,8 @@ export class SaleDetailRepository {
     return {
       saleId: detail.saleId,
       productId: detail.productId,
-      productName: detail.productName,
-      productCode: detail.productCode,
+      productNameSnapshot: detail.productName,
+      productCodeSnapshot: detail.productCode,
       quantity: detail.quantity,
       unitPrice: detail.unitPrice,
     };

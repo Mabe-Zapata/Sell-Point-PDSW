@@ -42,30 +42,30 @@ export class ErrorLogQueryService implements IErrorLogQueryService {
 
     const countQuery = `
       SELECT COUNT(*)::integer AS total
-      FROM error_logs el
-      WHERE ($1::varchar IS NULL OR el.exc_typ = $1)
-        AND ($2::uuid IS NULL OR el.usr_id = $2)
-        AND ($3::timestamp IS NULL OR el.cre_at >= $3)
-        AND ($4::timestamp IS NULL OR el.cre_at <= $4);
+      FROM "ERROR_LOGS" el
+      WHERE ($1::varchar IS NULL OR el."EXC_TYP" = $1)
+        AND ($2::uuid IS NULL OR el."USR_ID" = $2)
+        AND ($3::timestamp IS NULL OR el."CRE_AT" >= $3)
+        AND ($4::timestamp IS NULL OR el."CRE_AT" <= $4);
     `;
 
     const listQuery = `
       SELECT
         el.id,
-        el.exc_typ AS "exceptionType",
-        el.mes_err AS "message",
-        el.sta_tra AS "stackTrace",
-        el.src_err AS "source",
-        el.usr_id AS "userId",
-        el.cre_at AS "createdAt",
-        usr.usr_usr AS "userUsername"
-      FROM error_logs el
-      LEFT JOIN users usr ON el.usr_id = usr.id
-      WHERE ($1::varchar IS NULL OR el.exc_typ = $1)
-        AND ($2::uuid IS NULL OR el.usr_id = $2)
-        AND ($3::timestamp IS NULL OR el.cre_at >= $3)
-        AND ($4::timestamp IS NULL OR el.cre_at <= $4)
-      ORDER BY el.cre_at DESC
+        el."EXC_TYP" AS "exceptionType",
+        el."MES_ERR" AS "message",
+        el."STA_TRA" AS "stackTrace",
+        el."SRC_ERR" AS "source",
+        el."USR_ID" AS "userId",
+        el."CRE_AT" AS "createdAt",
+        usr."USR_USR" AS "userUsername"
+      FROM "ERROR_LOGS" el
+      LEFT JOIN "USERS" usr ON el."USR_ID" = usr.id
+      WHERE ($1::varchar IS NULL OR el."EXC_TYP" = $1)
+        AND ($2::uuid IS NULL OR el."USR_ID" = $2)
+        AND ($3::timestamp IS NULL OR el."CRE_AT" >= $3)
+        AND ($4::timestamp IS NULL OR el."CRE_AT" <= $4)
+      ORDER BY el."CRE_AT" DESC
       LIMIT $5 OFFSET $6;
     `;
 
@@ -94,15 +94,15 @@ export class ErrorLogQueryService implements IErrorLogQueryService {
     const query = `
       SELECT
         el.id,
-        el.exc_typ AS "exceptionType",
-        el.mes_err AS "message",
-        el.sta_tra AS "stackTrace",
-        el.src_err AS "source",
-        el.usr_id AS "userId",
-        el.cre_at AS "createdAt",
-        usr.usr_usr AS "userUsername"
-      FROM error_logs el
-      LEFT JOIN users usr ON el.usr_id = usr.id
+        el."EXC_TYP" AS "exceptionType",
+        el."MES_ERR" AS "message",
+        el."STA_TRA" AS "stackTrace",
+        el."SRC_ERR" AS "source",
+        el."USR_ID" AS "userId",
+        el."CRE_AT" AS "createdAt",
+        usr."USR_USR" AS "userUsername"
+      FROM "ERROR_LOGS" el
+      LEFT JOIN "USERS" usr ON el."USR_ID" = usr.id
       WHERE el.id = $1
       LIMIT 1;
     `;

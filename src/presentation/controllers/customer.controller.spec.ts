@@ -40,7 +40,7 @@ describe('CustomerController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      const result = await controller.findAll('1', '20', 'john', 'CEDULA');
+      const result = await controller.findAll('1', '20', 'john', '9999999999999');
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(ListCustomersWithStockQuery),
@@ -48,7 +48,7 @@ describe('CustomerController', () => {
       const calledQuery = mockQueryBus.execute.mock.calls[0][0] as ListCustomersWithStockQuery;
       expect(calledQuery.pagination).toEqual({ page: 1, limit: 20 });
       expect(calledQuery.q).toBe('john');
-      expect(calledQuery.identificationType).toBe('CEDULA');
+      expect(calledQuery.cedula).toBe('9999999999999');
       expect(result).toEqual(mockResult);
     });
 
@@ -93,7 +93,7 @@ describe('CustomerController', () => {
       mockCommandBus.execute.mockResolvedValue(mockCustomer);
 
       const createDto = {
-        identificationType: 'CEDULA',
+        cedula: '9999999999999',
         identificationNumber: '0901234567',
         names: 'John Doe',
       };

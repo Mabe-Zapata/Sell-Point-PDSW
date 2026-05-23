@@ -21,24 +21,24 @@ export class DashboardQueryService implements IDashboardQueryService {
   async getStats(branchId?: string): Promise<DashboardStats> {
     const query = `
       SELECT
-        COALESCE(SUM(sal.tot_sal), 0)::numeric AS total_revenue,
+        COALESCE(SUM(sal."TOT_SAL"), 0)::numeric AS total_revenue,
         COUNT(sal.id)::integer AS total_sales,
-        COALESCE(SUM(sal.tot_sal) FILTER (WHERE DATE(sal.cre_at) = CURRENT_DATE), 0)::numeric AS today_revenue,
-        COUNT(sal.id) FILTER (WHERE DATE(sal.cre_at) = CURRENT_DATE)::integer AS today_sales
-      FROM sales sal
-      WHERE ($1::uuid IS NULL OR sal.bra_id = $1)
-        AND sal.sta_sal = 'CONFIRMED';
+        COALESCE(SUM(sal."TOT_SAL") FILTER (WHERE DATE(sal."CRE_AT") = CURRENT_DATE), 0)::numeric AS today_revenue,
+        COUNT(sal.id) FILTER (WHERE DATE(sal."CRE_AT") = CURRENT_DATE)::integer AS today_sales
+      FROM "SALES" sal
+      WHERE ($1::uuid IS NULL OR sal."BRA_ID" = $1)
+        AND sal."STA_SAL" = 'CONFIRMED';
     `;
 
     const result = await this.pool.query(query, [branchId ?? null]);
     const row = result.rows[0];
 
     const customerCountResult = await this.pool.query(
-      'SELECT COUNT(*)::integer AS total FROM customers',
+      'SELECT COUNT(*)::integer AS total FROM "CUSTOMERS"',
     );
 
     const productCountResult = await this.pool.query(
-      'SELECT COUNT(*)::integer AS total FROM products WHERE act_pro = true',
+      'SELECT COUNT(*)::integer AS total FROM "PRODUCTS" WHERE "ACT_PRO" = true',
     );
 
     return {

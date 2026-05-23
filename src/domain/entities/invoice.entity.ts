@@ -2,39 +2,18 @@ import { InvoiceStatus } from './enums';
 
 export class Invoice {
   id!: string;
-
-  // Legacy compatibility fields used by application/presentation layer
-  customerId?: string;
-
-  customerName?: string;
-
-  invoiceDate?: Date;
-
-  subtotal?: number;
-
-  iva?: number;
-
-  total?: number;
-
-  items?: any[];
-
-  updatedAt?: Date;
-
   saleId!: string;
-
   seriesId!: string;
-
   invoiceNumber!: string;
-
   authorizationNumber?: string;
-
   issueDate!: Date;
-
   status!: InvoiceStatus;
-
   cancelledAt?: Date;
-
   createdAt!: Date;
+
+  // Computed for PDF only (fetched via JOIN at query time, not stored)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 
   constructor(partial: Partial<Invoice>) {
     Object.assign(this, partial);

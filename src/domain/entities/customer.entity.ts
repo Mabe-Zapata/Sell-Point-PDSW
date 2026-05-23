@@ -1,26 +1,19 @@
-import { IdentificationType } from './enums';
-
 export class Customer {
   id!: string;
 
-  // Legacy compatibility fields used by application/presentation layer
-  name?: string;
+  names!: string;
 
   lastName?: string;
 
   cedula?: string;
-
-  identificationType!: IdentificationType;
-
-  identificationNumber!: string;
-
-  names!: string;
 
   email?: string;
 
   phone?: string;
 
   address?: string;
+
+  isActive!: boolean;
 
   createdAt!: Date;
 

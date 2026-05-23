@@ -17,8 +17,8 @@ interface CountRow {
 
 interface CustomerRow {
   id: string;
-  identificationType: string;
-  identificationNumber: string;
+  // identificationType/identificationNumber replaced by cedula (simplify-schema-uta SDD)
+  cedula: string;
   names: string;
   email: string | null;
   phone: string | null;
@@ -38,46 +38,44 @@ export class CustomerQueryService implements ICustomerQueryService {
     page: number;
     limit: number;
     q?: string;
-    identificationType?: string;
+    cedula?: string;
   }): Promise<{ data: CustomerListItem[]; total: number; page: number; limit: number }> {
-    const { page, limit, q, identificationType } = params;
+    const { page, limit, q, cedula } = params;
     const offset = (page - 1) * limit;
     const searchPattern = q ? `%${q}%` : null;
 
     const countQuery = `
       SELECT COUNT(*)::integer AS total
-      FROM customers c
-      WHERE ($1::varchar IS NULL OR c.nam_cus ILIKE $1 OR c.idt_num ILIKE $1)
-        AND ($2::varchar IS NULL OR c.idt_typ = $2);
+      FROM "CUSTOMERS" c
+      WHERE ($1::varchar IS NULL OR c."NAM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
+        AND ($2::varchar IS NULL OR c."CED_CUS" = $2);
     `;
 
     const listQuery = `
       SELECT
         c.id,
-        c.idt_typ AS "identificationType",
-        c.idt_num AS "identificationNumber",
-        c.nam_cus AS "names",
-        c.ema_cus AS "email",
-        c.pho_cus AS "phone",
-        c.add_cus AS "address",
-        c.cre_at AS "createdAt"
-      FROM customers c
-      WHERE ($1::varchar IS NULL OR c.nam_cus ILIKE $1 OR c.idt_num ILIKE $1)
-        AND ($2::varchar IS NULL OR c.idt_typ = $2)
-      ORDER BY c.cre_at DESC
+        c."CED_CUS" AS "cedula",
+        c."NAM_CUS" AS "names",
+        c."EMA_CUS" AS "email",
+        c."PHO_CUS" AS "phone",
+        c."ADD_CUS" AS "address",
+        c."CRE_AT" AS "createdAt"
+      FROM "CUSTOMERS" c
+      WHERE ($1::varchar IS NULL OR c."NAM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
+        AND ($2::varchar IS NULL OR c."CED_CUS" = $2)
+      ORDER BY c."CRE_AT" DESC
       LIMIT $3 OFFSET $4;
     `;
 
     const [countResult, listResult] = await Promise.all([
-      this.pool.query<CountRow>(countQuery, [searchPattern, identificationType ?? null]),
-      this.pool.query<CustomerRow>(listQuery, [searchPattern, identificationType ?? null, limit, offset]),
+      this.pool.query<CountRow>(countQuery, [searchPattern, cedula ?? null]),
+      this.pool.query<CustomerRow>(listQuery, [searchPattern, cedula ?? null, limit, offset]),
     ]);
 
     return {
       data: listResult.rows.map((row): CustomerListItem => ({
         id: row.id,
-        identificationType: row.identificationType,
-        identificationNumber: row.identificationNumber,
+        cedula: row.cedula,
         names: row.names,
         email: row.email,
         phone: row.phone,
@@ -90,31 +88,29 @@ export class CustomerQueryService implements ICustomerQueryService {
     };
   }
 
-  async getCustomerByIdentification(identificationNumber: string): Promise<Customer | null> {
+  async getCustomerByIdentification(cedula: string): Promise<Customer | null> {
     const query = `
       SELECT
         c.id,
-        c.idt_typ AS "identificationType",
-        c.idt_num AS "identificationNumber",
-        c.nam_cus AS "names",
-        c.ema_cus AS "email",
-        c.pho_cus AS "phone",
-        c.add_cus AS "address",
-        c.cre_at AS "createdAt",
-        c.upd_at AS "updatedAt"
-      FROM customers c
-      WHERE c.idt_num = $1
+        c."CED_CUS" AS "cedula",
+        c."NAM_CUS" AS "names",
+        c."EMA_CUS" AS "email",
+        c."PHO_CUS" AS "phone",
+        c."ADD_CUS" AS "address",
+        c."CRE_AT" AS "createdAt",
+        c."UPD_AT" AS "updatedAt"
+      FROM "CUSTOMERS" c
+      WHERE c."CED_CUS" = $1
       LIMIT 1;
     `;
 
-    const result = await this.pool.query<CustomerRow>(query, [identificationNumber]);
+    const result = await this.pool.query<CustomerRow>(query, [cedula]);
     if (result.rows.length === 0) {
       return null;
     }
 
     return new Customer({
-      identificationType: result.rows[0].identificationType as any,
-      identificationNumber: result.rows[0].identificationNumber,
+      cedula: result.rows[0].cedula,
       names: result.rows[0].names,
       email: result.rows[0].email ?? undefined,
       phone: result.rows[0].phone ?? undefined,

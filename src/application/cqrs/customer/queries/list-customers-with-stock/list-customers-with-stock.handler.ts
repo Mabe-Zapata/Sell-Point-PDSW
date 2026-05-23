@@ -18,7 +18,8 @@ export class ListCustomersWithStockHandler implements IQueryHandler<ListCustomer
       page: validPagination.page,
       limit: validPagination.limit,
       q: query.q,
-      identificationType: query.identificationType,
+      // identificationType replaced by cedula (simplify-schema-uta SDD)
+      cedula: query.cedula,
     });
   }
 }

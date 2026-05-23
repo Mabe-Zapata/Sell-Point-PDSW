@@ -18,12 +18,11 @@ export class StockMovementRepository {
   private mapToDomain(entity: StockMovementTypeOrmEntity): StockMovement {
     return new StockMovement({
       id: entity.id,
-      warehouseId: entity.warehouseId,
       productId: entity.productId,
       type: StockMovementTypeMapper.toDomain(entity.type),
       quantity: Number(entity.quantity),
-      stockBefore: entity.stockBefore,
-      stockAfter: entity.stockAfter,
+      previousStock: entity.previousStock,
+      newStock: entity.newStock,
       userId: entity.userId,
       referenceType: entity.referenceType,
       referenceId: entity.referenceId,
@@ -34,12 +33,11 @@ export class StockMovementRepository {
 
   private mapToEntity(movement: StockMovement): Partial<StockMovementTypeOrmEntity> {
     return {
-      warehouseId: movement.warehouseId,
       productId: movement.productId,
       type: StockMovementTypeMapper.toDb(movement.type),
       quantity: movement.quantity,
-      stockBefore: movement.stockBefore,
-      stockAfter: movement.stockAfter,
+      previousStock: movement.previousStock,
+      newStock: movement.newStock,
       userId: movement.userId,
       referenceType: movement.referenceType,
       referenceId: movement.referenceId,
@@ -52,11 +50,6 @@ export class StockMovementRepository {
     return entity ? this.mapToDomain(entity) : null;
   }
 
-  async findByWarehouse(warehouseId: string): Promise<StockMovement[]> {
-    const entities = await this.repo.find({ where: { warehouseId } });
-    return entities.map((e) => this.mapToDomain(e));
-  }
-
   async findByProduct(productId: string): Promise<StockMovement[]> {
     const entities = await this.repo.find({ where: { productId } });
     return entities.map((e) => this.mapToDomain(e));
@@ -67,13 +60,10 @@ export class StockMovementRepository {
     filters: StockMovementFilters = {},
   ): Promise<PaginatedResult<StockMovement>> {
     const { page, limit } = pagination;
-    const { warehouseId, productId, type, userId, referenceType, referenceId } = filters;
+    const { productId, type, userId, referenceType, referenceId } = filters;
 
     const queryBuilder = this.repo.createQueryBuilder('movement');
 
-    if (warehouseId) {
-      queryBuilder.andWhere('movement.warehouseId = :warehouseId', { warehouseId });
-    }
     if (productId) {
       queryBuilder.andWhere('movement.productId = :productId', { productId });
     }

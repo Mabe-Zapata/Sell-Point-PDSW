@@ -1,13 +1,11 @@
-import { IsString, IsEmail, MaxLength, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsEmail, MaxLength, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { IdentificationType } from '../../../domain/entities/enums/identification-type.enum';
 
 export class UpdateCustomerDto {
   @IsString()
   @IsOptional()
-  @MaxLength(100)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  identificationNumber?: string;
+  @MaxLength(20)
+  cedula?: string;
 
   @IsString()
   @IsOptional()
@@ -15,9 +13,10 @@ export class UpdateCustomerDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   names?: string;
 
-  @IsEnum(IdentificationType)
+  @IsString()
   @IsOptional()
-  identificationType?: IdentificationType;
+  @MaxLength(100)
+  lastName?: string;
 
   @IsEmail({}, { message: 'Invalid email format' })
   @IsOptional()
@@ -33,4 +32,7 @@ export class UpdateCustomerDto {
   @IsOptional()
   @MaxLength(255)
   address?: string;
+
+  @IsOptional()
+  isActive?: boolean;
 }

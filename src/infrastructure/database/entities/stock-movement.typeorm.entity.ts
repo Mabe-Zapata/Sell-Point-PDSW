@@ -8,7 +8,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { StockMovementTypeDb } from './enums/stock-movement-type.db-enum';
-import { WarehouseTypeOrmEntity } from './warehouse.typeorm.entity';
 import { ProductTypeOrmEntity } from './product.typeorm.entity';
 import { UserTypeOrmEntity } from './user.typeorm.entity';
 
@@ -16,13 +15,6 @@ import { UserTypeOrmEntity } from './user.typeorm.entity';
 export class StockMovementTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
-
-  @Column({ name: 'WAR_ID', type: 'uuid' })
-  warehouseId!: string;
-
-  @ManyToOne(() => WarehouseTypeOrmEntity)
-  @JoinColumn({ name: 'WAR_ID' })
-  warehouse!: WarehouseTypeOrmEntity;
 
   @Column({ name: 'PRO_ID', type: 'uuid' })
   productId!: string;
@@ -41,11 +33,11 @@ export class StockMovementTypeOrmEntity {
   @Column({ name: 'QTY_MOV', type: 'decimal', precision: 10, scale: 3 })
   quantity!: number;
 
-  @Column({ name: 'STO_BEF', type: 'int' })
-  stockBefore!: number;
+  @Column({ name: 'PRE_STO_MOV', type: 'int' })
+  previousStock!: number;
 
-  @Column({ name: 'STO_AFT', type: 'int' })
-  stockAfter!: number;
+  @Column({ name: 'NEW_STO_MOV', type: 'int' })
+  newStock!: number;
 
   @Column({ name: 'USR_ID', type: 'uuid', nullable: true })
   userId?: string;
@@ -66,8 +58,4 @@ export class StockMovementTypeOrmEntity {
   @Index('IDX_STR_MOV_CREATED_AT')
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;
-
-  @Index('IDX_STR_MOV_TYP')
-  @Column({ name: 'TYP_MOV_IDX', type: 'varchar', length: 50 })
-  typeIndex!: string;
 }

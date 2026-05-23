@@ -12,8 +12,8 @@ export interface InvoiceListItem {
   createdAt: Date;
   saleNumber: string;
   customerName: string;
-  customerIdentificationNumber: string;
-  branchName: string;
+  customerCedula: string;
+  // branchName removed — branch entity deleted (simplify-schema-uta SDD)
   total: number;
   establishmentCode: string;
   emissionPointCode: string;
@@ -29,5 +29,6 @@ export interface IInvoiceQueryService {
     startDate?: Date;
     endDate?: Date;
   }): Promise<PaginatedResult<InvoiceListItem>>;
+  getInvoiceById(id: string): Promise<InvoiceListItem | null>;
   getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null>;
 }

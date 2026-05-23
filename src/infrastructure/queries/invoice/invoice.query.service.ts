@@ -24,8 +24,8 @@ interface InvoiceListRow {
   seriesId: string;
   saleNumber: string;
   customerName: string;
-  customerIdentificationNumber: string;
-  branchName: string;
+  customerCedula: string;
+  // branchName removed — branch entity deleted (simplify-schema-uta SDD)
   total: string | number;
   establishmentCode: string;
   emissionPointCode: string;
@@ -58,44 +58,42 @@ export class InvoiceQueryService implements IInvoiceQueryService {
 
     const countQuery = `
       SELECT COUNT(*)::integer AS total
-      FROM invoices i
-      INNER JOIN invoice_series ser ON i.ser_id = ser.id
-      WHERE ($1::uuid IS NULL OR ser.bra_id = $1)
-        AND ($2::varchar IS NULL OR i.sta_inv = $2)
-        AND ($3::varchar IS NULL OR i.inv_num ILIKE $3)
-        AND ($4::timestamp IS NULL OR i.cre_at >= $4)
-        AND ($5::timestamp IS NULL OR i.cre_at <= $5);
+      FROM "INVOICES" i
+      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
+      WHERE ($1::uuid IS NULL OR ser."BRA_ID" = $1)
+        AND ($2::varchar IS NULL OR i."STA_INV" = $2)
+        AND ($3::varchar IS NULL OR i."INV_NUM" ILIKE $3)
+        AND ($4::timestamp IS NULL OR i."CRE_AT" >= $4)
+        AND ($5::timestamp IS NULL OR i."CRE_AT" <= $5);
     `;
 
     const listQuery = `
       SELECT
         i.id,
-        i.inv_num AS "invoiceNumber",
-        i.aut_num AS "authorizationNumber",
-        i.iss_dat_inv AS "issueDate",
-        i.sta_inv AS "status",
-        i.can_at_inv AS "cancelledAt",
-        i.cre_at AS "createdAt",
-        i.sal_id AS "saleId",
-        i.ser_id AS "seriesId",
-        sal.sal_num AS "saleNumber",
-        ser.est_cod_ser AS "establishmentCode",
-        ser.emi_poi_cod_ser AS "emissionPointCode",
-        bra.nam_bra AS "branchName",
-        sal.tot_sal AS "total",
-        cus.nam_cus AS "customerName",
-        cus.idt_num AS "customerIdentificationNumber"
-      FROM invoices i
-      INNER JOIN invoice_series ser ON i.ser_id = ser.id
-      INNER JOIN sales sal ON i.sal_id = sal.id
-      INNER JOIN customers cus ON sal.cus_id = cus.id
-      INNER JOIN branches bra ON sal.bra_id = bra.id
-      WHERE ($1::uuid IS NULL OR ser.bra_id = $1)
-        AND ($2::varchar IS NULL OR i.sta_inv = $2)
-        AND ($3::varchar IS NULL OR i.inv_num ILIKE $3)
-        AND ($4::timestamp IS NULL OR i.cre_at >= $4)
-        AND ($5::timestamp IS NULL OR i.cre_at <= $5)
-      ORDER BY i.cre_at DESC
+        i."INV_NUM" AS "invoiceNumber",
+        i."AUT_NUM" AS "authorizationNumber",
+        i."ISS_DAT_INV" AS "issueDate",
+        i."STA_INV" AS "status",
+        i."CAN_AT_INV" AS "cancelledAt",
+        i."CRE_AT" AS "createdAt",
+        i."SAL_ID" AS "saleId",
+        i."SER_ID" AS "seriesId",
+        sal."SAL_NUM" AS "saleNumber",
+        ser."EST_COD_SER" AS "establishmentCode",
+        ser."EMI_POI_COD_SER" AS "emissionPointCode",
+        sal."TOT_SAL" AS "total",
+        cus."NAM_CUS" AS "customerName",
+        cus."CED_CUS" AS "customerCedula"
+      FROM "INVOICES" i
+      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
+      INNER JOIN "SALES" sal ON i."SAL_ID" = sal.id
+      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
+      WHERE ($1::uuid IS NULL OR ser."BRA_ID" = $1)
+        AND ($2::varchar IS NULL OR i."STA_INV" = $2)
+        AND ($3::varchar IS NULL OR i."INV_NUM" ILIKE $3)
+        AND ($4::timestamp IS NULL OR i."CRE_AT" >= $4)
+        AND ($5::timestamp IS NULL OR i."CRE_AT" <= $5)
+      ORDER BY i."CRE_AT" DESC
       LIMIT $6 OFFSET $7;
     `;
 
@@ -133,31 +131,66 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     const query = `
       SELECT
         i.id,
-        i.inv_num AS "invoiceNumber",
-        i.aut_num AS "authorizationNumber",
-        i.iss_dat_inv AS "issueDate",
-        i.sta_inv AS "status",
-        i.can_at_inv AS "cancelledAt",
-        i.cre_at AS "createdAt",
-        i.sal_id AS "saleId",
-        i.ser_id AS "seriesId",
-        sal.sal_num AS "saleNumber",
-        ser.est_cod_ser AS "establishmentCode",
-        ser.emi_poi_cod_ser AS "emissionPointCode",
-        bra.nam_bra AS "branchName",
-        sal.tot_sal AS "total",
-        cus.nam_cus AS "customerName",
-        cus.idt_num AS "customerIdentificationNumber"
-      FROM invoices i
-      INNER JOIN invoice_series ser ON i.ser_id = ser.id
-      INNER JOIN sales sal ON i.sal_id = sal.id
-      INNER JOIN customers cus ON sal.cus_id = cus.id
-      INNER JOIN branches bra ON sal.bra_id = bra.id
-      WHERE i.sal_id = $1
+        i."INV_NUM" AS "invoiceNumber",
+        i."AUT_NUM" AS "authorizationNumber",
+        i."ISS_DAT_INV" AS "issueDate",
+        i."STA_INV" AS "status",
+        i."CAN_AT_INV" AS "cancelledAt",
+        i."CRE_AT" AS "createdAt",
+        i."SAL_ID" AS "saleId",
+        i."SER_ID" AS "seriesId",
+        sal."SAL_NUM" AS "saleNumber",
+        ser."EST_COD_SER" AS "establishmentCode",
+        ser."EMI_POI_COD_SER" AS "emissionPointCode",
+        sal."TOT_SAL" AS "total",
+        cus."NAM_CUS" AS "customerName",
+        cus."CED_CUS" AS "customerCedula"
+      FROM "INVOICES" i
+      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
+      INNER JOIN "SALES" sal ON i."SAL_ID" = sal.id
+      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
+      WHERE i."SAL_ID" = $1
       LIMIT 1;
     `;
 
     const result = await this.pool.query<InvoiceListRow>(query, [saleId]);
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return {
+      ...result.rows[0],
+      total: Number(result.rows[0].total),
+    };
+  }
+
+  async getInvoiceById(id: string): Promise<InvoiceListItem | null> {
+    const query = `
+      SELECT
+        i.id,
+        i."INV_NUM" AS "invoiceNumber",
+        i."AUT_NUM" AS "authorizationNumber",
+        i."ISS_DAT_INV" AS "issueDate",
+        i."STA_INV" AS "status",
+        i."CAN_AT_INV" AS "cancelledAt",
+        i."CRE_AT" AS "createdAt",
+        i."SAL_ID" AS "saleId",
+        i."SER_ID" AS "seriesId",
+        sal."SAL_NUM" AS "saleNumber",
+        ser."EST_COD_SER" AS "establishmentCode",
+        ser."EMI_POI_COD_SER" AS "emissionPointCode",
+        sal."TOT_SAL" AS "total",
+        cus."NAM_CUS" AS "customerName",
+        cus."CED_CUS" AS "customerCedula"
+      FROM "INVOICES" i
+      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
+      INNER JOIN "SALES" sal ON i."SAL_ID" = sal.id
+      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
+      WHERE i.id = $1
+      LIMIT 1;
+    `;
+
+    const result = await this.pool.query<InvoiceListRow>(query, [id]);
     if (result.rows.length === 0) {
       return null;
     }

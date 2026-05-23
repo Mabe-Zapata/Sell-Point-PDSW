@@ -160,7 +160,7 @@ export class PdfService implements IPdfService {
       .font('Helvetica')
       .fontSize(9)
       .fillColor('#444444')
-      .text(`ID / Cédula: ${invoice.customerId ?? invoice.saleId ?? ''}`, this.ML, y + 30);
+      .text(`ID: ${invoice.customerId ?? invoice.saleId ?? ''}`, this.ML, y + 30);
 
     // Right column — thin box with totals preview
     const boxX = this.W - this.MR - 170;

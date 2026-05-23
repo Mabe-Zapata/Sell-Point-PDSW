@@ -30,10 +30,10 @@ export class SaleDetailTypeOrmEntity {
   product!: ProductTypeOrmEntity;
 
   @Column({ name: 'PRO_NAM_SAL', length: 255 })
-  productName!: string;
+  productNameSnapshot!: string;
 
   @Column({ name: 'PRO_COD_SAL', length: 50 })
-  productCode!: string;
+  productCodeSnapshot!: string;
 
   @Column({ name: 'QTY_SAL_DET', type: 'decimal', precision: 10, scale: 3 })
   quantity!: number;

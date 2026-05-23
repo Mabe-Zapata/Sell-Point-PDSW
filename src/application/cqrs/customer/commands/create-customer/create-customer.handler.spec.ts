@@ -42,20 +42,19 @@ describe('CreateCustomerHandler', () => {
   it('should check for duplicate and create customer', async () => {
     const mockCustomer = {
       id: 'cust-123',
-      identificationType: 'CEDULA',
-      identificationNumber: '0901234567',
+      cedula: '0901234567',
       names: 'John Doe',
       email: 'john@test.com',
       phone: '0991234567',
       address: 'Test address',
+      isActive: true,
     } as Customer;
 
     mockRepository.findByIdentificationNumber.mockResolvedValue(null);
     mockRepository.create.mockResolvedValue(mockCustomer);
 
     const dto: CreateCustomerDto = {
-      identificationType: 'CEDULA',
-      identificationNumber: '0901234567',
+      cedula: '0901234567',
       names: 'John Doe',
       email: 'john@test.com',
       phone: '0991234567',
@@ -68,7 +67,7 @@ describe('CreateCustomerHandler', () => {
     expect(mockRepository.findByIdentificationNumber).toHaveBeenCalledWith('0901234567');
     expect(mockRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        identificationNumber: '0901234567',
+        cedula: '0901234567',
         names: 'John Doe',
       }),
     );
@@ -76,12 +75,11 @@ describe('CreateCustomerHandler', () => {
   });
 
   it('should throw DuplicateCedulaException when customer exists', async () => {
-    const existingCustomer = { id: 'cust-existing' } as Customer;
+    const existingCustomer = { id: 'cust-existing', cedula: '0901234567' } as Customer;
     mockRepository.findByIdentificationNumber.mockResolvedValue(existingCustomer);
 
     const dto: CreateCustomerDto = {
-      identificationType: 'CEDULA',
-      identificationNumber: '0901234567',
+      cedula: '0901234567',
       names: 'John Doe',
     };
 

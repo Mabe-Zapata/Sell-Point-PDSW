@@ -31,7 +31,7 @@ describe('ListCustomersWithStockHandler', () => {
     mockQueryService.listCustomers.mockResolvedValue(mockResult);
 
     const pagination = { page: 1, limit: 20 };
-    const query = new ListCustomersWithStockQuery(pagination, 'john', 'CEDULA');
+    const query = new ListCustomersWithStockQuery(pagination, 'john', '9999999999999');
 
     const result = await handler.execute(query);
 
@@ -39,7 +39,7 @@ describe('ListCustomersWithStockHandler', () => {
       page: 1,
       limit: 20,
       q: 'john',
-      identificationType: 'CEDULA',
+      cedula: '9999999999999',
     });
     expect(result).toEqual(mockResult);
   });

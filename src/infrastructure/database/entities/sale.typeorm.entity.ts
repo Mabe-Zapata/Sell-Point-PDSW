@@ -9,7 +9,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { SaleStatusDb } from './enums/sale-status.db-enum';
-import { BranchTypeOrmEntity } from './branch.typeorm.entity';
 import { CustomerTypeOrmEntity } from './customer.typeorm.entity';
 import { UserTypeOrmEntity } from './user.typeorm.entity';
 import { TaxRateTypeOrmEntity } from './tax-rate.typeorm.entity';
@@ -21,10 +20,6 @@ export class SaleTypeOrmEntity {
 
   @Column({ name: 'BRA_ID', type: 'uuid' })
   branchId!: string;
-
-  @ManyToOne(() => BranchTypeOrmEntity)
-  @JoinColumn({ name: 'BRA_ID' })
-  branch!: BranchTypeOrmEntity;
 
   @Column({ name: 'CUS_ID', type: 'uuid' })
   customerId!: string;

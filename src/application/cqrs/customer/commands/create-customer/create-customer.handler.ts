@@ -17,20 +17,23 @@ export class CreateCustomerHandler implements ICommandHandler<CreateCustomerComm
   async execute(command: CreateCustomerCommand): Promise<Customer> {
     this.validator.validate(command.payload);
 
-    const existing = await this.customerRepository.findByIdentificationNumber(
-      command.payload.identificationNumber,
-    );
-    if (existing) {
-      throw new DuplicateCedulaException(command.payload.identificationNumber);
+    if (command.payload.cedula) {
+      const existing = await this.customerRepository.findByIdentificationNumber(
+        command.payload.cedula,
+      );
+      if (existing) {
+        throw new DuplicateCedulaException(command.payload.cedula);
+      }
     }
 
     const customer = new Customer({
-      identificationType: command.payload.identificationType,
-      identificationNumber: command.payload.identificationNumber,
+      cedula: command.payload.cedula,
       names: command.payload.names,
+      lastName: command.payload.lastName,
       email: command.payload.email,
       phone: command.payload.phone,
       address: command.payload.address,
+      isActive: true,
     });
 
     return this.customerRepository.create(customer);

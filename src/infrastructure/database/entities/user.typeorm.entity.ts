@@ -12,6 +12,15 @@ export class UserTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ name: 'FIR_NAM_USR', length: 100, nullable: true })
+  firstName?: string;
+
+  @Column({ name: 'LAS_NAM_USR', length: 100, nullable: true })
+  lastName?: string;
+
+  @Column({ name: 'CED_USR', length: 20, nullable: true })
+  cedula?: string;
+
   isActive?: boolean;
 
   @Column({ name: 'ROL_USR', length: 50, nullable: true })
@@ -40,7 +49,7 @@ export class UserTypeOrmEntity {
   @Column({ name: 'DEF_BRA_ID', type: 'uuid', nullable: true })
   defaultBranchId?: string;
 
-  @Column({ name: 'FAI_LOG_ATT', type: 'int', default: 0 })
+  @Column({ name: 'failed_attempts', type: 'int', default: 0 })
   failedLoginAttempts!: number;
 
   @CreateDateColumn({ name: 'CRE_AT' })

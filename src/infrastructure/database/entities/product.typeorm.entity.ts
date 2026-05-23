@@ -45,6 +45,9 @@ export class ProductTypeOrmEntity {
   @Column({ name: 'ACT_PRO', type: 'boolean', default: true })
   isActive!: boolean;
 
+  @Column({ name: 'CUR_STO_PRO', type: 'int', default: 0 })
+  currentStock!: number;
+
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;
 

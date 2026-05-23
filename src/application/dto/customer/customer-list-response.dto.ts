@@ -1,7 +1,7 @@
 export class CustomerListResponseDto {
   id: string;
-  identificationType: string;
-  identificationNumber: string;
+  // identificationType/identificationNumber replaced by cedula (simplify-schema-uta SDD)
+  cedula: string;
   names: string;
   email: string | null;
   phone: string | null;
@@ -10,8 +10,7 @@ export class CustomerListResponseDto {
 
   constructor(data: {
     id: string;
-    identificationType: string;
-    identificationNumber: string;
+    cedula: string;
     names: string;
     email: string | null;
     phone: string | null;
@@ -19,8 +18,7 @@ export class CustomerListResponseDto {
     createdAt: Date;
   }) {
     this.id = data.id;
-    this.identificationType = data.identificationType;
-    this.identificationNumber = data.identificationNumber;
+    this.cedula = data.cedula;
     this.names = data.names;
     this.email = data.email;
     this.phone = data.phone;
@@ -30,8 +28,7 @@ export class CustomerListResponseDto {
 
   static fromQueryResult(result: {
     id: string;
-    identificationType: string;
-    identificationNumber: string;
+    cedula: string;
     names: string;
     email: string | null;
     phone: string | null;
@@ -43,8 +40,7 @@ export class CustomerListResponseDto {
 
   static fromQueryResults(results: {
     id: string;
-    identificationType: string;
-    identificationNumber: string;
+    cedula: string;
     names: string;
     email: string | null;
     phone: string | null;

@@ -24,14 +24,14 @@ export class UpdateCustomerHandler implements ICommandHandler<UpdateCustomerComm
     }
 
     if (
-      validated.identificationNumber &&
-      validated.identificationNumber !== existingCustomer.identificationNumber
+      validated.cedula &&
+      validated.cedula !== existingCustomer.cedula
     ) {
       const customerWithCedula = await this.customerRepository.findByIdentificationNumber(
-        validated.identificationNumber,
+        validated.cedula,
       );
       if (customerWithCedula) {
-        throw new DuplicateCedulaException(validated.identificationNumber);
+        throw new DuplicateCedulaException(validated.cedula);
       }
     }
 
@@ -39,12 +39,13 @@ export class UpdateCustomerHandler implements ICommandHandler<UpdateCustomerComm
 
     const updatedCustomer = new Customer({
       id: existingCustomer.id,
-      identificationType: payload.identificationType ?? existingCustomer.identificationType,
-      identificationNumber: payload.identificationNumber ?? existingCustomer.identificationNumber,
+      cedula: payload.cedula ?? existingCustomer.cedula,
       names: payload.names ?? existingCustomer.names,
+      lastName: payload.lastName ?? existingCustomer.lastName,
       email: payload.email !== undefined ? payload.email : existingCustomer.email,
       phone: payload.phone !== undefined ? payload.phone : existingCustomer.phone,
       address: payload.address !== undefined ? payload.address : existingCustomer.address,
+      isActive: payload.isActive ?? existingCustomer.isActive,
       createdAt: existingCustomer.createdAt,
       updatedAt: new Date(),
     });

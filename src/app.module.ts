@@ -13,14 +13,11 @@ import { configuration } from './config/configuration';
 import { typeormConfig } from './config/typeorm.config';
 
 // Application - DI Tokens + CQRS Handlers (reducers)
-import {
-  CUSTOMER_REPOSITORY, PRODUCT_REPOSITORY, INVOICE_REPOSITORY,
-  INVOICE_ITEM_REPOSITORY, USER_REPOSITORY, DASHBOARD_REPOSITORY, TAX_CALCULATOR,
-} from './application/tokens';
+import { TAX_CALCULATOR } from './application/tokens';
 import {
   PRODUCT_QUERY_SERVICE, CUSTOMER_QUERY_SERVICE, INVOICE_QUERY_SERVICE,
   DASHBOARD_QUERY_SERVICE, SALE_QUERY_SERVICE, INVENTORY_QUERY_SERVICE,
-  STOCK_TRANSFER_QUERY_SERVICE, ERROR_LOG_QUERY_SERVICE
+  ERROR_LOG_QUERY_SERVICE
 } from './application/query-tokens';
 import { PDF_SERVICE } from './application/services/pdf-service.interface';
 import {
@@ -36,20 +33,6 @@ import {
   GetProductHandler, GetProductValidator,
   ListProductsHandler, ListProductsValidator,
   ListProductsWithStockHandler, ListProductsWithStockValidator,
-  CreateInvoiceHandler, CreateInvoiceValidator,
-  GetInvoiceHandler, GetInvoiceValidator,
-  ListInvoicesHandler, ListInvoicesValidator,
-  ListInvoicesWithStockHandler, ListInvoicesWithStockValidator,
-  GenerateInvoicePdfHandler, GenerateInvoicePdfValidator,
-  CreateBranchHandler, CreateBranchValidator,
-  UpdateBranchHandler, UpdateBranchValidator,
-  DeleteBranchHandler, DeleteBranchValidator,
-  GetBranchHandler, GetBranchValidator,
-  ListBranchesHandler, ListBranchesValidator,
-  CreateWarehouseHandler, CreateWarehouseValidator,
-  UpdateWarehouseHandler, UpdateWarehouseValidator,
-  GetWarehouseHandler, GetWarehouseValidator,
-  ListWarehousesHandler, ListWarehousesValidator,
   CreateCategoryHandler, CreateCategoryValidator,
   UpdateCategoryHandler, UpdateCategoryValidator,
   GetCategoryHandler, GetCategoryValidator,
@@ -68,15 +51,6 @@ import {
   ListSalesHandler, ListSalesValidator,
   GetStockLevelsHandler, GetStockLevelsValidator,
   GetMovementsHistoryHandler, GetMovementsHistoryValidator,
-  CreateTransferHandler, CreateTransferValidator,
-  ApproveTransferHandler, ApproveTransferValidator,
-  SendTransferHandler, SendTransferValidator,
-  ReceiveTransferHandler, ReceiveTransferValidator,
-  CancelTransferHandler, CancelTransferValidator,
-  GetTransferHandler, GetTransferValidator,
-  ListTransfersHandler, ListTransfersValidator,
-  CreatePaymentHandler, CreatePaymentValidator,
-  GetSalesHistoryHandler, GetSalesHistoryValidator,
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
   GetDashboardStatsHandler,
@@ -86,28 +60,26 @@ import {
 import { TaxCalculator } from './domain/services';
 import {
   CustomerRepository, ProductRepository, InvoiceRepository, InvoiceItemRepository,
-  DashboardRepository, UserRepository, BranchRepository, CategoryRepository,
-  WarehouseRepository, ErrorLogRepository, TaxRateRepository, InventoryRepository,
-  StockMovementRepository, StockTransferRepository, StockTransferDetailRepository,
-  SaleRepository, SaleDetailRepository, SalesHistoryRepository, PaymentRepository,
+  DashboardRepository, UserRepository, CategoryRepository,
+  ErrorLogRepository, TaxRateRepository,
+  StockMovementRepository, SaleRepository, SaleDetailRepository,
   InvoiceSeriesRepository,
 } from './infrastructure/repositories';
 import {
   DashboardQueryService, InvoiceQueryService, CustomerQueryService,
-  ProductQueryService, SaleQueryService, InventoryQueryService,
-  StockTransferQueryService, ErrorLogQueryService,
+  ProductQueryService, SaleQueryService,
+  ErrorLogQueryService,
 } from './infrastructure/queries';
 import { PdfService, AuthService } from './infrastructure/services';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import {
-  BranchTypeOrmEntity, CategoryTypeOrmEntity, CustomerTypeOrmEntity,
-  ErrorLogTypeOrmEntity, InventoryTypeOrmEntity, InvoiceTypeOrmEntity,
-  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity, PaymentTypeOrmEntity,
+  CategoryTypeOrmEntity, CustomerTypeOrmEntity,
+  ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
+  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
-  SaleDetailTypeOrmEntity, SalesHistoryTypeOrmEntity, StockMovementTypeOrmEntity,
-  StockTransferTypeOrmEntity, StockTransferDetailTypeOrmEntity,
+  SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
-  UserRoleTypeOrmEntity, WarehouseTypeOrmEntity,
+  UserRoleTypeOrmEntity,
 } from './infrastructure/database/entities';
 
 // Presentation
@@ -122,12 +94,6 @@ const CommandHandlers = [
   CreateProductHandler, CreateProductValidator,
   UpdateProductHandler, UpdateProductValidator,
   DeleteProductHandler, DeleteProductValidator,
-  CreateInvoiceHandler, CreateInvoiceValidator,
-  CreateBranchHandler, CreateBranchValidator,
-  UpdateBranchHandler, UpdateBranchValidator,
-  DeleteBranchHandler, DeleteBranchValidator,
-  CreateWarehouseHandler, CreateWarehouseValidator,
-  UpdateWarehouseHandler, UpdateWarehouseValidator,
   CreateCategoryHandler, CreateCategoryValidator,
   UpdateCategoryHandler, UpdateCategoryValidator,
   CreateTaxRateHandler, CreateTaxRateValidator,
@@ -138,12 +104,6 @@ const CommandHandlers = [
   UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
   ConfirmSaleHandler, ConfirmSaleValidator,
   CancelSaleHandler, CancelSaleValidator,
-  CreateTransferHandler, CreateTransferValidator,
-  ApproveTransferHandler, ApproveTransferValidator,
-  SendTransferHandler, SendTransferValidator,
-  ReceiveTransferHandler, ReceiveTransferValidator,
-  CancelTransferHandler, CancelTransferValidator,
-  CreatePaymentHandler, CreatePaymentValidator,
 ];
 
 const QueryHandlers = [
@@ -153,14 +113,6 @@ const QueryHandlers = [
   GetProductHandler, GetProductValidator,
   ListProductsHandler, ListProductsValidator,
   ListProductsWithStockHandler, ListProductsWithStockValidator,
-  GetInvoiceHandler, GetInvoiceValidator,
-  ListInvoicesHandler, ListInvoicesValidator,
-  ListInvoicesWithStockHandler, ListInvoicesWithStockValidator,
-  GenerateInvoicePdfHandler, GenerateInvoicePdfValidator,
-  GetBranchHandler, GetBranchValidator,
-  ListBranchesHandler, ListBranchesValidator,
-  GetWarehouseHandler, GetWarehouseValidator,
-  ListWarehousesHandler, ListWarehousesValidator,
   GetCategoryHandler, GetCategoryValidator,
   ListCategoriesHandler, ListCategoriesValidator,
   GetTaxRateHandler, GetTaxRateValidator,
@@ -169,9 +121,6 @@ const QueryHandlers = [
   ListSalesHandler, ListSalesValidator,
   GetStockLevelsHandler, GetStockLevelsValidator,
   GetMovementsHistoryHandler, GetMovementsHistoryValidator,
-  GetTransferHandler, GetTransferValidator,
-  ListTransfersHandler, ListTransfersValidator,
-  GetSalesHistoryHandler, GetSalesHistoryValidator,
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
   GetDashboardStatsHandler,
@@ -179,14 +128,13 @@ const QueryHandlers = [
 
 // All TypeORM entities
 const entities = [
-  BranchTypeOrmEntity, CategoryTypeOrmEntity, CustomerTypeOrmEntity,
-  ErrorLogTypeOrmEntity, InventoryTypeOrmEntity, InvoiceTypeOrmEntity,
-  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity, PaymentTypeOrmEntity,
+  CategoryTypeOrmEntity, CustomerTypeOrmEntity,
+  ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
+  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
-  SaleDetailTypeOrmEntity, SalesHistoryTypeOrmEntity, StockMovementTypeOrmEntity,
-  StockTransferTypeOrmEntity, StockTransferDetailTypeOrmEntity,
+  SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
-  UserRoleTypeOrmEntity, WarehouseTypeOrmEntity,
+  UserRoleTypeOrmEntity,
 ];
 
 @Module({
@@ -225,26 +173,19 @@ const entities = [
     // Domain Services
     { provide: TAX_CALCULATOR, useFactory: (c: ConfigService) => new TaxCalculator(c.get<number>('tax.percentage')!), inject: [ConfigService] },
     // Infrastructure - Repositories (token-mapped)
-    { provide: CUSTOMER_REPOSITORY, useClass: CustomerRepository },
-    { provide: PRODUCT_REPOSITORY, useClass: ProductRepository },
-    { provide: INVOICE_REPOSITORY, useClass: InvoiceRepository },
-    { provide: INVOICE_ITEM_REPOSITORY, useClass: InvoiceItemRepository },
-    { provide: DASHBOARD_REPOSITORY, useClass: DashboardRepository },
-    { provide: USER_REPOSITORY, useClass: UserRepository },
+    { provide: 'INVOICE_REPOSITORY', useClass: InvoiceRepository },
+    { provide: 'INVOICE_ITEM_REPOSITORY', useClass: InvoiceItemRepository },
+    { provide: 'CUSTOMER_REPOSITORY', useClass: CustomerRepository },
+    { provide: 'PRODUCT_REPOSITORY', useClass: ProductRepository },
+    { provide: 'DASHBOARD_REPOSITORY', useClass: DashboardRepository },
+    { provide: 'USER_REPOSITORY', useClass: UserRepository },
     UserRepository, // AuthService needs direct injection
-    { provide: 'BRANCH_REPOSITORY', useClass: BranchRepository },
     { provide: 'CATEGORY_REPOSITORY', useClass: CategoryRepository },
-    { provide: 'WAREHOUSE_REPOSITORY', useClass: WarehouseRepository },
     { provide: 'ERROR_LOG_REPOSITORY', useClass: ErrorLogRepository },
     { provide: 'TAX_RATE_REPOSITORY', useClass: TaxRateRepository },
-    { provide: 'INVENTORY_REPOSITORY', useClass: InventoryRepository },
     { provide: 'STOCK_MOVEMENT_REPOSITORY', useClass: StockMovementRepository },
-    { provide: 'STOCK_TRANSFER_REPOSITORY', useClass: StockTransferRepository },
-    { provide: 'STOCK_TRANSFER_DETAIL_REPOSITORY', useClass: StockTransferDetailRepository },
     { provide: 'SALE_REPOSITORY', useClass: SaleRepository },
     { provide: 'SALE_DETAIL_REPOSITORY', useClass: SaleDetailRepository },
-    { provide: 'SALES_HISTORY_REPOSITORY', useClass: SalesHistoryRepository },
-    { provide: 'PAYMENT_REPOSITORY', useClass: PaymentRepository },
     { provide: 'INVOICE_SERIES_REPOSITORY', useClass: InvoiceSeriesRepository },
     // Infrastructure - pg Query Services (token-mapped)
     { provide: PRODUCT_QUERY_SERVICE, useClass: ProductQueryService },
@@ -252,13 +193,11 @@ const entities = [
     { provide: INVOICE_QUERY_SERVICE, useClass: InvoiceQueryService },
     { provide: DASHBOARD_QUERY_SERVICE, useClass: DashboardQueryService },
     { provide: SALE_QUERY_SERVICE, useClass: SaleQueryService },
-    { provide: INVENTORY_QUERY_SERVICE, useClass: InventoryQueryService },
-    { provide: STOCK_TRANSFER_QUERY_SERVICE, useClass: StockTransferQueryService },
     { provide: ERROR_LOG_QUERY_SERVICE, useClass: ErrorLogQueryService },
     // Infrastructure - Services
     { provide: PDF_SERVICE, useClass: PdfService },
     AuthService,
-    
+
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
     ...CommandHandlers,

@@ -22,7 +22,7 @@ export class DeleteCustomerHandler implements ICommandHandler<DeleteCustomerComm
     }
 
     // R9: CONSUMIDOR_FINAL delete protection
-    if (customer.identificationNumber === '9999999999999') {
+    if (customer.cedula === '9999999999999') {
       throw new BusinessRuleException('Cannot delete CONSUMIDOR_FINAL customer');
     }
 

@@ -1,71 +1,47 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  Index,
-  ManyToOne,
-  JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { InvoiceStatusDb } from './enums/invoice-status.db-enum';
-import { SaleTypeOrmEntity } from './sale.typeorm.entity';
-import { InvoiceSeriesTypeOrmEntity } from './invoice-series.typeorm.entity';
+import { InvoiceItemTypeOrmEntity } from './invoice-item.typeorm.entity';
 
 @Entity('INVOICES')
 export class InvoiceTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  // Legacy compatibility fields used by older seed/application code
-  customerId?: string;
-
-  invoiceDate?: Date;
-
-  subtotal?: number;
-
-  iva?: number;
-
-  total?: number;
-
-  items?: any[];
-
-  @Column({ name: 'SAL_ID', type: 'uuid', unique: true })
+  @Column({ name: 'SAL_ID', type: 'uuid' })
   saleId!: string;
-
-  @ManyToOne(() => SaleTypeOrmEntity)
-  @JoinColumn({ name: 'SAL_ID' })
-  sale!: SaleTypeOrmEntity;
 
   @Column({ name: 'SER_ID', type: 'uuid' })
   seriesId!: string;
 
-  @ManyToOne(() => InvoiceSeriesTypeOrmEntity)
-  @JoinColumn({ name: 'SER_ID' })
-  series!: InvoiceSeriesTypeOrmEntity;
-
-  @Column({ name: 'INV_NUM', length: 20 })
+  @Column({ name: 'INV_NUM', length: 50, unique: true })
   invoiceNumber!: string;
 
-  @Column({ name: 'AUT_NUM', length: 100 })
-  authorizationNumber!: string;
+  @Column({ name: 'AUTH_NUM', length: 100, nullable: true })
+  authorizationNumber?: string;
 
-  @Column({ name: 'ISS_DAT_INV', type: 'timestamp' })
+  @Column({ name: 'ISS_DAT', type: 'timestamp' })
   issueDate!: Date;
 
-  @Index('IDX_INV_STA')
   @Column({
     name: 'STA_INV',
     type: 'enum',
     enum: InvoiceStatusDb,
-    default: InvoiceStatusDb.ISSUED,
   })
   status!: InvoiceStatusDb;
 
-  @Column({ name: 'CAN_AT_INV', type: 'timestamp', nullable: true })
+  @Column({ name: 'CAN_DAT', type: 'timestamp', nullable: true })
   cancelledAt?: Date;
+
+  @OneToMany(() => InvoiceItemTypeOrmEntity, (item) => item.invoice)
+  items!: InvoiceItemTypeOrmEntity[];
 
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;
-
-  updatedAt?: Date;
 }

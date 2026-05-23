@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CustomerTypeOrmEntity } from '../database/entities/customer.typeorm.entity';
 import { Customer } from '../../domain/entities/customer.entity';
-import { IdentificationTypeMapper } from '../database/entities/enums/identification-type.db-enum';
 import { ICustomerRepository, CustomerFilters } from '../../domain/repositories/customer.repository.interface';
 import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
 
@@ -19,12 +18,12 @@ export class CustomerRepository implements ICustomerRepository {
   private mapToDomain(entity: CustomerTypeOrmEntity): Customer {
     return new Customer({
       id: entity.id,
-      identificationType: IdentificationTypeMapper.toDomain(entity.identificationType),
-      identificationNumber: entity.identificationNumber,
       names: entity.names,
+      lastName: entity.lastName,
       email: entity.email,
       phone: entity.phone,
       address: entity.address,
+      isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -32,12 +31,12 @@ export class CustomerRepository implements ICustomerRepository {
 
   private mapToEntity(customer: Customer): Partial<CustomerTypeOrmEntity> {
     return {
-      identificationType: IdentificationTypeMapper.toDb(customer.identificationType),
-      identificationNumber: customer.identificationNumber,
       names: customer.names,
+      lastName: customer.lastName,
       email: customer.email,
       phone: customer.phone,
       address: customer.address,
+      isActive: customer.isActive,
     };
   }
 
@@ -46,8 +45,8 @@ export class CustomerRepository implements ICustomerRepository {
     return entity ? this.mapToDomain(entity) : null;
   }
 
-  async findByIdentificationNumber(identificationNumber: string): Promise<Customer | null> {
-    const entity = await this.repo.findOne({ where: { identificationNumber } });
+  async findByIdentificationNumber(cedula: string): Promise<Customer | null> {
+    const entity = await this.repo.findOne({ where: { cedula } });
     return entity ? this.mapToDomain(entity) : null;
   }
 
@@ -61,7 +60,7 @@ export class CustomerRepository implements ICustomerRepository {
     const queryBuilder = this.repo.createQueryBuilder('customer');
 
     if (q) {
-      queryBuilder.where('customer.names ILIKE :q OR customer.identificationNumber ILIKE :q', { q: `%${q}%` });
+      queryBuilder.where('customer.names ILIKE :q OR customer.cedula ILIKE :q', { q: `%${q}%` });
     }
 
     const total = await queryBuilder.getCount();

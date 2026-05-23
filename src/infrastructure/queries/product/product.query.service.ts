@@ -50,32 +50,30 @@ export class ProductQueryService implements IProductQueryService {
 
     const countQuery = `
       SELECT COUNT(*)::integer AS total
-      FROM products p
-      LEFT JOIN inventories i ON i.pro_id = p.id
-      WHERE ($1::varchar IS NULL OR p.nam_pro ILIKE $1 OR p.cod_pro ILIKE $1)
-        AND ($2::uuid IS NULL OR p.cat_id = $2)
-        AND ($3::boolean IS NULL OR p.act_pro = $3);
+      FROM "PRODUCTS" p
+      LEFT JOIN "INVENTORIES" i ON i."PRO_ID" = p.id
+      WHERE ($1::varchar IS NULL OR p."NAM_PRO" ILIKE $1 OR p."COD_PRO" ILIKE $1)
+        AND ($2::uuid IS NULL OR p."CAT_ID" = $2)
+        AND ($3::boolean IS NULL OR p."ACT_PRO" = $3);
     `;
 
     const listQuery = `
       SELECT
         p.id,
-        p.cod_pro AS "code",
-        p.nam_pro AS "name",
-        p.sal_pri_pro AS "salePrice",
-        p.cos_pri_pro AS "costPrice",
-        COALESCE(SUM(i.cur_sto), 0) AS "currentStock",
-        p.act_pro AS "isActive",
-        p.cat_id AS "categoryId",
-        c.nam_cat AS "categoryName"
-      FROM products p
-      LEFT JOIN categories c ON p.cat_id = c.id
-      LEFT JOIN inventories i ON i.pro_id = p.id
-      WHERE ($1::varchar IS NULL OR p.nam_pro ILIKE $1 OR p.cod_pro ILIKE $1)
-        AND ($2::uuid IS NULL OR p.cat_id = $2)
-        AND ($3::boolean IS NULL OR p.act_pro = $3)
-      GROUP BY p.id, p.cod_pro, p.nam_pro, p.sal_pri_pro, p.cos_pri_pro, p.act_pro, p.cat_id, c.nam_cat, p.cre_at
-      ORDER BY p.cre_at DESC
+        p."COD_PRO" AS "code",
+        p."NAM_PRO" AS "name",
+        p."SAL_PRI_PRO" AS "salePrice",
+        p."COS_PRI_PRO" AS "costPrice",
+        p."CUR_STO_PRO" AS "currentStock",
+        p."ACT_PRO" AS "isActive",
+        p."CAT_ID" AS "categoryId",
+        c."NAM_CAT" AS "categoryName"
+      FROM "PRODUCTS" p
+      LEFT JOIN "CATEGORIES" c ON p."CAT_ID" = c.id
+      WHERE ($1::varchar IS NULL OR p."NAM_PRO" ILIKE $1 OR p."COD_PRO" ILIKE $1)
+        AND ($2::uuid IS NULL OR p."CAT_ID" = $2)
+        AND ($3::boolean IS NULL OR p."ACT_PRO" = $3)
+      ORDER BY p."CRE_AT" DESC
       LIMIT $4 OFFSET $5;
     `;
 
@@ -103,22 +101,22 @@ export class ProductQueryService implements IProductQueryService {
   }
 
   async getProductWithStock(id: string): Promise<(ProductListItem & { warehouseStock: { warehouseId: string; warehouseName: string; currentStock: number }[] }) | null> {
+    // Note: warehouse stock tracking removed (simplify-schema-uta SDD)
+    // currentStock now lives directly on PRODUCTS.CUR_STO_PRO
     const productQuery = `
       SELECT
         p.id,
-        p.cod_pro AS "code",
-        p.nam_pro AS "name",
-        p.sal_pri_pro AS "salePrice",
-        p.cos_pri_pro AS "costPrice",
-        COALESCE(SUM(i.cur_sto), 0) AS "currentStock",
-        p.cat_id AS "categoryId",
-        c.nam_cat AS "categoryName",
-        p.act_pro AS "isActive"
-      FROM products p
-      LEFT JOIN categories c ON p.cat_id = c.id
-      LEFT JOIN inventories i ON i.pro_id = p.id
-      WHERE p.id = $1
-      GROUP BY p.id, p.cod_pro, p.nam_pro, p.sal_pri_pro, p.cos_pri_pro, p.cat_id, c.nam_cat, p.act_pro;
+        p."COD_PRO" AS "code",
+        p."NAM_PRO" AS "name",
+        p."SAL_PRI_PRO" AS "salePrice",
+        p."COS_PRI_PRO" AS "costPrice",
+        p."CUR_STO_PRO" AS "currentStock",
+        p."CAT_ID" AS "categoryId",
+        c."NAM_CAT" AS "categoryName",
+        p."ACT_PRO" AS "isActive"
+      FROM "PRODUCTS" p
+      LEFT JOIN "CATEGORIES" c ON p."CAT_ID" = c.id
+      WHERE p.id = $1;
     `;
 
     const stockQuery = `
@@ -137,7 +135,6 @@ export class ProductQueryService implements IProductQueryService {
       return null;
     }
 
-    const stockResult = await this.pool.query<ProductWarehouseStockRow>(stockQuery, [id]);
     const row = productResult.rows[0];
 
     return {
@@ -150,11 +147,7 @@ export class ProductQueryService implements IProductQueryService {
       categoryId: row.categoryId,
       categoryName: row.categoryName,
       isActive: row.isActive,
-      warehouseStock: stockResult.rows.map((stock) => ({
-        warehouseId: stock.warehouseId,
-        warehouseName: stock.warehouseName,
-        currentStock: Number(stock.currentStock),
-      })),
+      warehouseStock: [], // Warehouse tracking removed (simplify-schema-uta SDD)
     };
   }
 }

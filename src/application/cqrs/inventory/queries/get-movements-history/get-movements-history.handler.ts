@@ -17,7 +17,6 @@ export class GetMovementsHistoryHandler implements IQueryHandler<GetMovementsHis
   async execute(query: GetMovementsHistoryQuery): Promise<PaginatedResult<StockMovement>> {
     const validPagination = this.validator.validate(query.pagination);
     return this.stockMovementRepository.findAll(validPagination, {
-      warehouseId: query.warehouseId,
       productId: query.productId,
       type: query.type,
       userId: query.userId,

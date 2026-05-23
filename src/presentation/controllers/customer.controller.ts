@@ -90,8 +90,8 @@ export class CustomerController {
   })
   @ApiQuery({ name: 'page', description: 'Page number (default: 1)', required: false, type: Number })
   @ApiQuery({ name: 'limit', description: 'Number of items per page (default: 20)', required: false, type: Number })
-  @ApiQuery({ name: 'q', description: 'Search query (searches in names, identificationNumber)', required: false, type: String })
-  @ApiQuery({ name: 'identificationType', description: 'Filter by identification type', required: false, type: String })
+  @ApiQuery({ name: 'q', description: 'Search query (searches in names, cedula)', required: false, type: String })
+  @ApiQuery({ name: 'cedula', description: 'Filter by cedula', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'List of customers retrieved successfully',
@@ -100,7 +100,7 @@ export class CustomerController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') searchQuery?: string,
-    @Query('identificationType') identificationType?: string,
+    @Query('cedula') cedula?: string,
   ): Promise<{
     data: CustomerListResponseDto[];
     total: number;
@@ -113,7 +113,8 @@ export class CustomerController {
     };
 
     const result = await this.queryBus.execute(
-      new ListCustomersWithStockQuery(pagination, searchQuery, identificationType),
+      // identificationType replaced by cedula (simplify-schema-uta SDD)
+      new ListCustomersWithStockQuery(pagination, searchQuery, cedula),
     );
 
     return {

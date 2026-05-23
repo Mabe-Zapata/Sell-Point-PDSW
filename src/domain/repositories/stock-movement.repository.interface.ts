@@ -2,7 +2,6 @@ import { StockMovement } from '../entities';
 import { PaginationParams, PaginatedResult } from './pagination.types';
 
 export interface StockMovementFilters {
-  warehouseId?: string;
   productId?: string;
   type?: string;
   userId?: string;
