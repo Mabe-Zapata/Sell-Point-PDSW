@@ -5,6 +5,7 @@ import { CreateWarehouseValidator } from './create-warehouse.validator';
 import { WAREHOUSE_REPOSITORY } from '../../../../tokens';
 import type { IWarehouseRepository } from '../../../../../domain/repositories';
 import { Warehouse } from '../../../../../domain/entities';
+import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
 @CommandHandler(CreateWarehouseCommand)
 export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCommand> {
@@ -15,6 +16,14 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
 
   async execute(command: CreateWarehouseCommand): Promise<Warehouse> {
     this.validator.validate(command.payload);
+
+    // R7: Only ONE main warehouse per branch
+    if (command.payload.isMain === true) {
+      const existingMainWarehouse = await this.warehouseRepository.findMainByBranchId(command.payload.branchId);
+      if (existingMainWarehouse) {
+        throw new BusinessRuleException('Branch already has a main warehouse');
+      }
+    }
 
     const warehouse = new Warehouse({
       branchId: command.payload.branchId,

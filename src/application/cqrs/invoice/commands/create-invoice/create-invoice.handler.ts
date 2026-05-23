@@ -3,8 +3,8 @@ import { Inject } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import { CreateInvoiceCommand } from './create-invoice.command';
 import { CreateInvoiceValidator } from './create-invoice.validator';
-import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY, PRODUCT_REPOSITORY, TAX_CALCULATOR } from '../../../../tokens';
-import type { IInvoiceRepository, IInvoiceItemRepository, IProductRepository } from '../../../../../domain/repositories';
+import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY, PRODUCT_REPOSITORY, TAX_CALCULATOR, INVOICE_SERIES_REPOSITORY, SALE_REPOSITORY } from '../../../../tokens';
+import type { IInvoiceRepository, IInvoiceItemRepository, IProductRepository, IInvoiceSeriesRepository, ISaleRepository } from '../../../../../domain/repositories';
 import { TaxCalculator } from '../../../../../domain/services/tax-calculator.service';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { Invoice } from '../../../../../domain/entities/invoice.entity';
@@ -20,10 +20,23 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
     @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
     @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
     @Inject(TAX_CALCULATOR) private readonly taxCalculator: TaxCalculator,
+    @Inject(INVOICE_SERIES_REPOSITORY) private readonly invoiceSeriesRepository: IInvoiceSeriesRepository,
+    @Inject(SALE_REPOSITORY) private readonly saleRepository: ISaleRepository,
   ) {}
 
   async execute(command: CreateInvoiceCommand): Promise<Invoice> {
     const validated = this.validator.validate(command.payload);
+
+    // R28: No active invoice series check - verify branch has an active invoice series
+    const sale = await this.saleRepository.findById(validated.saleId);
+    if (!sale) {
+      throw new EntityNotFoundException('Sale', validated.saleId);
+    }
+
+    const activeSeriesForBranch = await this.invoiceSeriesRepository.findActiveByBranchId(sale.branchId);
+    if (!activeSeriesForBranch) {
+      throw new BadRequestException('No active invoice series for this branch');
+    }
 
     const productMap = new Map<string, Product>();
     for (const item of validated.items) {

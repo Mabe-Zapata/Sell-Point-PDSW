@@ -4,7 +4,8 @@ import { UpdateSaleDetailQuantityCommand } from './update-sale-detail-quantity.c
 import { UpdateSaleDetailQuantityValidator } from './update-sale-detail-quantity.validator';
 import { SALE_REPOSITORY, SALE_DETAIL_REPOSITORY } from '../../../../tokens';
 import type { ISaleRepository, ISaleDetailRepository } from '../../../../../domain/repositories';
-import { SaleDetail } from '../../../../../domain/entities';
+import { SaleDetail, SaleStatus } from '../../../../../domain/entities';
+import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
 @CommandHandler(UpdateSaleDetailQuantityCommand)
 export class UpdateSaleDetailQuantityHandler implements ICommandHandler<UpdateSaleDetailQuantityCommand> {
@@ -20,6 +21,11 @@ export class UpdateSaleDetailQuantityHandler implements ICommandHandler<UpdateSa
     const sale = await this.saleRepository.findById(command.saleId);
     if (!sale) {
       throw new Error(`Sale with ID '${command.saleId}' not found`);
+    }
+
+    // R25: Sale modification before confirmation only
+    if (sale.status !== SaleStatus.DRAFT) {
+      throw new BusinessRuleException('Sale cannot be modified after confirmation');
     }
 
     const saleDetail = await this.saleDetailRepository.findById(command.payload.saleDetailId);

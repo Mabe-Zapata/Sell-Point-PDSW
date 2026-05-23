@@ -11,14 +11,14 @@ export interface JwtConfig {
 
 export const configuration = () => ({
   database: {
-    host: process.env.DATABASE_HOST || 'localhost',
-    port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-    username: process.env.DATABASE_USERNAME || 'root',
+    host: process.env.DATABASE_HOST || process.env.POSTGRES_HOST || 'localhost',
+    port: parseInt(process.env.DATABASE_PORT || process.env.POSTGRES_PORT || '5432', 10),
+    username: process.env.DATABASE_USERNAME || process.env.POSTGRES_USER || 'sellpoint',
     password:
       process.env.DATABASE_PASSWORD !== undefined
         ? process.env.DATABASE_PASSWORD
-        : 'root',
-    name: process.env.DATABASE_NAME || 'sellpoint',
+        : process.env.POSTGRES_PASSWORD || 'sellpoint',
+    name: process.env.DATABASE_NAME || process.env.POSTGRES_DB || 'sellpoint',
   },
   tax: {
     percentage: parseFloat(process.env.IVA_PERCENTAGE || '15'),

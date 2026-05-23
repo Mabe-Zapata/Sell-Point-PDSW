@@ -4,7 +4,8 @@ import { AddSaleDetailCommand } from './add-sale-detail.command';
 import { AddSaleDetailValidator } from './add-sale-detail.validator';
 import { SALE_REPOSITORY, SALE_DETAIL_REPOSITORY } from '../../../../tokens';
 import type { ISaleRepository, ISaleDetailRepository } from '../../../../../domain/repositories';
-import { SaleDetail } from '../../../../../domain/entities';
+import { SaleDetail, SaleStatus } from '../../../../../domain/entities';
+import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
 @CommandHandler(AddSaleDetailCommand)
 export class AddSaleDetailHandler implements ICommandHandler<AddSaleDetailCommand> {
@@ -20,6 +21,24 @@ export class AddSaleDetailHandler implements ICommandHandler<AddSaleDetailComman
     const sale = await this.saleRepository.findById(command.payload.saleId);
     if (!sale) {
       throw new Error(`Sale with ID '${command.payload.saleId}' not found`);
+    }
+
+    // R25: Sale modification before confirmation only
+    if (sale.status !== SaleStatus.DRAFT) {
+      throw new BusinessRuleException('Sale cannot be modified after confirmation');
+    }
+
+    // R24: Check if product already exists in sale_details
+    const existingDetails = await this.saleDetailRepository.findBySaleId(command.payload.saleId);
+    const existingDetail = existingDetails.find(d => d.productId === command.payload.productId);
+
+    if (existingDetail) {
+      // Increment quantity instead of creating new row
+      const updatedDetail = new SaleDetail({
+        ...existingDetail,
+        quantity: existingDetail.quantity + command.payload.quantity,
+      });
+      return this.saleDetailRepository.update(updatedDetail);
     }
 
     const saleDetail = new SaleDetail({

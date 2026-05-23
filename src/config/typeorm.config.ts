@@ -16,8 +16,8 @@ export const typeormConfig: TypeOrmModuleOptions = {
   database: config.database.name,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../infrastructure/database/migrations/*{.ts,.js}'],
-  synchronize: false,
-  logging: false,
+  synchronize: true,
+  logging: true,
 };
 
 export const dataSource = new DataSource({
@@ -29,6 +29,6 @@ export const dataSource = new DataSource({
   database: config.database.name,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../infrastructure/database/migrations/*{.ts,.js}'],
-  synchronize: false,
-  logging: false,
+  synchronize: true,
+  logging: true,
 });

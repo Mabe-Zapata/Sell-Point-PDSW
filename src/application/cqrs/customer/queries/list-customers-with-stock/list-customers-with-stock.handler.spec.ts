@@ -1,0 +1,62 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ListCustomersWithStockHandler } from './list-customers-with-stock.handler';
+import { ListCustomersWithStockValidator } from './list-customers-with-stock.validator';
+import { CUSTOMER_QUERY_SERVICE } from '../../../../query-tokens';
+import type { ICustomerQueryService } from '../../../../../domain/query-services/customer.query-service.interface';
+import { ListCustomersWithStockQuery } from './list-customers-with-stock.query';
+
+describe('ListCustomersWithStockHandler', () => {
+  let handler: ListCustomersWithStockHandler;
+  let mockQueryService: jest.Mocked<ICustomerQueryService>;
+
+  beforeEach(async () => {
+    mockQueryService = {
+      listCustomers: jest.fn(),
+      getCustomerByIdentification: jest.fn(),
+    } as any;
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ListCustomersWithStockHandler,
+        ListCustomersWithStockValidator,
+        { provide: CUSTOMER_QUERY_SERVICE, useValue: mockQueryService },
+      ],
+    }).compile();
+
+    handler = module.get<ListCustomersWithStockHandler>(ListCustomersWithStockHandler);
+  });
+
+  it('should call queryService.listCustomers with correct params', async () => {
+    const mockResult = { data: [], total: 0, page: 1, limit: 20 };
+    mockQueryService.listCustomers.mockResolvedValue(mockResult);
+
+    const pagination = { page: 1, limit: 20 };
+    const query = new ListCustomersWithStockQuery(pagination, 'john', 'CEDULA');
+
+    const result = await handler.execute(query);
+
+    expect(mockQueryService.listCustomers).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      q: 'john',
+      identificationType: 'CEDULA',
+    });
+    expect(result).toEqual(mockResult);
+  });
+
+  it('should use default pagination when not provided', async () => {
+    const mockResult = { data: [], total: 0, page: 1, limit: 20 };
+    mockQueryService.listCustomers.mockResolvedValue(mockResult);
+
+    const query = new ListCustomersWithStockQuery();
+
+    await handler.execute(query);
+
+    expect(mockQueryService.listCustomers).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      q: undefined,
+      identificationType: undefined,
+    });
+  });
+});

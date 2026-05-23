@@ -4,6 +4,8 @@ import { RemoveSaleDetailCommand } from './remove-sale-detail.command';
 import { RemoveSaleDetailValidator } from './remove-sale-detail.validator';
 import { SALE_REPOSITORY, SALE_DETAIL_REPOSITORY } from '../../../../tokens';
 import type { ISaleRepository, ISaleDetailRepository } from '../../../../../domain/repositories';
+import { SaleStatus } from '../../../../../domain/entities';
+import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
 @CommandHandler(RemoveSaleDetailCommand)
 export class RemoveSaleDetailHandler implements ICommandHandler<RemoveSaleDetailCommand> {
@@ -19,6 +21,11 @@ export class RemoveSaleDetailHandler implements ICommandHandler<RemoveSaleDetail
     const sale = await this.saleRepository.findById(command.saleId);
     if (!sale) {
       throw new Error(`Sale with ID '${command.saleId}' not found`);
+    }
+
+    // R25: Sale modification before confirmation only
+    if (sale.status !== SaleStatus.DRAFT) {
+      throw new BusinessRuleException('Sale cannot be modified after confirmation');
     }
 
     const saleDetail = await this.saleDetailRepository.findById(command.saleDetailId);

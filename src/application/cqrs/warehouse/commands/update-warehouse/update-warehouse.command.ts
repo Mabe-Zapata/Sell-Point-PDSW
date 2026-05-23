@@ -1,5 +1,6 @@
 export interface UpdateWarehousePayload {
   name?: string;
+  isMain?: boolean;
   isActive?: boolean;
 }
 

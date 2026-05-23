@@ -114,9 +114,6 @@ import {
 import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 
-// Use Cases
-import { GetDashboardStatsUseCase } from './application/use-cases/dashboard/get-dashboard-stats.use-case';
-
 // CQRS arrays
 const CommandHandlers = [
   CreateCustomerHandler, CreateCustomerValidator,
@@ -234,6 +231,7 @@ const entities = [
     { provide: INVOICE_ITEM_REPOSITORY, useClass: InvoiceItemRepository },
     { provide: DASHBOARD_REPOSITORY, useClass: DashboardRepository },
     { provide: USER_REPOSITORY, useClass: UserRepository },
+    UserRepository, // AuthService needs direct injection
     { provide: 'BRANCH_REPOSITORY', useClass: BranchRepository },
     { provide: 'CATEGORY_REPOSITORY', useClass: CategoryRepository },
     { provide: 'WAREHOUSE_REPOSITORY', useClass: WarehouseRepository },
@@ -260,7 +258,7 @@ const entities = [
     // Infrastructure - Services
     { provide: PDF_SERVICE, useClass: PdfService },
     AuthService,
-    GetDashboardStatsUseCase,
+    
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
     ...CommandHandlers,
