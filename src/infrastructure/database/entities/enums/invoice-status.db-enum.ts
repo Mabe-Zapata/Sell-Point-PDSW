@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
 export enum InvoiceStatusDb {
   ISSUED = 'ISSUED',
   CANCELLED = 'CANCELLED',
@@ -7,25 +6,11 @@ export enum InvoiceStatusDb {
 import { InvoiceStatus } from '../../../../domain/entities/enums/invoice-status.enum';
 
 export class InvoiceStatusMapper {
-  static toDomain(db: InvoiceStatusDb): InvoiceStatus {
-    switch (db) {
-      case InvoiceStatusDb.ISSUED:
-        return InvoiceStatus.ISSUED;
-      case InvoiceStatusDb.CANCELLED:
-        return InvoiceStatus.CANCELLED;
-      default:
-        throw new Error(`Unknown InvoiceStatusDb: ${db}`);
-    }
+  static toDomain(value: string | InvoiceStatusDb): InvoiceStatus {
+    return InvoiceStatus[value as keyof typeof InvoiceStatus];
   }
 
-  static toDb(domain: InvoiceStatus): InvoiceStatusDb {
-    switch (domain) {
-      case InvoiceStatus.ISSUED:
-        return InvoiceStatusDb.ISSUED;
-      case InvoiceStatus.CANCELLED:
-        return InvoiceStatusDb.CANCELLED;
-      default:
-        throw new Error(`Unknown InvoiceStatus: ${domain}`);
-    }
+  static toDb(domain: InvoiceStatus): string {
+    return domain;
   }
 }

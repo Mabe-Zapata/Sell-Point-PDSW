@@ -28,7 +28,7 @@ export class CreateCustomerHandler implements ICommandHandler<CreateCustomerComm
 
     const customer = new Customer({
       cedula: command.payload.cedula,
-      names: command.payload.names,
+      firstName: command.payload.firstName,
       lastName: command.payload.lastName,
       email: command.payload.email,
       phone: command.payload.phone,

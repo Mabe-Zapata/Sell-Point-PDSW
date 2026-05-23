@@ -54,7 +54,7 @@ export class SaleQueryService implements ISaleQueryService {
         sal."CRE_AT" AS "createdAt",
         sal."BRA_ID" AS "branchId",
         sal."CUS_ID" AS "customerId",
-        cus."NAM_CUS" AS "customerName",
+        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
         usr."USR_USR" AS "cashierUsername"
       FROM "SALES" sal
       INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
@@ -111,7 +111,7 @@ export class SaleQueryService implements ISaleQueryService {
         sal."CUS_ID" AS "customerId",
         sal."CAS_USR_ID" AS "cashierUserId",
         sal."TAX_RAT_ID" AS "taxRateId",
-        cus."NAM_CUS" AS "customerName",
+        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
         cus."CED_CUS" AS "customerCedula",
         usr."USR_USR" AS "cashierUsername"
       FROM "SALES" sal

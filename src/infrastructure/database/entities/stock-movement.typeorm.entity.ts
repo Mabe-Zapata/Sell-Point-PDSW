@@ -13,8 +13,8 @@ import { UserTypeOrmEntity } from './user.typeorm.entity';
 
 @Entity('STOCK_MOVEMENTS')
 export class StockMovementTypeOrmEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column({ name: 'PRO_ID', type: 'uuid' })
   productId!: string;
@@ -25,10 +25,10 @@ export class StockMovementTypeOrmEntity {
 
   @Column({
     name: 'TYP_MOV',
-    type: 'enum',
-    enum: StockMovementTypeDb,
+    type: 'varchar',
+    length: 30,
   })
-  type!: StockMovementTypeDb;
+  type!: string;
 
   @Column({ name: 'QTY_MOV', type: 'decimal', precision: 10, scale: 3 })
   quantity!: number;

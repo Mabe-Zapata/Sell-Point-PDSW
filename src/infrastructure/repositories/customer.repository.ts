@@ -17,8 +17,9 @@ export class CustomerRepository implements ICustomerRepository {
 
   private mapToDomain(entity: CustomerTypeOrmEntity): Customer {
     return new Customer({
-      id: entity.id,
-      names: entity.names,
+      id: String(entity.id),
+      cedula: entity.cedula,
+      firstName: entity.firstName,
       lastName: entity.lastName,
       email: entity.email,
       phone: entity.phone,
@@ -31,7 +32,8 @@ export class CustomerRepository implements ICustomerRepository {
 
   private mapToEntity(customer: Customer): Partial<CustomerTypeOrmEntity> {
     return {
-      names: customer.names,
+      cedula: customer.cedula,
+      firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
       phone: customer.phone,
@@ -60,7 +62,7 @@ export class CustomerRepository implements ICustomerRepository {
     const queryBuilder = this.repo.createQueryBuilder('customer');
 
     if (q) {
-      queryBuilder.where('customer.names ILIKE :q OR customer.cedula ILIKE :q', { q: `%${q}%` });
+      queryBuilder.where('customer.firstName ILIKE :q OR customer.cedula ILIKE :q', { q: `%${q}%` });
     }
 
     const total = await queryBuilder.getCount();

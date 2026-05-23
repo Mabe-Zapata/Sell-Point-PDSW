@@ -1,17 +1,31 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class CustomerListResponseDto {
+  @ApiProperty({ description: 'Unique customer identifier', example: '550e8400-e29b-41d4-a716-446655440000' })
   id: string;
-  // identificationType/identificationNumber replaced by cedula (simplify-schema-uta SDD)
+
+  @ApiProperty({ description: 'Identification document number (CI/RUC)', example: '0999999999001' })
   cedula: string;
-  names: string;
+
+  @ApiProperty({ description: 'Customer first name', example: 'John' })
+  firstName: string;
+
+  @ApiProperty({ description: 'Customer email address', example: 'john.smith@example.com', nullable: true })
   email: string | null;
+
+  @ApiProperty({ description: 'Customer phone number', example: '+593999999999', nullable: true })
   phone: string | null;
+
+  @ApiProperty({ description: 'Customer physical address', example: 'Av. Amazonas N35-42', nullable: true })
   address: string | null;
+
+  @ApiProperty({ description: 'Customer creation timestamp' })
   createdAt: Date;
 
   constructor(data: {
     id: string;
     cedula: string;
-    names: string;
+    firstName: string;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -19,7 +33,7 @@ export class CustomerListResponseDto {
   }) {
     this.id = data.id;
     this.cedula = data.cedula;
-    this.names = data.names;
+    this.firstName = data.firstName;
     this.email = data.email;
     this.phone = data.phone;
     this.address = data.address;
@@ -29,7 +43,7 @@ export class CustomerListResponseDto {
   static fromQueryResult(result: {
     id: string;
     cedula: string;
-    names: string;
+    firstName: string;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -41,7 +55,7 @@ export class CustomerListResponseDto {
   static fromQueryResults(results: {
     id: string;
     cedula: string;
-    names: string;
+    firstName: string;
     email: string | null;
     phone: string | null;
     address: string | null;

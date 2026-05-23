@@ -36,7 +36,7 @@ export class ErrorLogRepository implements IErrorLogRepository {
     };
   }
 
-  async findById(id: string): Promise<ErrorLog | null> {
+  async findById(id: number): Promise<ErrorLog | null> {
     const entity = await this.repo.findOne({ where: { id } });
     return entity ? this.mapToDomain(entity) : null;
   }

@@ -36,7 +36,7 @@ export class SaleDetailRepository {
     };
   }
 
-  async findById(id: string): Promise<SaleDetail | null> {
+  async findById(id: number): Promise<SaleDetail | null> {
     const entity = await this.repo.findOne({ where: { id } });
     return entity ? this.mapToDomain(entity) : null;
   }

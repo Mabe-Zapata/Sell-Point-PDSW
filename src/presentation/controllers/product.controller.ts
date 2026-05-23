@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -25,6 +26,8 @@ import { GetProductQuery } from '../../application/cqrs/product/queries/get-prod
 import { ListProductsWithStockQuery } from '../../application/cqrs/product/queries/list-products-with-stock/list-products-with-stock.query';
 import { UpdateProductCommand } from '../../application/cqrs/product/commands/update-product/update-product.command';
 import { DeleteProductCommand } from '../../application/cqrs/product/commands/delete-product/delete-product.command';
+import { ActivateProductCommand } from '../../application/cqrs/product/commands/activate-product/activate-product.command';
+import { DeactivateProductCommand } from '../../application/cqrs/product/commands/deactivate-product/deactivate-product.command';
 
 import { CreateProductDto } from '../../application/dto/product/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/product/update-product.dto';
@@ -142,6 +145,44 @@ export class ProductController {
   ): Promise<ProductResponseDto> {
     const product = await this.commandBus.execute(
       new UpdateProductCommand(id, updateProductDto),
+    );
+    return ProductResponseDto.fromEntity(product);
+  }
+
+  @Patch(':id/activate')
+  @ApiOperation({
+    summary: 'Activate a product',
+    description: 'Sets a product as active. Only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Product activated successfully',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async activate(@Param('id') id: string): Promise<ProductResponseDto> {
+    const product = await this.commandBus.execute(
+      new ActivateProductCommand(id),
+    );
+    return ProductResponseDto.fromEntity(product);
+  }
+
+  @Patch(':id/deactivate')
+  @ApiOperation({
+    summary: 'Deactivate a product',
+    description: 'Sets a product as inactive. Only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Product deactivated successfully',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async deactivate(@Param('id') id: string): Promise<ProductResponseDto> {
+    const product = await this.commandBus.execute(
+      new DeactivateProductCommand(id),
     );
     return ProductResponseDto.fromEntity(product);
   }

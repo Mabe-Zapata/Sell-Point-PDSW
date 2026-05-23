@@ -1,10 +1,10 @@
 import { Customer } from '../entities';
 
-// identificationType/identificationNumber replaced by cedula (simplify-schema-uta SDD)
 export interface CustomerListItem {
   id: string;
   cedula: string;
-  names: string;
+  firstName: string;
+  lastName: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;

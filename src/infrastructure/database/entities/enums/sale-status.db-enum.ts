@@ -7,29 +7,11 @@ export enum SaleStatusDb {
 import { SaleStatus } from '../../../../domain/entities/enums/sale-status.enum';
 
 export class SaleStatusMapper {
-  static toDomain(db: SaleStatusDb): SaleStatus {
-    switch (db) {
-      case SaleStatusDb.DRAFT:
-        return SaleStatus.DRAFT;
-      case SaleStatusDb.CONFIRMED:
-        return SaleStatus.CONFIRMED;
-      case SaleStatusDb.CANCELLED:
-        return SaleStatus.CANCELLED;
-      default:
-        throw new Error(`Unknown SaleStatusDb: ${db}`);
-    }
+  static toDomain(value: string | SaleStatusDb): SaleStatus {
+    return SaleStatus[value as keyof typeof SaleStatus];
   }
 
-  static toDb(domain: SaleStatus): SaleStatusDb {
-    switch (domain) {
-      case SaleStatus.DRAFT:
-        return SaleStatusDb.DRAFT;
-      case SaleStatus.CONFIRMED:
-        return SaleStatusDb.CONFIRMED;
-      case SaleStatus.CANCELLED:
-        return SaleStatusDb.CANCELLED;
-      default:
-        throw new Error(`Unknown SaleStatus: ${domain}`);
-    }
+  static toDb(domain: SaleStatus): string {
+    return domain as string;
   }
 }

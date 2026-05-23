@@ -40,11 +40,11 @@ export class UserTypeOrmEntity {
 
   @Column({
     name: 'STA_USR',
-    type: 'enum',
-    enum: UserStatusDb,
-    default: UserStatusDb.ACTIVE,
+    type: 'varchar',
+    length: 30,
+    default: 'ACTIVE',
   })
-  status!: UserStatusDb;
+  status!: string;
 
   @Column({ name: 'DEF_BRA_ID', type: 'uuid', nullable: true })
   defaultBranchId?: string;

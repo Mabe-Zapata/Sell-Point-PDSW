@@ -1,7 +1,7 @@
 import { ExceptionType } from './enums';
 
 export class ErrorLog {
-  id!: string;
+  id!: number;
 
   exceptionType!: ExceptionType;
 

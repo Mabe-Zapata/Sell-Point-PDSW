@@ -8,7 +8,7 @@ export interface ErrorLogFilters {
 }
 
 export interface IErrorLogRepository {
-  findById(id: string): Promise<ErrorLog | null>;
+findById(id: number): Promise<ErrorLog | null>;
   findAll(
     pagination?: PaginationParams,
     filters?: ErrorLogFilters,

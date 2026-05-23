@@ -40,12 +40,12 @@ export class UpdateCustomerHandler implements ICommandHandler<UpdateCustomerComm
     const updatedCustomer = new Customer({
       id: existingCustomer.id,
       cedula: payload.cedula ?? existingCustomer.cedula,
-      names: payload.names ?? existingCustomer.names,
+      firstName: payload.firstName ?? existingCustomer.firstName,
       lastName: payload.lastName ?? existingCustomer.lastName,
       email: payload.email !== undefined ? payload.email : existingCustomer.email,
       phone: payload.phone !== undefined ? payload.phone : existingCustomer.phone,
       address: payload.address !== undefined ? payload.address : existingCustomer.address,
-      isActive: payload.isActive ?? existingCustomer.isActive,
+      isActive: existingCustomer.isActive,
       createdAt: existingCustomer.createdAt,
       updatedAt: new Date(),
     });

@@ -15,7 +15,7 @@ export class ProductRepository implements IProductRepository {
 
   private mapToDomain(entity: ProductTypeOrmEntity): Product {
     return new Product({
-      id: entity.id,
+      id: String(entity.id),
       categoryId: entity.categoryId,
       code: entity.code,
       name: entity.name,
@@ -100,7 +100,7 @@ export class ProductRepository implements IProductRepository {
     await this.repo.delete(id);
   }
 
-  async decrementStock(_id: string, _quantity: number): Promise<void> {
+  async decrementStock(_id: number, _quantity: number): Promise<void> {
     return;
   }
 }

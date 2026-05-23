@@ -5,12 +5,6 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 
-export enum UserStatusDb {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  BLOCKED = 'BLOCKED',
-}
-
 @Entity('ROLES')
 export class RoleTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')

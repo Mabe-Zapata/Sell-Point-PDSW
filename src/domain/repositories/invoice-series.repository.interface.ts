@@ -15,5 +15,5 @@ export interface IInvoiceSeriesRepository {
   ): Promise<PaginatedResult<InvoiceSeries>>;
   create(invoiceSeries: InvoiceSeries): Promise<InvoiceSeries>;
   update(invoiceSeries: InvoiceSeries): Promise<InvoiceSeries>;
-  incrementSequence(id: string): Promise<number>;
+  incrementSequence(id: number): Promise<number>;
 }

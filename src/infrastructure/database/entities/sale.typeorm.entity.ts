@@ -48,11 +48,11 @@ export class SaleTypeOrmEntity {
   @Index('IDX_SAL_STA')
   @Column({
     name: 'STA_SAL',
-    type: 'enum',
-    enum: SaleStatusDb,
-    default: SaleStatusDb.DRAFT,
+    type: 'varchar',
+    length: 30,
+    default: 'DRAFT',
   })
-  status!: SaleStatusDb;
+  status!: string;
 
   @Column({ name: 'SUB_SAL', type: 'decimal', precision: 12, scale: 2 })
   subtotal!: number;

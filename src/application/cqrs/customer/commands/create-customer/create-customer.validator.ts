@@ -4,8 +4,11 @@ import { CreateCustomerDto } from '../../../../dto/customer/create-customer.dto'
 @Injectable()
 export class CreateCustomerValidator {
   validate(payload: CreateCustomerDto): void {
-    if (!payload.names || payload.names.trim().length === 0) {
-      throw new BadRequestException('Customer names are required');
+    if (!payload.firstName || payload.firstName.trim().length === 0) {
+      throw new BadRequestException('Customer first name is required');
+    }
+    if (!payload.cedula || payload.cedula.trim().length === 0) {
+      throw new BadRequestException('Cedula is required');
     }
   }
 }

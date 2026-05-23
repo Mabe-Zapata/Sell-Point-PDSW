@@ -12,8 +12,8 @@ import { ProductTypeOrmEntity } from './product.typeorm.entity';
 
 @Entity('SALE_DETAILS')
 export class SaleDetailTypeOrmEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column({ name: 'SAL_ID', type: 'uuid' })
   saleId!: string;

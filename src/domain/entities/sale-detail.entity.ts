@@ -1,5 +1,5 @@
 export class SaleDetail {
-  id!: string;
+  id!: number;
 
   saleId!: string;
 

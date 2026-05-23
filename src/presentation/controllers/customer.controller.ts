@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -25,6 +26,8 @@ import { GetCustomerQuery } from '../../application/cqrs/customer/queries/get-cu
 import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/queries/list-customers-with-stock/list-customers-with-stock.query';
 import { UpdateCustomerCommand } from '../../application/cqrs/customer/commands/update-customer/update-customer.command';
 import { DeleteCustomerCommand } from '../../application/cqrs/customer/commands/delete-customer/delete-customer.command';
+import { ActivateCustomerCommand } from '../../application/cqrs/customer/commands/activate-customer/activate-customer.command';
+import { DeactivateCustomerCommand } from '../../application/cqrs/customer/commands/deactivate-customer/deactivate-customer.command';
 
 import { CreateCustomerDto } from '../../application/dto/customer/create-customer.dto';
 import { UpdateCustomerDto } from '../../application/dto/customer/update-customer.dto';
@@ -149,6 +152,44 @@ export class CustomerController {
   ): Promise<CustomerResponseDto> {
     const customer = await this.commandBus.execute(
       new UpdateCustomerCommand(id, updateCustomerDto),
+    );
+    return CustomerResponseDto.fromEntity(customer);
+  }
+
+  @Patch(':id/activate')
+  @ApiOperation({
+    summary: 'Activate a customer',
+    description: 'Sets a customer as active. Only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer activated successfully',
+    type: CustomerResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async activate(@Param('id') id: string): Promise<CustomerResponseDto> {
+    const customer = await this.commandBus.execute(
+      new ActivateCustomerCommand(id),
+    );
+    return CustomerResponseDto.fromEntity(customer);
+  }
+
+  @Patch(':id/deactivate')
+  @ApiOperation({
+    summary: 'Deactivate a customer',
+    description: 'Sets a customer as inactive. Only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer deactivated successfully',
+    type: CustomerResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async deactivate(@Param('id') id: string): Promise<CustomerResponseDto> {
+    const customer = await this.commandBus.execute(
+      new DeactivateCustomerCommand(id),
     );
     return CustomerResponseDto.fromEntity(customer);
   }

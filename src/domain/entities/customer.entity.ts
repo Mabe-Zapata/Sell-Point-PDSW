@@ -1,7 +1,7 @@
 export class Customer {
   id!: string;
 
-  names!: string;
+  firstName!: string;
 
   lastName?: string;
 

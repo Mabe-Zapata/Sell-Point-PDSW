@@ -16,7 +16,7 @@ export class InvoiceSeriesRepository {
 
   private mapToDomain(entity: InvoiceSeriesTypeOrmEntity): InvoiceSeries {
     return new InvoiceSeries({
-      id: entity.id,
+      id: String(entity.id),
       branchId: entity.branchId,
       establishmentCode: entity.establishmentCode,
       emissionPointCode: entity.emissionPointCode,

@@ -12,15 +12,15 @@ import { UserTypeOrmEntity } from './user.typeorm.entity';
 
 @Entity('ERROR_LOGS')
 export class ErrorLogTypeOrmEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column({
     name: 'EXC_TYP',
-    type: 'enum',
-    enum: ExceptionTypeDb,
+    type: 'varchar',
+    length: 30,
   })
-  exceptionType!: ExceptionTypeDb;
+  exceptionType!: string;
 
   @Column({ name: 'MES_ERR', type: 'text' })
   message!: string;

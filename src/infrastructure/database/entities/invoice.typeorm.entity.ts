@@ -31,10 +31,10 @@ export class InvoiceTypeOrmEntity {
 
   @Column({
     name: 'STA_INV',
-    type: 'enum',
-    enum: InvoiceStatusDb,
+    type: 'varchar',
+    length: 30,
   })
-  status!: InvoiceStatusDb;
+  status!: string;
 
   @Column({ name: 'CAN_DAT', type: 'timestamp', nullable: true })
   cancelledAt?: Date;

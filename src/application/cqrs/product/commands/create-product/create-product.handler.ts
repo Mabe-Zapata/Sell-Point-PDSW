@@ -23,7 +23,7 @@ export class CreateProductHandler implements ICommandHandler<CreateProductComman
       description: command.payload.description,
       salePrice: command.payload.salePrice,
       costPrice: command.payload.costPrice,
-      isActive: command.payload.isActive ?? true,
+      isActive: true,
     });
 
     return this.productRepository.create(product);

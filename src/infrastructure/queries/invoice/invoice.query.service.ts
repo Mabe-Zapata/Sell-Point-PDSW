@@ -82,7 +82,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         ser."EST_COD_SER" AS "establishmentCode",
         ser."EMI_POI_COD_SER" AS "emissionPointCode",
         sal."TOT_SAL" AS "total",
-        cus."NAM_CUS" AS "customerName",
+        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
         cus."CED_CUS" AS "customerCedula"
       FROM "INVOICES" i
       INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
@@ -143,7 +143,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         ser."EST_COD_SER" AS "establishmentCode",
         ser."EMI_POI_COD_SER" AS "emissionPointCode",
         sal."TOT_SAL" AS "total",
-        cus."NAM_CUS" AS "customerName",
+        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
         cus."CED_CUS" AS "customerCedula"
       FROM "INVOICES" i
       INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
@@ -180,7 +180,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         ser."EST_COD_SER" AS "establishmentCode",
         ser."EMI_POI_COD_SER" AS "emissionPointCode",
         sal."TOT_SAL" AS "total",
-        cus."NAM_CUS" AS "customerName",
+        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
         cus."CED_CUS" AS "customerCedula"
       FROM "INVOICES" i
       INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id

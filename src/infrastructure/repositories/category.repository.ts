@@ -17,7 +17,7 @@ export class CategoryRepository implements ICategoryRepository {
 
   private mapToDomain(entity: CategoryTypeOrmEntity): Category {
     return new Category({
-      id: entity.id,
+      id: String(entity.id),
       name: entity.name,
       description: entity.description,
       isActive: entity.isActive,

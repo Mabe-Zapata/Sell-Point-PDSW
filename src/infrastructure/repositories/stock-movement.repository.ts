@@ -45,7 +45,7 @@ export class StockMovementRepository {
     };
   }
 
-  async findById(id: string): Promise<StockMovement | null> {
+  async findById(id: number): Promise<StockMovement | null> {
     const entity = await this.repo.findOne({ where: { id } });
     return entity ? this.mapToDomain(entity) : null;
   }

@@ -1,7 +1,7 @@
 import { StockMovementType } from './enums';
 
 export class StockMovement {
-  id!: string;
+  id!: number;
 
   productId!: string;
 

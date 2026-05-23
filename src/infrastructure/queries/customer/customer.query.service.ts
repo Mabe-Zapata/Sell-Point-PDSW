@@ -17,9 +17,9 @@ interface CountRow {
 
 interface CustomerRow {
   id: string;
-  // identificationType/identificationNumber replaced by cedula (simplify-schema-uta SDD)
   cedula: string;
-  names: string;
+  firstName: string;
+  lastName: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -47,21 +47,22 @@ export class CustomerQueryService implements ICustomerQueryService {
     const countQuery = `
       SELECT COUNT(*)::integer AS total
       FROM "CUSTOMERS" c
-      WHERE ($1::varchar IS NULL OR c."NAM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
+      WHERE ($1::varchar IS NULL OR c."NOM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
         AND ($2::varchar IS NULL OR c."CED_CUS" = $2);
     `;
 
-    const listQuery = `
+const listQuery = `
       SELECT
         c.id,
         c."CED_CUS" AS "cedula",
-        c."NAM_CUS" AS "names",
+        c."NOM_CUS" AS "firstName",
+        c."APE_CUS" AS "lastName",
         c."EMA_CUS" AS "email",
         c."PHO_CUS" AS "phone",
         c."ADD_CUS" AS "address",
         c."CRE_AT" AS "createdAt"
       FROM "CUSTOMERS" c
-      WHERE ($1::varchar IS NULL OR c."NAM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
+      WHERE ($1::varchar IS NULL OR c."NOM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
         AND ($2::varchar IS NULL OR c."CED_CUS" = $2)
       ORDER BY c."CRE_AT" DESC
       LIMIT $3 OFFSET $4;
@@ -76,7 +77,8 @@ export class CustomerQueryService implements ICustomerQueryService {
       data: listResult.rows.map((row): CustomerListItem => ({
         id: row.id,
         cedula: row.cedula,
-        names: row.names,
+        firstName: row.firstName,
+        lastName: row.lastName,
         email: row.email,
         phone: row.phone,
         address: row.address,
@@ -93,7 +95,8 @@ export class CustomerQueryService implements ICustomerQueryService {
       SELECT
         c.id,
         c."CED_CUS" AS "cedula",
-        c."NAM_CUS" AS "names",
+        c."NOM_CUS" AS "firstName",
+        c."APE_CUS" AS "lastName",
         c."EMA_CUS" AS "email",
         c."PHO_CUS" AS "phone",
         c."ADD_CUS" AS "address",
@@ -110,13 +113,16 @@ export class CustomerQueryService implements ICustomerQueryService {
     }
 
     return new Customer({
+      id: result.rows[0].id,
       cedula: result.rows[0].cedula,
-      names: result.rows[0].names,
+      firstName: result.rows[0].firstName,
+      lastName: result.rows[0].lastName ?? undefined,
       email: result.rows[0].email ?? undefined,
       phone: result.rows[0].phone ?? undefined,
       address: result.rows[0].address ?? undefined,
+      isActive: true,
       createdAt: result.rows[0].createdAt,
-      updatedAt: new Date(),
+      updatedAt: result.rows[0].updatedAt,
     });
   }
 }

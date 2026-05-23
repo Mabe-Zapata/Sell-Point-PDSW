@@ -14,13 +14,14 @@ export class CustomerTypeOrmEntity {
   // Legacy compatibility fields used by older seed/application code
   name?: string;
 
-  lastName?: string;
-
   @Column({ name: 'CED_CUS', length: 20, nullable: true })
   cedula?: string;
 
-  @Column({ name: 'NAM_CUS', length: 255 })
-  names!: string;
+  @Column({ name: 'NOM_CUS', length: 100 })
+  firstName!: string;
+
+  @Column({ name: 'APE_CUS', length: 100, nullable: true })
+  lastName?: string;
 
   @Column({ name: 'EMA_CUS', length: 255, nullable: true })
   email?: string;
