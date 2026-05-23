@@ -33,6 +33,7 @@ export class ProductTypeOrmEntity {
   @Column({ name: 'NAM_PRO', length: 255 })
   name!: string;
 
+  @Column({ name: 'DES_PRO', type: 'text', nullable: true })
   description?: string;
 
   @Column({ name: 'SAL_PRI_PRO', type: 'decimal', precision: 12, scale: 2 })

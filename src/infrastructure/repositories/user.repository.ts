@@ -18,7 +18,12 @@ export class UserRepository implements IUserRepository {
   private mapToDomain(entity: UserTypeOrmEntity): User {
     return new User({
       id: entity.id,
+      firstName: entity.firstName,
+      lastName: entity.lastName,
+      cedula: entity.cedula,
+      role: entity.role,
       employeeId: entity.employeeId,
+      username: entity.username,
       email: entity.email,
       passwordHash: entity.passwordHash,
       status: UserStatusMapper.toDomain(entity.status),

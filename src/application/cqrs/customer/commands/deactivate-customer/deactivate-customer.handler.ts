@@ -22,12 +22,9 @@ export class DeactivateCustomerHandler implements ICommandHandler<DeactivateCust
       throw new EntityNotFoundException('Customer', command.id);
     }
 
-    const deactivatedCustomer = new Customer({
-      ...customer,
-      isActive: false,
-      updatedAt: new Date(),
-    });
+    // Use domain method - enforces business rules
+    customer.deactivate();
 
-    return this.customerRepository.update(deactivatedCustomer);
+    return this.customerRepository.update(customer);
   }
 }

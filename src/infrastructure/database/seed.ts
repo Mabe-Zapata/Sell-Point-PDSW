@@ -90,8 +90,10 @@ async function main() {
 
   // 5. Seed Consumer Final customer
   const consumerFinalData = {
+    firstName: 'CONSUMIDOR',
+    lastName: 'FINAL',
     cedula: '9999999999999',
-    names: 'CONSUMIDOR FINAL',
+    isActive: true,
   };
 
   let consumerFinal = await customerRepo.findOne({ where: { cedula: consumerFinalData.cedula } });

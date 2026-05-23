@@ -1,17 +1,49 @@
 export class Category {
-  id!: string;
+  readonly id!: string;
+  readonly name!: string;
+  readonly description?: string;
+  readonly createdAt!: Date;
 
-  name!: string;
+  private _isActive!: boolean;
+  private _updatedAt!: Date;
 
-  description?: string;
+  constructor(properties: {
+    id: string;
+    name: string;
+    description?: string;
+    isActive: boolean;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }) {
+    this.id = properties.id;
+    this.name = properties.name;
+    this.description = properties.description;
+    this._isActive = properties.isActive;
+    this.createdAt = properties.createdAt || new Date();
+    this._updatedAt = properties.updatedAt || new Date();
+  }
 
-  isActive!: boolean;
+  get isActive(): boolean {
+    return this._isActive;
+  }
 
-  createdAt!: Date;
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
 
-  updatedAt!: Date;
+  activate(): void {
+    if (this._isActive) {
+      throw new Error('Category is already active');
+    }
+    this._isActive = true;
+    this._updatedAt = new Date();
+  }
 
-  constructor(partial: Partial<Category>) {
-    Object.assign(this, partial);
+  deactivate(): void {
+    if (!this._isActive) {
+      throw new Error('Category is already inactive');
+    }
+    this._isActive = false;
+    this._updatedAt = new Date();
   }
 }

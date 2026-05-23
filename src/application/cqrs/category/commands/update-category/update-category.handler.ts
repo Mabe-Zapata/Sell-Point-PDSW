@@ -29,8 +29,11 @@ export class UpdateCategoryHandler implements ICommandHandler<UpdateCategoryComm
     }
 
     const updated = new Category({
-      ...existing,
-      ...command.payload,
+      id: existing.id,
+      name: command.payload.name ?? existing.name,
+      description: command.payload.description ?? existing.description,
+      isActive: command.payload.isActive ?? existing.isActive,
+      createdAt: existing.createdAt,
     });
 
     return this.categoryRepository.update(updated);

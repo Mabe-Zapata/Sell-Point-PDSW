@@ -34,9 +34,9 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
           : existingProduct.description,
       salePrice: payload.salePrice ?? existingProduct.salePrice,
       costPrice: payload.costPrice ?? existingProduct.costPrice,
+      currentStock: existingProduct.currentStock,
       isActive: existingProduct.isActive,
       createdAt: existingProduct.createdAt,
-      updatedAt: new Date(),
     });
 
     return this.productRepository.update(updatedProduct);

@@ -1,27 +1,64 @@
 export class Customer {
-  id!: string;
+  readonly id!: string;
+  readonly firstName!: string;
+  readonly lastName?: string;
+  readonly cedula?: string;
+  readonly email?: string;
+  readonly phone?: string;
+  readonly address?: string;
+  readonly createdAt!: Date;
+  readonly deletedAt?: Date;
 
-  firstName!: string;
+  private _isActive!: boolean;
+  private _updatedAt!: Date;
 
-  lastName?: string;
+  constructor(properties: {
+    id: string;
+    firstName: string;
+    lastName?: string;
+    cedula?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    isActive: boolean;
+    createdAt?: Date;
+    updatedAt?: Date;
+    deletedAt?: Date;
+  }) {
+    this.id = properties.id;
+    this.firstName = properties.firstName;
+    this.lastName = properties.lastName;
+    this.cedula = properties.cedula;
+    this.email = properties.email;
+    this.phone = properties.phone;
+    this.address = properties.address;
+    this._isActive = properties.isActive;
+    this.createdAt = properties.createdAt || new Date();
+    this._updatedAt = properties.updatedAt || new Date();
+    this.deletedAt = properties.deletedAt;
+  }
 
-  cedula?: string;
+  get isActive(): boolean {
+    return this._isActive;
+  }
 
-  email?: string;
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
 
-  phone?: string;
+  activate(): void {
+    if (this._isActive) {
+      throw new Error('Customer is already active');
+    }
+    this._isActive = true;
+    this._updatedAt = new Date();
+  }
 
-  address?: string;
-
-  isActive!: boolean;
-
-  createdAt!: Date;
-
-  updatedAt!: Date;
-
-  deletedAt?: Date;
-
-  constructor(partial: Partial<Customer>) {
-    Object.assign(this, partial);
+  deactivate(): void {
+    if (!this._isActive) {
+      throw new Error('Customer is already inactive');
+    }
+    this._isActive = false;
+    this._updatedAt = new Date();
   }
 }

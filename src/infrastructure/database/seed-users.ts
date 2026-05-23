@@ -13,7 +13,7 @@ async function main() {
   const userRepo = dataSource.getRepository(UserTypeOrmEntity);
 
   // Delete all existing users
-  await userRepo.query('DELETE FROM `USERS`');
+  await userRepo.query('DELETE FROM "USERS"');
   process.stdout.write('Existing users deleted.\n');
 
   // Hash the password

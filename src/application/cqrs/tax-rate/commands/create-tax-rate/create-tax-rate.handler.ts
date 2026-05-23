@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { CreateTaxRateCommand } from './create-tax-rate.command';
 import { CreateTaxRateValidator } from './create-tax-rate.validator';
 import { TAX_RATE_REPOSITORY } from '../../../../tokens';
@@ -22,6 +23,7 @@ export class CreateTaxRateHandler implements ICommandHandler<CreateTaxRateComman
     }
 
     const taxRate = new TaxRate({
+      id: randomUUID(),
       name: command.payload.name,
       percentage: command.payload.percentage,
       isActive: command.payload.isActive ?? true,

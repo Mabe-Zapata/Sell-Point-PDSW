@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { CreateProductCommand } from './create-product.command';
 import { CreateProductValidator } from './create-product.validator';
 import { PRODUCT_REPOSITORY } from '../../../../tokens';
@@ -17,12 +18,14 @@ export class CreateProductHandler implements ICommandHandler<CreateProductComman
     await this.validator.validate(command.payload);
 
     const product = new Product({
+      id: randomUUID(),
       categoryId: command.payload.categoryId,
       code: command.payload.code,
       name: command.payload.name,
       description: command.payload.description,
       salePrice: command.payload.salePrice,
       costPrice: command.payload.costPrice,
+      currentStock: 0,
       isActive: true,
     });
 

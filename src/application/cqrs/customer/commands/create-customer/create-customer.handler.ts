@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { CreateCustomerCommand } from './create-customer.command';
 import { CreateCustomerValidator } from './create-customer.validator';
 import { CUSTOMER_REPOSITORY } from '../../../../tokens';
@@ -27,12 +28,13 @@ export class CreateCustomerHandler implements ICommandHandler<CreateCustomerComm
     }
 
     const customer = new Customer({
+      id: randomUUID(),
       cedula: command.payload.cedula,
       firstName: command.payload.firstName,
       lastName: command.payload.lastName,
       email: command.payload.email,
       phone: command.payload.phone,
-      address: command.payload.address,
+      address: command.payload.address ?? '',
       isActive: true,
     });
 

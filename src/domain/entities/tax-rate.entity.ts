@@ -1,17 +1,49 @@
 export class TaxRate {
-  id!: string;
+  readonly id!: string;
+  readonly name!: string;
+  readonly percentage!: number;
+  readonly createdAt!: Date;
 
-  name!: string;
+  private _isActive!: boolean;
+  private _updatedAt!: Date;
 
-  percentage!: number;
+  constructor(properties: {
+    id: string;
+    name: string;
+    percentage: number;
+    isActive: boolean;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }) {
+    this.id = properties.id;
+    this.name = properties.name;
+    this.percentage = properties.percentage;
+    this._isActive = properties.isActive;
+    this.createdAt = properties.createdAt || new Date();
+    this._updatedAt = properties.updatedAt || new Date();
+  }
 
-  isActive!: boolean;
+  get isActive(): boolean {
+    return this._isActive;
+  }
 
-  createdAt!: Date;
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
 
-  updatedAt!: Date;
+  activate(): void {
+    if (this._isActive) {
+      throw new Error('TaxRate is already active');
+    }
+    this._isActive = true;
+    this._updatedAt = new Date();
+  }
 
-  constructor(partial: Partial<TaxRate>) {
-    Object.assign(this, partial);
+  deactivate(): void {
+    if (!this._isActive) {
+      throw new Error('TaxRate is already inactive');
+    }
+    this._isActive = false;
+    this._updatedAt = new Date();
   }
 }

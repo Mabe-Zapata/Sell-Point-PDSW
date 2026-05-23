@@ -21,7 +21,8 @@ export class UserTypeOrmEntity {
   @Column({ name: 'CED_USR', length: 20, nullable: true })
   cedula?: string;
 
-  isActive?: boolean;
+  @Column({ name: 'ACT_USR', type: 'boolean', default: true })
+  isActive!: boolean;
 
   @Column({ name: 'ROL_USR', length: 50, nullable: true })
   role?: string;

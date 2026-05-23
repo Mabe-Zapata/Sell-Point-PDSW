@@ -47,7 +47,6 @@ export class UpdateCustomerHandler implements ICommandHandler<UpdateCustomerComm
       address: payload.address !== undefined ? payload.address : existingCustomer.address,
       isActive: existingCustomer.isActive,
       createdAt: existingCustomer.createdAt,
-      updatedAt: new Date(),
     });
 
     return this.customerRepository.update(updatedCustomer);

@@ -22,12 +22,8 @@ export class DeactivateProductHandler implements ICommandHandler<DeactivateProdu
       throw new EntityNotFoundException('Product', command.id);
     }
 
-    const deactivatedProduct = new Product({
-      ...product,
-      isActive: false,
-      updatedAt: new Date(),
-    });
+    product.deactivate();
 
-    return this.productRepository.update(deactivatedProduct);
+    return this.productRepository.update(product);
   }
 }

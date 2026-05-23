@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { CreateCategoryCommand } from './create-category.command';
 import { CreateCategoryValidator } from './create-category.validator';
 import { CATEGORY_REPOSITORY } from '../../../../tokens';
@@ -22,6 +23,7 @@ export class CreateCategoryHandler implements ICommandHandler<CreateCategoryComm
     }
 
     const category = new Category({
+      id: randomUUID(),
       name: command.payload.name,
       description: command.payload.description,
       isActive: true,

@@ -22,12 +22,9 @@ export class ActivateCustomerHandler implements ICommandHandler<ActivateCustomer
       throw new EntityNotFoundException('Customer', command.id);
     }
 
-    const activatedCustomer = new Customer({
-      ...customer,
-      isActive: true,
-      updatedAt: new Date(),
-    });
+    // Use domain method - enforces business rules
+    customer.activate();
 
-    return this.customerRepository.update(activatedCustomer);
+    return this.customerRepository.update(customer);
   }
 }

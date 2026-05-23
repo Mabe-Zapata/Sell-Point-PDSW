@@ -16,7 +16,11 @@ export const typeormConfig: TypeOrmModuleOptions = {
   database: config.database.name,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../infrastructure/database/migrations/*{.ts,.js}'],
-  synchronize: true,
+  // IMPORTANT: Set synchronize to false. Run migrations explicitly with:
+  //   npm run typeorm:migration:run   (or: npx typeorm migration:run -d src/config/typeorm.config.ts)
+  // Using synchronize:true will cause TypeORM to auto-sync entity changes to the schema,
+  // which can cause data loss in production and bypasses migration versioning.
+  synchronize: false,
   logging: true,
 };
 
@@ -29,6 +33,10 @@ export const dataSource = new DataSource({
   database: config.database.name,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../infrastructure/database/migrations/*{.ts,.js}'],
-  synchronize: true,
+  // IMPORTANT: Set synchronize to false. Run migrations explicitly with:
+  //   npm run typeorm:migration:run   (or: npx typeorm migration:run -d src/config/typeorm.config.ts)
+  // Using synchronize:true will cause TypeORM to auto-sync entity changes to the schema,
+  // which can cause data loss in production and bypasses migration versioning.
+  synchronize: false,
   logging: true,
 });

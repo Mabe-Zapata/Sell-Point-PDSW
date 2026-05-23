@@ -22,12 +22,8 @@ export class ActivateProductHandler implements ICommandHandler<ActivateProductCo
       throw new EntityNotFoundException('Product', command.id);
     }
 
-    const activatedProduct = new Product({
-      ...product,
-      isActive: true,
-      updatedAt: new Date(),
-    });
+    product.activate();
 
-    return this.productRepository.update(activatedProduct);
+    return this.productRepository.update(product);
   }
 }

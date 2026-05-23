@@ -29,8 +29,11 @@ export class UpdateTaxRateHandler implements ICommandHandler<UpdateTaxRateComman
     }
 
     const updated = new TaxRate({
-      ...existing,
-      ...command.payload,
+      id: existing.id,
+      name: command.payload.name ?? existing.name,
+      percentage: command.payload.percentage ?? existing.percentage,
+      isActive: command.payload.isActive ?? existing.isActive,
+      createdAt: existing.createdAt,
     });
 
     return this.taxRateRepository.update(updated);
