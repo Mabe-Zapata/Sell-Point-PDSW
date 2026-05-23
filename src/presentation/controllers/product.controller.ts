@@ -22,14 +22,14 @@ import {
 
 import { CreateProductCommand } from '../../application/cqrs/product/commands/create-product/create-product.command';
 import { GetProductQuery } from '../../application/cqrs/product/queries/get-product/get-product.query';
-import { ListProductsQuery } from '../../application/cqrs/product/queries/list-products/list-products.query';
+import { ListProductsWithStockQuery } from '../../application/cqrs/product/queries/list-products-with-stock/list-products-with-stock.query';
 import { UpdateProductCommand } from '../../application/cqrs/product/commands/update-product/update-product.command';
 import { DeleteProductCommand } from '../../application/cqrs/product/commands/delete-product/delete-product.command';
 
 import { CreateProductDto } from '../../application/dto/product/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/product/update-product.dto';
 import { ProductResponseDto } from '../../application/dto/product/product-response.dto';
-import { ProductFilters } from '../../domain/repositories/product.repository.interface';
+import { ProductWithStockResponseDto } from '../../application/dto/product/product-with-stock-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('products')
@@ -81,28 +81,14 @@ export class ProductController {
 
   @Get()
   @ApiOperation({
-    summary: 'List products with pagination and search',
-    description:
-      'Retrieves a paginated list of products. Provides a generic search parameter `q` to filter by product ID or name.',
+    summary: 'List products with stock (pg query service)',
+    description: 'Retrieves a paginated list of products using pg raw SQL for optimal read performance.',
   })
-  @ApiQuery({
-    name: 'page',
-    description: 'Page number (default: 1)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of items per page (default: 20)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'q',
-    description: 'Search query (searches in id, code, name)',
-    required: false,
-    type: String,
-  })
+  @ApiQuery({ name: 'page', description: 'Page number (default: 1)', required: false, type: Number })
+  @ApiQuery({ name: 'limit', description: 'Number of items per page (default: 20)', required: false, type: Number })
+  @ApiQuery({ name: 'q', description: 'Search query (searches in code, name)', required: false, type: String })
+  @ApiQuery({ name: 'categoryId', description: 'Filter by category UUID', required: false, type: String })
+  @ApiQuery({ name: 'isActive', description: 'Filter by active status', required: false, type: Boolean })
   @ApiResponse({
     status: 200,
     description: 'List of products retrieved successfully',
@@ -111,8 +97,10 @@ export class ProductController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') searchQuery?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('isActive') isActive?: string,
   ): Promise<{
-    data: ProductResponseDto[];
+    data: ProductWithStockResponseDto[];
     total: number;
     page: number;
     limit: number;
@@ -122,16 +110,12 @@ export class ProductController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const filters: ProductFilters = {
-      q: searchQuery,
-    };
-
     const result = await this.queryBus.execute(
-      new ListProductsQuery(pagination, filters),
+      new ListProductsWithStockQuery(pagination, searchQuery, categoryId, isActive === 'true'),
     );
 
     return {
-      data: ProductResponseDto.fromEntities(result.data),
+      data: ProductWithStockResponseDto.fromQueryResults(result.data),
       total: result.total,
       page: result.page,
       limit: result.limit,

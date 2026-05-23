@@ -23,12 +23,12 @@ import type { Response } from 'express';
 
 import { CreateInvoiceCommand } from '../../application/cqrs/invoice/commands/create-invoice/create-invoice.command';
 import { GetInvoiceQuery } from '../../application/cqrs/invoice/queries/get-invoice/get-invoice.query';
-import { ListInvoicesQuery } from '../../application/cqrs/invoice/queries/list-invoices/list-invoices.query';
+import { ListInvoicesWithStockQuery } from '../../application/cqrs/invoice/queries/list-invoices-with-stock/list-invoices-with-stock.query';
 import { GenerateInvoicePdfQuery } from '../../application/cqrs/invoice/queries/generate-invoice-pdf/generate-invoice-pdf.query';
 
 import { CreateInvoiceDto } from '../../application/dto/invoice/create-invoice.dto';
 import { InvoiceResponseDto } from '../../application/dto/invoice/invoice-response.dto';
-import { InvoiceFilters } from '../../domain/repositories/invoice.repository.interface';
+import { InvoiceListResponseDto } from '../../application/dto/invoice/invoice-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('invoices')
@@ -112,45 +112,16 @@ export class InvoiceController {
 
   @Get()
   @ApiOperation({
-    summary: 'List invoices with pagination and filters',
-    description: 'Retrieves a paginated list of invoices.',
+    summary: 'List invoices (pg query service)',
+    description: 'Retrieves a paginated list of invoices using pg raw SQL for optimal read performance.',
   })
-  @ApiQuery({
-    name: 'page',
-    description: 'Page number (default: 1)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of items per page (default: 20)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'saleId',
-    description: 'Filter by sale ID',
-    required: false,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'seriesId',
-    description: 'Filter by series ID',
-    required: false,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'status',
-    description: 'Filter by status',
-    required: false,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'authorizationNumber',
-    description: 'Filter by authorization number',
-    required: false,
-    type: String,
-  })
+  @ApiQuery({ name: 'page', description: 'Page number (default: 1)', required: false, type: Number })
+  @ApiQuery({ name: 'limit', description: 'Number of items per page (default: 20)', required: false, type: Number })
+  @ApiQuery({ name: 'branchId', description: 'Filter by branch ID', required: false, type: String })
+  @ApiQuery({ name: 'status', description: 'Filter by status', required: false, type: String })
+  @ApiQuery({ name: 'invoiceNumber', description: 'Filter by invoice number', required: false, type: String })
+  @ApiQuery({ name: 'startDate', description: 'Filter by start date', required: false, type: String })
+  @ApiQuery({ name: 'endDate', description: 'Filter by end date', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'List of invoices retrieved successfully',
@@ -158,12 +129,13 @@ export class InvoiceController {
   async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('saleId') saleId?: string,
-    @Query('seriesId') seriesId?: string,
+    @Query('branchId') branchId?: string,
     @Query('status') status?: string,
-    @Query('authorizationNumber') authorizationNumber?: string,
+    @Query('invoiceNumber') invoiceNumber?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<{
-    data: InvoiceResponseDto[];
+    data: InvoiceListResponseDto[];
     total: number;
     page: number;
     limit: number;
@@ -173,19 +145,19 @@ export class InvoiceController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const filters: InvoiceFilters = {
-      saleId,
-      seriesId,
-      status,
-      authorizationNumber,
-    };
-
     const result = await this.queryBus.execute(
-      new ListInvoicesQuery(pagination, filters),
+      new ListInvoicesWithStockQuery(
+        pagination,
+        branchId,
+        status,
+        invoiceNumber,
+        startDate ? new Date(startDate) : undefined,
+        endDate ? new Date(endDate) : undefined,
+      ),
     );
 
     return {
-      data: InvoiceResponseDto.fromEntities(result.data),
+      data: InvoiceListResponseDto.fromQueryResults(result.data),
       total: result.total,
       page: result.page,
       limit: result.limit,

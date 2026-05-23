@@ -22,14 +22,14 @@ import {
 
 import { CreateCustomerCommand } from '../../application/cqrs/customer/commands/create-customer/create-customer.command';
 import { GetCustomerQuery } from '../../application/cqrs/customer/queries/get-customer/get-customer.query';
-import { ListCustomersQuery } from '../../application/cqrs/customer/queries/list-customers/list-customers.query';
+import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/queries/list-customers-with-stock/list-customers-with-stock.query';
 import { UpdateCustomerCommand } from '../../application/cqrs/customer/commands/update-customer/update-customer.command';
 import { DeleteCustomerCommand } from '../../application/cqrs/customer/commands/delete-customer/delete-customer.command';
 
 import { CreateCustomerDto } from '../../application/dto/customer/create-customer.dto';
 import { UpdateCustomerDto } from '../../application/dto/customer/update-customer.dto';
 import { CustomerResponseDto } from '../../application/dto/customer/customer-response.dto';
-import { CustomerFilters } from '../../domain/repositories/customer.repository.interface';
+import { CustomerListResponseDto } from '../../application/dto/customer/customer-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('customers')
@@ -85,28 +85,13 @@ export class CustomerController {
 
   @Get()
   @ApiOperation({
-    summary: 'List customers with pagination and search',
-    description:
-      'Retrieves a paginated list of customers. Provides a generic search parameter `q` to filter by cedula, name, or last name.',
+    summary: 'List customers (pg query service)',
+    description: 'Retrieves a paginated list of customers using pg raw SQL for optimal read performance.',
   })
-  @ApiQuery({
-    name: 'page',
-    description: 'Page number (default: 1)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of items per page (default: 20)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'q',
-    description: 'Search query (searches in name, lastName, cedula)',
-    required: false,
-    type: String,
-  })
+  @ApiQuery({ name: 'page', description: 'Page number (default: 1)', required: false, type: Number })
+  @ApiQuery({ name: 'limit', description: 'Number of items per page (default: 20)', required: false, type: Number })
+  @ApiQuery({ name: 'q', description: 'Search query (searches in names, identificationNumber)', required: false, type: String })
+  @ApiQuery({ name: 'identificationType', description: 'Filter by identification type', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'List of customers retrieved successfully',
@@ -115,8 +100,9 @@ export class CustomerController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') searchQuery?: string,
+    @Query('identificationType') identificationType?: string,
   ): Promise<{
-    data: CustomerResponseDto[];
+    data: CustomerListResponseDto[];
     total: number;
     page: number;
     limit: number;
@@ -126,16 +112,12 @@ export class CustomerController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const filters: CustomerFilters = {
-      q: searchQuery,
-    };
-
     const result = await this.queryBus.execute(
-      new ListCustomersQuery(pagination, filters),
+      new ListCustomersWithStockQuery(pagination, searchQuery, identificationType),
     );
 
     return {
-      data: CustomerResponseDto.fromEntities(result.data),
+      data: CustomerListResponseDto.fromQueryResults(result.data),
       total: result.total,
       page: result.page,
       limit: result.limit,
