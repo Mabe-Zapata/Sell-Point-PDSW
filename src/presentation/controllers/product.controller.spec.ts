@@ -4,6 +4,12 @@ import { ProductController } from './product.controller';
 import { ListProductsWithStockQuery } from '../../application/cqrs/product/queries/list-products-with-stock/list-products-with-stock.query';
 import { GetProductQuery } from '../../application/cqrs/product/queries/get-product/get-product.query';
 import { CreateProductCommand } from '../../application/cqrs/product/commands/create-product/create-product.command';
+import { AdjustStockCommand } from '../../application/cqrs/inventory/commands/adjust-stock/adjust-stock.command';
+import { GetMovementsHistoryQuery } from '../../application/cqrs/inventory/queries/get-movements-history/get-movements-history.query';
+import { AdjustStockDto } from '../../application/dto/stock/adjust-stock.dto';
+import { StockMovementType } from '../../domain/entities/enums/stock-movement-type.enum';
+import { StockMovement } from '../../domain/entities/stock-movement.entity';
+import { StockMovementResponseDto } from '../../application/dto/stock/stock-movement-response.dto';
 
 describe('ProductController', () => {
   let controller: ProductController;
@@ -109,6 +115,88 @@ describe('ProductController', () => {
         new CreateProductCommand(createDto),
       );
       expect(result).toEqual(mockProduct);
+    });
+  });
+
+  describe('adjustStock', () => {
+    it('should call commandBus.execute with AdjustStockCommand and return StockMovementResponseDto', async () => {
+      const mockMovement = new StockMovement({
+        id: 1,
+        productId: 'prod-123',
+        type: StockMovementType.IN,
+        quantity: 5,
+        previousStock: 10,
+        newStock: 15,
+        createdAt: new Date('2026-05-24'),
+      });
+      mockCommandBus.execute.mockResolvedValue(mockMovement);
+
+      const dto: AdjustStockDto = {
+        type: StockMovementType.IN,
+        quantity: 5,
+      };
+
+      const result = await controller.adjustStock('prod-123', dto);
+
+      expect(mockCommandBus.execute).toHaveBeenCalledWith(
+        new AdjustStockCommand('prod-123', dto),
+      );
+      expect(result).toBeInstanceOf(StockMovementResponseDto);
+      expect(result.productId).toBe('prod-123');
+      expect(result.quantity).toBe(5);
+      expect(result.previousStock).toBe(10);
+      expect(result.newStock).toBe(15);
+    });
+  });
+
+  describe('findMovements', () => {
+    it('should call queryBus.execute with GetMovementsHistoryQuery', async () => {
+      const mockMovement = new StockMovement({
+        id: 1,
+        productId: 'prod-123',
+        type: StockMovementType.IN,
+        quantity: 5,
+        previousStock: 10,
+        newStock: 15,
+        createdAt: new Date('2026-05-24'),
+      });
+
+      const mockResult = {
+        data: [mockMovement],
+        total: 1,
+        page: 1,
+        limit: 20,
+      };
+      mockQueryBus.execute.mockResolvedValue(mockResult);
+
+      const result = await controller.findMovements('prod-123', '1', '20', 'IN');
+
+      expect(mockQueryBus.execute).toHaveBeenCalledWith(
+        expect.any(GetMovementsHistoryQuery),
+      );
+      const calledQuery = mockQueryBus.execute.mock.calls[0][0] as GetMovementsHistoryQuery;
+      expect(calledQuery.productId).toBe('prod-123');
+      expect(calledQuery.type).toBe('IN');
+      expect(result.data[0]).toBeInstanceOf(StockMovementResponseDto);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+    });
+
+    it('should use default pagination when params not provided', async () => {
+      const mockResult = {
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+      };
+      mockQueryBus.execute.mockResolvedValue(mockResult);
+
+      await controller.findMovements('prod-123', undefined, undefined, undefined);
+
+      expect(mockQueryBus.execute).toHaveBeenCalledWith(
+        expect.any(GetMovementsHistoryQuery),
+      );
     });
   });
 });

@@ -29,11 +29,15 @@ import { UpdateProductCommand } from '../../application/cqrs/product/commands/up
 import { DeleteProductCommand } from '../../application/cqrs/product/commands/delete-product/delete-product.command';
 import { ActivateProductCommand } from '../../application/cqrs/product/commands/activate-product/activate-product.command';
 import { DeactivateProductCommand } from '../../application/cqrs/product/commands/deactivate-product/deactivate-product.command';
+import { AdjustStockCommand } from '../../application/cqrs/inventory/commands/adjust-stock/adjust-stock.command';
+import { GetMovementsHistoryQuery } from '../../application/cqrs/inventory/queries/get-movements-history/get-movements-history.query';
 
 import { CreateProductDto } from '../../application/dto/product/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/product/update-product.dto';
 import { ProductResponseDto } from '../../application/dto/product/product-response.dto';
 import { ProductWithStockResponseDto } from '../../application/dto/product/product-with-stock-response.dto';
+import { AdjustStockDto } from '../../application/dto/stock/adjust-stock.dto';
+import { StockMovementResponseDto } from '../../application/dto/stock/stock-movement-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('products')
@@ -200,5 +204,50 @@ export class ProductController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
     await this.commandBus.execute(new DeleteProductCommand(id));
+  }
+
+  @Patch(':id/stock')
+  @ApiOperation({ summary: 'Adjust product stock', description: 'Adjusts stock levels for a product. Creates a stock movement record.' })
+  @ApiParam({ name: 'id', description: 'Product UUID' })
+  @ApiBody({ type: AdjustStockDto })
+  @ApiResponse({ status: 200, description: 'Stock adjusted successfully' })
+  @ApiResponse({ status: 422, description: 'Insufficient stock' })
+  async adjustStock(
+    @Param('id') id: string,
+    @Body() dto: AdjustStockDto,
+  ): Promise<StockMovementResponseDto> {
+    const movement = await this.commandBus.execute(
+      new AdjustStockCommand(id, dto),
+    );
+    return StockMovementResponseDto.fromEntity(movement);
+  }
+
+  @Get(':id/movements')
+  @ApiOperation({ summary: 'Get product stock movement history' })
+  @ApiParam({ name: 'id', description: 'Product UUID' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by movement type' })
+  async findMovements(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('type') type?: string,
+  ): Promise<{ data: StockMovementResponseDto[]; total: number; page: number; limit: number }> {
+    const pagination: PaginationParams = {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+    };
+
+    const result = await this.queryBus.execute(
+      new GetMovementsHistoryQuery(pagination, undefined, id, type),
+    );
+
+    return {
+      data: result.data.map(m => StockMovementResponseDto.fromEntity(m)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
   }
 }
