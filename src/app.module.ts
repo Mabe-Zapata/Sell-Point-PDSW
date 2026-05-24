@@ -37,6 +37,9 @@ import {
   ListProductsWithStockHandler, ListProductsWithStockValidator,
   CreateCategoryHandler, CreateCategoryValidator,
   UpdateCategoryHandler, UpdateCategoryValidator,
+  DeleteCategoryHandler, DeleteCategoryValidator,
+  ActivateCategoryHandler, ActivateCategoryValidator,
+  DeactivateCategoryHandler, DeactivateCategoryValidator,
   GetCategoryHandler, GetCategoryValidator,
   ListCategoriesHandler, ListCategoriesValidator,
   CreateTaxRateHandler, CreateTaxRateValidator,
@@ -86,7 +89,7 @@ import {
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController } from './presentation/controllers';
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
@@ -102,6 +105,9 @@ const CommandHandlers = [
   DeleteProductHandler, DeleteProductValidator,
   CreateCategoryHandler, CreateCategoryValidator,
   UpdateCategoryHandler, UpdateCategoryValidator,
+  DeleteCategoryHandler, DeleteCategoryValidator,
+  ActivateCategoryHandler, ActivateCategoryValidator,
+  DeactivateCategoryHandler, DeactivateCategoryValidator,
   CreateTaxRateHandler, CreateTaxRateValidator,
   UpdateTaxRateHandler, UpdateTaxRateValidator,
   CreateSaleHandler, CreateSaleValidator,
@@ -166,7 +172,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController],
   providers: [
     AppService,
     // Domain Services

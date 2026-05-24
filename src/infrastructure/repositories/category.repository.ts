@@ -86,4 +86,8 @@ export class CategoryRepository implements ICategoryRepository {
     if (!updated) throw new Error('Category not found after update');
     return this.mapToDomain(updated);
   }
+
+  async softDelete(id: string): Promise<void> {
+    await this.repo.delete(id);
+  }
 }
