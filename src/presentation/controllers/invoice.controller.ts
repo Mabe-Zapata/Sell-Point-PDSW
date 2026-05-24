@@ -17,6 +17,7 @@ import {
   ApiQuery,
   ApiBody,
   ApiProduces,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Inject } from '@nestjs/common';
@@ -38,6 +39,7 @@ import { Invoice } from '../../domain/entities/invoice.entity';
 import { InvoiceItem } from '../../domain/entities/invoice-item.entity';
 
 @ApiTags('invoices')
+@ApiBearerAuth('access-token')
 @Controller('invoices')
 export class InvoiceController {
   constructor(

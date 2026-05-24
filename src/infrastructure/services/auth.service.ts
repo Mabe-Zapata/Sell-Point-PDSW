@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '../../domain/entities/user.entity';
+import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import { UserFilters } from '../../domain/repositories/user.repository.interface';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService, RefreshTokenPayload } from '../redis/redis.service';
 
@@ -118,5 +121,24 @@ export class AuthService {
 
   async revokeRefreshToken(uuid: string): Promise<void> {
     await this.redisService.deleteRefreshToken(uuid);
+  }
+
+  async verifyAccessToken(token: string): Promise<TokenPayload | null> {
+    try {
+      return this.jwtService.verify<TokenPayload>(token);
+    } catch {
+      return null;
+    }
+  }
+
+  async getAuthenticatedUser(employeeId: string): Promise<User | null> {
+    return this.userRepository.findById(employeeId);
+  }
+
+  async listUsers(
+    pagination: PaginationParams,
+    filters: UserFilters,
+  ): Promise<PaginatedResult<User>> {
+    return this.userRepository.findAll(pagination, filters);
   }
 }

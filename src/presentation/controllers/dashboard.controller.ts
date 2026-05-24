@@ -1,11 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 
 import { GetDashboardStatsQuery } from '../../application/cqrs/dashboard/queries/get-dashboard-stats/get-dashboard-stats.query';
 import { DashboardStatsDto } from '../../application/dto/dashboard/dashboard-stats.dto';
 
 @ApiTags('dashboard')
+@ApiBearerAuth('access-token')
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly queryBus: QueryBus) {}

@@ -70,17 +70,41 @@ export class UserRepository implements IUserRepository {
     filters: UserFilters = {},
   ): Promise<PaginatedResult<User>> {
     const { page, limit } = pagination;
-    const { q, status } = filters;
+    const { q, status, role, username, email, employeeId, isActive } = filters;
 
-    const queryBuilder = this.repo.createQueryBuilder('user');
+    const queryBuilder = this.repo.createQueryBuilder('user').where('1=1');
 
     if (q) {
-      queryBuilder.where('user.employeeId ILIKE :q OR user.email ILIKE :q', {
-        q: `%${q}%`,
+      queryBuilder.where(
+        '(LOWER(user.employeeId) LIKE LOWER(:q) OR LOWER(user.email) LIKE LOWER(:q) OR LOWER(user.username) LIKE LOWER(:q))',
+        {
+          q: `%${q}%`,
+        },
+      );
+    }
+    if (employeeId) {
+      queryBuilder.andWhere('user.employeeId = :employeeId', { employeeId });
+    }
+    if (username) {
+      queryBuilder.andWhere('LOWER(user.username) LIKE LOWER(:username)', {
+        username: `%${username}%`,
       });
+    }
+    if (email) {
+      queryBuilder.andWhere('LOWER(user.email) LIKE LOWER(:email)', {
+        email: `%${email}%`,
+      });
+    }
+    if (role) {
+      queryBuilder.andWhere('user.role = :role', { role });
     }
     if (status) {
       queryBuilder.andWhere('user.status = :status', { status });
+    }
+    if (isActive !== undefined) {
+      queryBuilder.andWhere(isActive ? 'user.status = :activeStatus' : 'user.status <> :activeStatus', {
+        activeStatus: 'ACTIVE',
+      });
     }
 
     const total = await queryBuilder.getCount();

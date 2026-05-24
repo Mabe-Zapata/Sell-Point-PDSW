@@ -4,6 +4,11 @@ import { PaginationParams, PaginatedResult } from './pagination.types';
 export interface UserFilters {
   q?: string;
   status?: string;
+  role?: string;
+  username?: string;
+  email?: string;
+  employeeId?: string;
+  isActive?: boolean;
 }
 
 export interface IUserRepository {

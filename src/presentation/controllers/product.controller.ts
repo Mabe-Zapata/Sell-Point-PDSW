@@ -19,6 +19,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { CreateProductCommand } from '../../application/cqrs/product/commands/create-product/create-product.command';
@@ -36,6 +37,7 @@ import { ProductWithStockResponseDto } from '../../application/dto/product/produ
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('products')
+@ApiBearerAuth('access-token')
 @Controller('products')
 export class ProductController {
   constructor(

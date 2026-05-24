@@ -18,6 +18,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { CreateCustomerCommand } from '../../application/cqrs/customer/commands/create-customer/create-customer.command';
@@ -34,6 +35,7 @@ import { CustomerListResponseDto } from '../../application/dto/customer/customer
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('customers')
+@ApiBearerAuth('access-token')
 @Controller('customers')
 export class CustomerController {
   constructor(
