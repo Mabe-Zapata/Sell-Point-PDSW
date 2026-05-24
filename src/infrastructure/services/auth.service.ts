@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../domain/entities/user.entity';
+import { UserStatus } from '../../domain/entities/enums/user-status.enum';
 import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
 import { UserFilters } from '../../domain/repositories/user.repository.interface';
 import { UserRepository } from '../repositories/user.repository';
@@ -33,6 +34,7 @@ export class AuthService {
   private static readonly ACCESS_TOKEN_TTL = 900;
   private static readonly REFRESH_TOKEN_TTL_DEFAULT = 604800;
   private static readonly REFRESH_TOKEN_TTL_REMEMBER = 2592000;
+  private static readonly MAX_FAILED_ATTEMPTS = 3;
 
   constructor(
     private readonly userRepository: UserRepository,
@@ -40,25 +42,14 @@ export class AuthService {
     private readonly redisService: RedisService,
   ) {}
 
-  /**
-   * Hash a plain-text password using bcrypt (salt is embedded in the hash).
-   * Use this when creating or updating a user's password.
-   */
   async hashPassword(plain: string): Promise<string> {
     return bcrypt.hash(plain, AuthService.SALT_ROUNDS);
   }
 
-  /**
-   * Verify a plain-text password against a bcrypt hash stored in PAS_HASH.
-   */
   async verifyPassword(plain: string, hash: string): Promise<boolean> {
     return bcrypt.compare(plain, hash);
   }
 
-  /**
-   * Authenticate a user by EMP_ID + password.
-   * Returns a session payload on success, null on failure.
-   */
   async login(
     employeeId: string,
     password: string,
@@ -67,8 +58,32 @@ export class AuthService {
     const user = await this.userRepository.findByEmployeeId(employeeId);
     if (!user) return null;
 
+    if (user.status === UserStatus.BLOCKED) {
+      throw new UnauthorizedException({
+        code: 'USER_BLOCKED',
+        message: 'auth.errors.user_blocked',
+      });
+    }
+
     const valid = await this.verifyPassword(password, user.passwordHash);
-    if (!valid) return null;
+
+    if (!valid) {
+      const newAttempts = user.failedLoginAttempts + 1;
+      await this.userRepository.updateFailedLoginAttempts(user.id, newAttempts);
+
+      if (newAttempts >= AuthService.MAX_FAILED_ATTEMPTS) {
+        user.block();
+        await this.userRepository.update(user);
+        throw new UnauthorizedException({
+          code: 'USER_BLOCKED',
+          message: 'auth.errors.user_blocked',
+        });
+      }
+
+      return null;
+    }
+
+    await this.userRepository.updateFailedLoginAttempts(user.id, 0);
 
     const payload: TokenPayload = {
       employeeId: user.id,
@@ -123,16 +138,23 @@ export class AuthService {
     await this.redisService.deleteRefreshToken(uuid);
   }
 
-  async verifyAccessToken(token: string): Promise<TokenPayload | null> {
-    try {
-      return this.jwtService.verify<TokenPayload>(token);
-    } catch {
-      return null;
-    }
+  verifyAccessToken(token: string): TokenPayload | null {
+  try {
+    return this.jwtService.verify<TokenPayload>(token);
+  } catch {
+    return null;
   }
+}
 
   async getAuthenticatedUser(employeeId: string): Promise<User | null> {
     return this.userRepository.findById(employeeId);
+  }
+
+  async unlockUser(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) return;
+    user.unlock();
+    await this.userRepository.update(user);
   }
 
   async listUsers(

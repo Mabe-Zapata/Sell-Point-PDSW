@@ -55,7 +55,7 @@ import {
   GetMovementsHistoryHandler, GetMovementsHistoryValidator,
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
-  GetDashboardStatsHandler,
+  GetDashboardStatsHandler, UnlockUserHandler, UnlockUserValidator,
 } from './application/cqrs';
 
 // Domain + Infrastructure (barrel imports)
@@ -91,6 +91,7 @@ import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
 // CQRS arrays
 const CommandHandlers = [
+  UnlockUserHandler, UnlockUserValidator,
   CreateCustomerHandler, CreateCustomerValidator,
   UpdateCustomerHandler, UpdateCustomerValidator,
   ActivateCustomerHandler, ActivateCustomerValidator,
