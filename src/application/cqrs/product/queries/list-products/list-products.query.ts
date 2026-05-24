@@ -1,8 +1,7 @@
 import {
   ProductFilters,
-  PaginatedResult,
 } from '../../../../../domain/repositories/product.repository.interface';
-import { PaginationParams } from '../../../../../domain/repositories/customer.repository.interface';
+import { PaginationParams } from '../../../../../domain/repositories/pagination.types';
 
 export class ListProductsQuery {
   constructor(

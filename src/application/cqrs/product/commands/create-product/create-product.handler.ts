@@ -1,25 +1,32 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { CreateProductCommand } from './create-product.command';
 import { CreateProductValidator } from './create-product.validator';
-import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { PRODUCT_REPOSITORY } from '../../../../tokens';
+import type { IProductRepository } from '../../../../../domain/repositories';
 import { Product } from '../../../../../domain/entities/product.entity';
 
 @CommandHandler(CreateProductCommand)
 export class CreateProductHandler implements ICommandHandler<CreateProductCommand> {
   constructor(
     private readonly validator: CreateProductValidator,
-    private readonly productRepository: ProductRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
   ) {}
 
   async execute(command: CreateProductCommand): Promise<Product> {
     await this.validator.validate(command.payload);
 
     const product = new Product({
+      id: randomUUID(),
+      categoryId: command.payload.categoryId,
       code: command.payload.code,
       name: command.payload.name,
       description: command.payload.description,
-      unitPrice: command.payload.unitPrice,
-      availableQuantity: command.payload.availableQuantity,
+      salePrice: command.payload.salePrice,
+      costPrice: command.payload.costPrice,
+      currentStock: 0,
+      isActive: true,
     });
 
     return this.productRepository.create(product);

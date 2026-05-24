@@ -4,45 +4,59 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { UserStatusDb } from './enums/user-status.db-enum';
+import { dbBooleanColumn } from './db-column.helper';
 
 @Entity('USERS')
 export class UserTypeOrmEntity {
-  @ApiProperty({ description: 'User unique identifier' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @ApiProperty({ description: 'Employee identifier' })
-  @Column({ name: 'EMP_ID', length: 50 })
-  employeeId: string;
+  @Column({ name: 'FIR_NAM_USR', length: 100, nullable: true })
+  firstName?: string;
 
-  @ApiProperty({ description: 'User email address' })
-  @Column({ name: 'EMA_USR', length: 255, nullable: true })
-  email?: string;
+  @Column({ name: 'LAS_NAM_USR', length: 100, nullable: true })
+  lastName?: string;
 
-  @ApiProperty({ description: 'Hashed password' })
+  @Column({ name: 'CED_USR', length: 20, nullable: true })
+  cedula?: string;
+
+  @Column({ name: 'ACT_USR', ...dbBooleanColumn() })
+  isActive!: boolean;
+
+  @Column({ name: 'ROL_USR', length: 50, nullable: true })
+  role?: string;
+
+  @Column({ name: 'EMP_ID', length: 50, unique: true })
+  employeeId!: string;
+
+  @Column({ name: 'USR_USR', length: 100, unique: true })
+  username!: string;
+
+  @Column({ name: 'EMA_USR', length: 255, unique: true })
+  email!: string;
+
   @Column({ name: 'PAS_HASH', length: 255 })
-  passwordHash: string;
+  passwordHash!: string;
 
-  @ApiProperty({ description: 'User role', default: 'ADMIN' })
-  @Column({ name: 'ROL_USR', length: 30, default: 'ADMIN' })
-  role: string;
+  @Column({
+    name: 'STA_USR',
+    type: 'varchar',
+    length: 30,
+    default: 'ACTIVE',
+  })
+  status!: string;
 
-  @ApiProperty({ description: 'Whether the user is active', default: true })
-  @Column({ name: 'ACT_USR', type: 'tinyint', default: 1 })
-  isActive: boolean;
+  @Column({ name: 'DEF_BRA_ID', type: 'uuid', nullable: true })
+  defaultBranchId?: string;
 
-  @ApiProperty({ description: 'Creation timestamp' })
+  @Column({ name: 'failed_attempts', type: 'int', default: 0 })
+  failedLoginAttempts!: number;
+
   @CreateDateColumn({ name: 'CRE_AT' })
-  createdAt: Date;
+  createdAt!: Date;
 
-  @ApiProperty({ description: 'Last update timestamp' })
   @UpdateDateColumn({ name: 'UPD_AT' })
-  updatedAt: Date;
-
-  @ApiProperty({ description: 'Soft delete timestamp' })
-  @DeleteDateColumn({ name: 'DEL_AT' })
-  deletedAt?: Date;
+  updatedAt!: Date;
 }

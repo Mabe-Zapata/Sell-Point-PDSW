@@ -1,68 +1,34 @@
 import { Invoice } from '../../../domain/entities/invoice.entity';
-import { InvoiceItem } from '../../../domain/entities/invoice-item.entity';
-
-export class InvoiceItemResponseDto {
-  id: string;
-
-  productId: string;
-
-  quantity: number;
-
-  unitPrice: number;
-
-  constructor(item: InvoiceItem) {
-    this.id = item.id;
-    this.productId = item.productId;
-    this.quantity = item.quantity;
-    this.unitPrice = item.unitPrice;
-  }
-
-  static fromEntity(item: InvoiceItem): InvoiceItemResponseDto {
-    return new InvoiceItemResponseDto(item);
-  }
-
-  static fromEntities(items: InvoiceItem[]): InvoiceItemResponseDto[] {
-    return items.map((item) => new InvoiceItemResponseDto(item));
-  }
-}
 
 export class InvoiceResponseDto {
   id: string;
 
+  saleId: string;
+
+  seriesId: string;
+
   invoiceNumber: string;
 
-  invoiceDate: Date;
+  authorizationNumber?: string;
 
-  customerId: string;
+  issueDate: Date;
 
-  customerName?: string;
+  status: string;
 
-  subtotal: number;
-
-  iva: number;
-
-  total: number;
-
-  items?: InvoiceItemResponseDto[];
+  cancelledAt?: Date;
 
   createdAt: Date;
 
-  updatedAt: Date;
-
   constructor(invoice: Invoice) {
     this.id = invoice.id;
+    this.saleId = invoice.saleId;
+    this.seriesId = invoice.seriesId;
     this.invoiceNumber = invoice.invoiceNumber;
-    this.invoiceDate = invoice.invoiceDate;
-    this.customerId = invoice.customerId;
-    this.customerName = invoice.customerName;
-    this.subtotal = invoice.subtotal;
-    this.iva = invoice.iva;
-    this.total = invoice.total;
-    this.items = invoice.items
-      ? invoice.items.map((item) => new InvoiceItemResponseDto(item))
-      : undefined;
+    this.authorizationNumber = invoice.authorizationNumber;
+    this.issueDate = invoice.issueDate;
+    this.status = invoice.status;
+    this.cancelledAt = invoice.cancelledAt;
     this.createdAt = invoice.createdAt;
-    this.updatedAt = invoice.updatedAt;
   }
 
   static fromEntity(invoice: Invoice): InvoiceResponseDto {

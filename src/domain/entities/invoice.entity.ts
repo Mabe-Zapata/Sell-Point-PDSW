@@ -1,29 +1,19 @@
-import { InvoiceItem } from './invoice-item.entity';
+import { InvoiceStatus } from './enums';
 
 export class Invoice {
-  id: string;
+  id!: string;
+  saleId!: string;
+  seriesId!: string;
+  invoiceNumber!: string;
+  authorizationNumber?: string;
+  issueDate!: Date;
+  status!: InvoiceStatus;
+  cancelledAt?: Date;
+  createdAt!: Date;
 
-  invoiceNumber: string;
-
-  invoiceDate: Date;
-
-  customerId: string;
-
-  customerName?: string;
-
-  subtotal: number;
-
-  iva: number;
-
-  total: number;
-
-  items?: InvoiceItem[];
-
-  createdAt: Date;
-
-  updatedAt: Date;
-
-  deletedAt?: Date;
+  // Computed for PDF only (fetched via JOIN at query time, not stored)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 
   constructor(partial: Partial<Invoice>) {
     Object.assign(this, partial);

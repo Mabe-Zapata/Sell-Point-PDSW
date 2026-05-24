@@ -1,0 +1,7 @@
+export enum IdentificationType {
+  RUC = 'RUC',
+  CEDULA = 'CEDULA',
+  PASAPORTE = 'PASAPORTE',
+  FOREIGN_ID = 'FOREIGN_ID',
+  CONSUMIDOR_FINAL = 'CONSUMIDOR_FINAL',
+}

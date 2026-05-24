@@ -1,23 +1,69 @@
+import { BusinessRuleException } from '../exceptions';
+
 export class Product {
-  id: string;
+  readonly id!: string;
+  readonly categoryId!: string;
+  readonly code!: string;
+  readonly name!: string;
+  readonly description?: string;
+  readonly salePrice!: number;
+  readonly costPrice!: number;
+  readonly currentStock!: number;
+  readonly createdAt!: Date;
+  readonly deletedAt?: Date;
 
-  code: string;
+  private _isActive!: boolean;
+  private _updatedAt!: Date;
 
-  name: string;
+  constructor(properties: {
+    id: string;
+    categoryId: string;
+    code: string;
+    name: string;
+    description?: string;
+    salePrice: number;
+    costPrice: number;
+    currentStock: number;
+    isActive: boolean;
+    createdAt?: Date;
+    updatedAt?: Date;
+    deletedAt?: Date;
+  }) {
+    this.id = properties.id;
+    this.categoryId = properties.categoryId;
+    this.code = properties.code;
+    this.name = properties.name;
+    this.description = properties.description;
+    this.salePrice = properties.salePrice;
+    this.costPrice = properties.costPrice;
+    this.currentStock = properties.currentStock;
+    this._isActive = properties.isActive;
+    this.createdAt = properties.createdAt || new Date();
+    this._updatedAt = properties.updatedAt || new Date();
+    this.deletedAt = properties.deletedAt;
+  }
 
-  description?: string;
+  get isActive(): boolean {
+    return this._isActive;
+  }
 
-  unitPrice: number;
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
 
-  availableQuantity: number;
+  activate(): void {
+    if (this._isActive) {
+      throw new BusinessRuleException('Product is already active');
+    }
+    this._isActive = true;
+    this._updatedAt = new Date();
+  }
 
-  createdAt: Date;
-
-  updatedAt: Date;
-
-  deletedAt?: Date;
-
-  constructor(partial: Partial<Product>) {
-    Object.assign(this, partial);
+  deactivate(): void {
+    if (!this._isActive) {
+      throw new BusinessRuleException('Product is already inactive');
+    }
+    this._isActive = false;
+    this._updatedAt = new Date();
   }
 }

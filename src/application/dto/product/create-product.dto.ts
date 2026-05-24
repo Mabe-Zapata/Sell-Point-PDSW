@@ -6,11 +6,16 @@ import {
   MaxLength,
   IsOptional,
   Max,
-  IsInt,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class CreateProductDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(36)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  categoryId: string;
+
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
@@ -31,10 +36,11 @@ export class CreateProductDto {
   @IsPositive()
   @Max(99999999.99)
   @Type(() => Number)
-  unitPrice: number;
+  salePrice: number;
 
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
+  @Max(99999999.99)
   @Type(() => Number)
-  availableQuantity: number;
+  costPrice: number;
 }

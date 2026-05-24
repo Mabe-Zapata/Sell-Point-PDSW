@@ -14,7 +14,7 @@ export class InvoiceItemRepository implements IInvoiceItemRepository {
 
   private mapToDomain(entity: InvoiceItemTypeOrmEntity): InvoiceItem {
     return new InvoiceItem({
-      id: entity.id,
+      id: String(entity.id),
       invoiceId: entity.invoiceId,
       productId: entity.productId,
       productName: entity.product?.name,

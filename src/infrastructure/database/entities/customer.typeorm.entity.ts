@@ -4,49 +4,41 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { dbBooleanColumn } from './db-column.helper';
 
 @Entity('CUSTOMERS')
 export class CustomerTypeOrmEntity {
-  @ApiProperty({ description: 'Customer unique identifier' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @ApiProperty({ description: 'Customer name' })
-  @Column({ name: 'NAM_CUS', length: 100 })
-  name: string;
+  // Legacy compatibility fields used by older seed/application code
+  name?: string;
 
-  @ApiProperty({ description: 'Customer last name' })
-  @Column({ name: 'LAS_NAM_CUS', length: 100 })
-  lastName: string;
+  @Column({ name: 'CED_CUS', length: 20, nullable: true })
+  cedula?: string;
 
-  @ApiProperty({ description: 'Customer identification number' })
-  @Column({ name: 'ID_CUS', length: 20, unique: true })
-  cedula: string;
+  @Column({ name: 'NOM_CUS', length: 100 })
+  firstName!: string;
 
-  @ApiProperty({ description: 'Customer email address' })
+  @Column({ name: 'APE_CUS', length: 100, nullable: true })
+  lastName?: string;
+
   @Column({ name: 'EMA_CUS', length: 255, nullable: true })
   email?: string;
 
-  @ApiProperty({ description: 'Customer phone number' })
   @Column({ name: 'PHO_CUS', length: 20, nullable: true })
   phone?: string;
 
-  @ApiProperty({ description: 'Customer address' })
   @Column({ name: 'ADD_CUS', length: 255, nullable: true })
   address?: string;
 
-  @ApiProperty({ description: 'Creation timestamp' })
+  @Column({ name: 'ACT_CUS', ...dbBooleanColumn() })
+  isActive!: boolean;
+
   @CreateDateColumn({ name: 'CRE_AT' })
-  createdAt: Date;
+  createdAt!: Date;
 
-  @ApiProperty({ description: 'Last update timestamp' })
   @UpdateDateColumn({ name: 'UPD_AT' })
-  updatedAt: Date;
-
-  @ApiProperty({ description: 'Soft delete timestamp' })
-  @DeleteDateColumn({ name: 'DEL_AT' })
-  deletedAt?: Date;
+  updatedAt!: Date;
 }

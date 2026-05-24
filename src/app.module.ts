@@ -1,222 +1,210 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { SwaggerModule } from '@nestjs/swagger';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configuration } from './config/configuration';
 import { typeormConfig } from './config/typeorm.config';
+import { createSwaggerConfig } from './config/swagger.config';
 
-// Domain
-import { TaxCalculator } from './domain/services/tax-calculator.service';
+// Application - DI Tokens + CQRS Handlers (reducers)
+import { TAX_CALCULATOR } from './application/tokens';
+import {
+  PRODUCT_QUERY_SERVICE, CUSTOMER_QUERY_SERVICE, INVOICE_QUERY_SERVICE,
+  DASHBOARD_QUERY_SERVICE, SALE_QUERY_SERVICE,
+  ERROR_LOG_QUERY_SERVICE
+} from './application/query-tokens';
+import { PDF_SERVICE } from './application/services/pdf-service.interface';
+import {
+  CreateCustomerHandler, CreateCustomerValidator,
+  UpdateCustomerHandler, UpdateCustomerValidator,
+  ActivateCustomerHandler, ActivateCustomerValidator,
+  DeactivateCustomerHandler, DeactivateCustomerValidator,
+  GetCustomerHandler, GetCustomerValidator,
+  ListCustomersHandler, ListCustomersValidator,
+  ListCustomersWithStockHandler, ListCustomersWithStockValidator,
+  CreateProductHandler, CreateProductValidator,
+  UpdateProductHandler, UpdateProductValidator,
+  DeleteProductHandler, DeleteProductValidator,
+  GetProductHandler, GetProductValidator,
+  ListProductsHandler, ListProductsValidator,
+  ListProductsWithStockHandler, ListProductsWithStockValidator,
+  CreateCategoryHandler, CreateCategoryValidator,
+  UpdateCategoryHandler, UpdateCategoryValidator,
+  GetCategoryHandler, GetCategoryValidator,
+  ListCategoriesHandler, ListCategoriesValidator,
+  CreateTaxRateHandler, CreateTaxRateValidator,
+  UpdateTaxRateHandler, UpdateTaxRateValidator,
+  GetTaxRateHandler, GetTaxRateValidator,
+  ListTaxRatesHandler, ListTaxRatesValidator,
+  CreateSaleHandler, CreateSaleValidator,
+  AddSaleDetailHandler, AddSaleDetailValidator,
+  RemoveSaleDetailHandler, RemoveSaleDetailValidator,
+  UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
+  ConfirmSaleHandler, ConfirmSaleValidator,
+  CancelSaleHandler, CancelSaleValidator,
+  GetSaleHandler, GetSaleValidator,
+  ListSalesHandler, ListSalesValidator,
+  GetStockLevelsHandler, GetStockLevelsValidator,
+  GetMovementsHistoryHandler, GetMovementsHistoryValidator,
+  GetErrorLogHandler, GetErrorLogValidator,
+  ListErrorLogsHandler, ListErrorLogsValidator,
+  GetDashboardStatsHandler,
+} from './application/cqrs';
 
-// Application - CQRS (Customer)
-import { CreateCustomerHandler } from './application/cqrs/customer/commands/create-customer/create-customer.handler';
-import { CreateCustomerValidator } from './application/cqrs/customer/commands/create-customer/create-customer.validator';
-import { UpdateCustomerHandler } from './application/cqrs/customer/commands/update-customer/update-customer.handler';
-import { UpdateCustomerValidator } from './application/cqrs/customer/commands/update-customer/update-customer.validator';
-import { DeleteCustomerHandler } from './application/cqrs/customer/commands/delete-customer/delete-customer.handler';
-import { DeleteCustomerValidator } from './application/cqrs/customer/commands/delete-customer/delete-customer.validator';
-import { GetCustomerHandler } from './application/cqrs/customer/queries/get-customer/get-customer.handler';
-import { GetCustomerValidator } from './application/cqrs/customer/queries/get-customer/get-customer.validator';
-import { ListCustomersHandler } from './application/cqrs/customer/queries/list-customers/list-customers.handler';
-import { ListCustomersValidator } from './application/cqrs/customer/queries/list-customers/list-customers.validator';
+// Domain + Infrastructure (barrel imports)
+import { TaxCalculator } from './domain/services';
+import {
+  CustomerRepository, ProductRepository, InvoiceRepository, InvoiceItemRepository,
+  DashboardRepository, UserRepository, CategoryRepository,
+  ErrorLogRepository, TaxRateRepository,
+  StockMovementRepository, SaleRepository, SaleDetailRepository,
+  InvoiceSeriesRepository,
+} from './infrastructure/repositories';
+import {
+  DashboardQueryService, InvoiceQueryService, CustomerQueryService,
+  ProductQueryService, SaleQueryService,
+  ErrorLogQueryService,
+} from './infrastructure/queries';
+import { PdfService, AuthService } from './infrastructure/services';
+import { RedisModule } from './infrastructure/redis/redis.module';
+import {
+  CategoryTypeOrmEntity, CustomerTypeOrmEntity,
+  ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
+  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
+  ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
+  SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
+  TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
+  UserRoleTypeOrmEntity,
+} from './infrastructure/database/entities';
 
-// Application - CQRS (Product)
-import { CreateProductHandler } from './application/cqrs/product/commands/create-product/create-product.handler';
-import { CreateProductValidator } from './application/cqrs/product/commands/create-product/create-product.validator';
-import { UpdateProductHandler } from './application/cqrs/product/commands/update-product/update-product.handler';
-import { UpdateProductValidator } from './application/cqrs/product/commands/update-product/update-product.validator';
-import { DeleteProductHandler } from './application/cqrs/product/commands/delete-product/delete-product.handler';
-import { DeleteProductValidator } from './application/cqrs/product/commands/delete-product/delete-product.validator';
-import { GetProductHandler } from './application/cqrs/product/queries/get-product/get-product.handler';
-import { GetProductValidator } from './application/cqrs/product/queries/get-product/get-product.validator';
-import { ListProductsHandler } from './application/cqrs/product/queries/list-products/list-products.handler';
-import { ListProductsValidator } from './application/cqrs/product/queries/list-products/list-products.validator';
+// Presentation
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController } from './presentation/controllers';
+import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
+import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
-// Application - CQRS (Invoice)
-import { CreateInvoiceHandler } from './application/cqrs/invoice/commands/create-invoice/create-invoice.handler';
-import { CreateInvoiceValidator } from './application/cqrs/invoice/commands/create-invoice/create-invoice.validator';
-import { GetInvoiceHandler } from './application/cqrs/invoice/queries/get-invoice/get-invoice.handler';
-import { GetInvoiceValidator } from './application/cqrs/invoice/queries/get-invoice/get-invoice.validator';
-import { ListInvoicesHandler } from './application/cqrs/invoice/queries/list-invoices/list-invoices.handler';
-import { ListInvoicesValidator } from './application/cqrs/invoice/queries/list-invoices/list-invoices.validator';
-import { GenerateInvoicePdfHandler } from './application/cqrs/invoice/queries/generate-invoice-pdf/generate-invoice-pdf.handler';
-import { GenerateInvoicePdfValidator } from './application/cqrs/invoice/queries/generate-invoice-pdf/generate-invoice-pdf.validator';
-
-// Infrastructure - Repositories
-import { CustomerRepository } from './infrastructure/repositories/customer.repository';
-import { ProductRepository } from './infrastructure/repositories/product.repository';
-import { InvoiceRepository } from './infrastructure/repositories/invoice.repository';
-import { InvoiceItemRepository } from './infrastructure/repositories/invoice-item.repository';
-import { DashboardRepository } from './infrastructure/repositories/dashboard.repository';
-
-// Infrastructure - Services
-import { PdfService } from './infrastructure/services/pdf.service';
-import { AuthService } from './infrastructure/services/auth.service';
-
-// Infrastructure - Repositories (Auth)
-import { UserRepository } from './infrastructure/repositories/user.repository';
-
-// Application - Use Cases
-import { GetDashboardStatsUseCase } from './application/use-cases/dashboard/get-dashboard-stats.use-case';
-
-// Presentation - Controllers
-import { CustomerController } from './presentation/controllers/customer.controller';
-import { ProductController } from './presentation/controllers/product.controller';
-import { InvoiceController } from './presentation/controllers/invoice.controller';
-import { DashboardController } from './presentation/controllers/dashboard.controller';
-import { AuthController } from './presentation/controllers/auth.controller';
-
-// Presentation - Filters and Interceptors
-import { GlobalExceptionFilter } from './presentation/filters/global-exception.filter';
-import { PaginationInterceptor } from './presentation/interceptors/pagination.interceptor';
-
-// TypeORM Entities
-import { CustomerTypeOrmEntity } from './infrastructure/database/entities/customer.typeorm.entity';
-import { ProductTypeOrmEntity } from './infrastructure/database/entities/product.typeorm.entity';
-import { InvoiceTypeOrmEntity } from './infrastructure/database/entities/invoice.typeorm.entity';
-import { InvoiceItemTypeOrmEntity } from './infrastructure/database/entities/invoice-item.typeorm.entity';
-import { UserTypeOrmEntity } from './infrastructure/database/entities/user.typeorm.entity';
-
-// CQRS Handlers and Validators
+// CQRS arrays
 const CommandHandlers = [
-  CreateCustomerHandler,
-  CreateCustomerValidator,
-  UpdateCustomerHandler,
-  UpdateCustomerValidator,
-  DeleteCustomerHandler,
-  DeleteCustomerValidator,
-  CreateProductHandler,
-  CreateProductValidator,
-  UpdateProductHandler,
-  UpdateProductValidator,
-  DeleteProductHandler,
-  DeleteProductValidator,
-  CreateInvoiceHandler,
-  CreateInvoiceValidator,
+  CreateCustomerHandler, CreateCustomerValidator,
+  UpdateCustomerHandler, UpdateCustomerValidator,
+  ActivateCustomerHandler, ActivateCustomerValidator,
+  DeactivateCustomerHandler, DeactivateCustomerValidator,
+  CreateProductHandler, CreateProductValidator,
+  UpdateProductHandler, UpdateProductValidator,
+  DeleteProductHandler, DeleteProductValidator,
+  CreateCategoryHandler, CreateCategoryValidator,
+  UpdateCategoryHandler, UpdateCategoryValidator,
+  CreateTaxRateHandler, CreateTaxRateValidator,
+  UpdateTaxRateHandler, UpdateTaxRateValidator,
+  CreateSaleHandler, CreateSaleValidator,
+  AddSaleDetailHandler, AddSaleDetailValidator,
+  RemoveSaleDetailHandler, RemoveSaleDetailValidator,
+  UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
+  ConfirmSaleHandler, ConfirmSaleValidator,
+  CancelSaleHandler, CancelSaleValidator,
 ];
 
 const QueryHandlers = [
-  GetCustomerHandler,
-  GetCustomerValidator,
-  ListCustomersHandler,
-  ListCustomersValidator,
-  GetProductHandler,
-  GetProductValidator,
-  ListProductsHandler,
-  ListProductsValidator,
-  GetInvoiceHandler,
-  GetInvoiceValidator,
-  ListInvoicesHandler,
-  ListInvoicesValidator,
-  GenerateInvoicePdfHandler,
-  GenerateInvoicePdfValidator,
+  GetCustomerHandler, GetCustomerValidator,
+  ListCustomersHandler, ListCustomersValidator,
+  ListCustomersWithStockHandler, ListCustomersWithStockValidator,
+  GetProductHandler, GetProductValidator,
+  ListProductsHandler, ListProductsValidator,
+  ListProductsWithStockHandler, ListProductsWithStockValidator,
+  GetCategoryHandler, GetCategoryValidator,
+  ListCategoriesHandler, ListCategoriesValidator,
+  GetTaxRateHandler, GetTaxRateValidator,
+  ListTaxRatesHandler, ListTaxRatesValidator,
+  GetSaleHandler, GetSaleValidator,
+  ListSalesHandler, ListSalesValidator,
+  GetStockLevelsHandler, GetStockLevelsValidator,
+  GetMovementsHistoryHandler, GetMovementsHistoryValidator,
+  GetErrorLogHandler, GetErrorLogValidator,
+  ListErrorLogsHandler, ListErrorLogsValidator,
+  GetDashboardStatsHandler,
+];
+
+// All TypeORM entities
+const entities = [
+  CategoryTypeOrmEntity, CustomerTypeOrmEntity,
+  ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
+  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
+  ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
+  SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
+  TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
+  UserRoleTypeOrmEntity,
 ];
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      envFilePath: '.env',
-    }),
-    CqrsModule,
-    TypeOrmModule.forRootAsync({
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration], envFilePath: '.env' }),
+    JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService): TypeOrmModuleOptions => ({
-        type: 'mysql',
-        host: configService.get<string>('database.host'),
-        port: configService.get<number>('database.port'),
-        username: configService.get<string>('database.username'),
-        password: configService.get<string>('database.password'),
-        database: configService.get<string>('database.name'),
-        entities: [
-          CustomerTypeOrmEntity,
-          ProductTypeOrmEntity,
-          InvoiceTypeOrmEntity,
-          InvoiceItemTypeOrmEntity,
-          UserTypeOrmEntity,
-        ],
-        synchronize: typeormConfig.synchronize,
-        logging: typeormConfig.logging,
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secret'),
+        signOptions: { expiresIn: 900 },
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([
-      CustomerTypeOrmEntity,
-      ProductTypeOrmEntity,
-      InvoiceTypeOrmEntity,
-      InvoiceItemTypeOrmEntity,
-      UserTypeOrmEntity,
-    ]),
+    RedisModule,
+    CqrsModule,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (): TypeOrmModuleOptions => ({
+        ...typeormConfig,
+        entities,
+      }),
+    }),
+    TypeOrmModule.forFeature(entities),
   ],
-  controllers: [
-    AppController,
-    CustomerController,
-    ProductController,
-    InvoiceController,
-    DashboardController,
-    AuthController,
-  ],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController],
   providers: [
     AppService,
     // Domain Services
-    {
-      provide: TaxCalculator,
-      useFactory: (configService: ConfigService) => {
-        const taxPercentage = configService.get<number>('tax.percentage');
-        if (taxPercentage === undefined) {
-          throw new Error('tax.percentage is not defined in configuration');
-        }
-        return new TaxCalculator(taxPercentage);
-      },
-      inject: [ConfigService],
-    },
-    // Infrastructure - Repositories
-    CustomerRepository,
-    ProductRepository,
-    InvoiceRepository,
-    InvoiceItemRepository,
-    DashboardRepository,
-    UserRepository,
-    // Infrastructure - Services (Auth)
-    AuthService,
+    { provide: TAX_CALCULATOR, useFactory: (c: ConfigService) => new TaxCalculator(c.get<number>('tax.percentage')!), inject: [ConfigService] },
+    // Infrastructure - Repositories (token-mapped)
+    { provide: 'INVOICE_REPOSITORY', useClass: InvoiceRepository },
+    { provide: 'INVOICE_ITEM_REPOSITORY', useClass: InvoiceItemRepository },
+    { provide: 'CUSTOMER_REPOSITORY', useClass: CustomerRepository },
+    { provide: 'PRODUCT_REPOSITORY', useClass: ProductRepository },
+    { provide: 'DASHBOARD_REPOSITORY', useClass: DashboardRepository },
+    { provide: 'USER_REPOSITORY', useClass: UserRepository },
+    UserRepository, // AuthService needs direct injection
+    { provide: 'CATEGORY_REPOSITORY', useClass: CategoryRepository },
+    { provide: 'ERROR_LOG_REPOSITORY', useClass: ErrorLogRepository },
+    { provide: 'TAX_RATE_REPOSITORY', useClass: TaxRateRepository },
+    { provide: 'STOCK_MOVEMENT_REPOSITORY', useClass: StockMovementRepository },
+    { provide: 'SALE_REPOSITORY', useClass: SaleRepository },
+    { provide: 'SALE_DETAIL_REPOSITORY', useClass: SaleDetailRepository },
+    { provide: 'INVOICE_SERIES_REPOSITORY', useClass: InvoiceSeriesRepository },
+    // Infrastructure - pg Query Services (token-mapped)
+    { provide: PRODUCT_QUERY_SERVICE, useClass: ProductQueryService },
+    { provide: CUSTOMER_QUERY_SERVICE, useClass: CustomerQueryService },
+    { provide: INVOICE_QUERY_SERVICE, useClass: InvoiceQueryService },
+    { provide: DASHBOARD_QUERY_SERVICE, useClass: DashboardQueryService },
+    { provide: SALE_QUERY_SERVICE, useClass: SaleQueryService },
+    { provide: ERROR_LOG_QUERY_SERVICE, useClass: ErrorLogQueryService },
     // Infrastructure - Services
-    PdfService,
-    // Application - Use Cases
-    GetDashboardStatsUseCase,
-    // DataSource for transactions
-    // Global Filters and Interceptors
-    {
-      provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: PaginationInterceptor,
-    },
-    // CQRS Handlers
+    { provide: PDF_SERVICE, useClass: PdfService },
+    AuthService,
+
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
     ...CommandHandlers,
     ...QueryHandlers,
   ],
 })
 export class AppModule {
+  // eslint-disable-next-line @typescript-eslint/require-await
   static async setupSwagger(app: any): Promise<void> {
-    const config = new DocumentBuilder()
-      .setTitle('Sell Point Backend API')
-      .setDescription('Point of Sale Backend System - RESTful API')
-      .setVersion('1.0')
-      .addTag('customers', 'Customer management operations')
-      .addTag('products', 'Product management operations')
-      .addTag('invoices', 'Invoice and sales operations')
-      .addTag('dashboard', 'Dashboard and statistics operations')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    const config = createSwaggerConfig();
+    SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
   }
 }

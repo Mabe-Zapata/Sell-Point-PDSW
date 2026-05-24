@@ -1,17 +1,39 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import { DeleteProductCommand } from './delete-product.command';
 import { DeleteProductValidator } from './delete-product.validator';
-import { ProductRepository } from '../../../../../infrastructure/repositories/product.repository';
+import { PRODUCT_REPOSITORY, STOCK_MOVEMENT_REPOSITORY } from '../../../../tokens';
+import type { IProductRepository, IStockMovementRepository } from '../../../../../domain/repositories';
+import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
+import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
 @CommandHandler(DeleteProductCommand)
 export class DeleteProductHandler implements ICommandHandler<DeleteProductCommand> {
   constructor(
     private readonly validator: DeleteProductValidator,
-    private readonly productRepository: ProductRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
+    @Inject(STOCK_MOVEMENT_REPOSITORY) private readonly stockMovementRepository: IStockMovementRepository,
   ) {}
 
   async execute(command: DeleteProductCommand): Promise<void> {
-    await this.validator.validate(command.id);
-    await this.productRepository.softDelete(command.id);
+    const id = this.validator.validate(command.id);
+    const product = await this.productRepository.findById(id);
+    if (!product) {
+      throw new EntityNotFoundException('Product', id);
+    }
+
+    // R12: Product soft delete without history check
+    const movements = await this.stockMovementRepository.findAll(
+      { page: 1, limit: 1 },
+      { productId: id }
+    );
+
+    if (movements.total > 0) {
+      // Product has history - soft delete only
+      throw new BusinessRuleException('Cannot physically delete product with stock movement history. Use soft delete instead.');
+    }
+
+    // No history, allow physical delete
+    await this.productRepository.softDelete(id);
   }
 }

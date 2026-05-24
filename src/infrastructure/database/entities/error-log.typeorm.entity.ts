@@ -1,0 +1,51 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { ExceptionTypeDb } from './enums/exception-type.db-enum';
+import { UserTypeOrmEntity } from './user.typeorm.entity';
+import { dbLongTextColumn } from './db-column.helper';
+
+@Entity('ERROR_LOGS')
+export class ErrorLogTypeOrmEntity {
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
+
+  @Column({
+    name: 'EXC_TYP',
+    type: 'varchar',
+    length: 30,
+  })
+  exceptionType!: string;
+
+  @Column({ name: 'MES_ERR', ...dbLongTextColumn() })
+  message!: string;
+
+  @Column({ name: 'STA_TRA', ...dbLongTextColumn(true) })
+  stackTrace?: string;
+
+  @Column({ name: 'SRC_ERR', length: 100, nullable: true })
+  source?: string;
+
+  @Column({ name: 'SRC_SCR_ERR', length: 100, nullable: true })
+  sourceScreen?: string;
+
+  @Column({ name: 'SRC_EVT_ERR', length: 100, nullable: true })
+  sourceEvent?: string;
+
+  @Column({ name: 'USR_ID', type: 'uuid', nullable: true })
+  userId?: string;
+
+  @ManyToOne(() => UserTypeOrmEntity, { nullable: true })
+  @JoinColumn({ name: 'USR_ID' })
+  user?: UserTypeOrmEntity;
+
+  @Index('IDX_ERR_LOG_CREATED_AT')
+  @CreateDateColumn({ name: 'CRE_AT' })
+  createdAt!: Date;
+}

@@ -1,7 +1,7 @@
 import {
-  PaginationParams,
   CustomerFilters,
 } from '../../../../../domain/repositories/customer.repository.interface';
+import { PaginationParams } from '../../../../../domain/repositories/pagination.types';
 
 export class ListCustomersQuery {
   constructor(

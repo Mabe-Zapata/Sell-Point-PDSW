@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { PaginatedResult } from '../../domain/repositories/customer.repository.interface';
+import { PaginatedResult } from '../../domain/repositories/pagination.types';
 
 export interface PaginationMetadata {
   total: number;

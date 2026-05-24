@@ -2,9 +2,22 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import { typeormConfig } from './config/typeorm.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // WARN: synchronize enabled check
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (typeormConfig.synchronize === true) {
+    console.warn(
+      '\x1b[33m[WARNING]\x1b[0m TypeORM synchronize is ENABLED. ' +
+        'This is dangerous in production and will overwrite the schema. ' +
+        'Set synchronize: false in src/config/typeorm.config.ts and run migrations with: ' +
+        'npm run typeorm:migration:run',
+    );
+  }
 
   // Enable CORS for frontend requests
   app.enableCors();

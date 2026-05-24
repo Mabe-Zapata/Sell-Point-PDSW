@@ -1,26 +1,41 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { CreateCustomerCommand } from './create-customer.command';
 import { CreateCustomerValidator } from './create-customer.validator';
-import { CustomerRepository } from '../../../../../infrastructure/repositories/customer.repository';
+import { CUSTOMER_REPOSITORY } from '../../../../tokens';
+import type { ICustomerRepository } from '../../../../../domain/repositories';
+import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
 import { Customer } from '../../../../../domain/entities/customer.entity';
 
 @CommandHandler(CreateCustomerCommand)
 export class CreateCustomerHandler implements ICommandHandler<CreateCustomerCommand> {
   constructor(
     private readonly validator: CreateCustomerValidator,
-    private readonly customerRepository: CustomerRepository,
+    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
   ) {}
 
   async execute(command: CreateCustomerCommand): Promise<Customer> {
-    await this.validator.validate(command.payload);
+    this.validator.validate(command.payload);
+
+    if (command.payload.cedula) {
+      const existing = await this.customerRepository.findByIdentificationNumber(
+        command.payload.cedula,
+      );
+      if (existing) {
+        throw new DuplicateCedulaException(command.payload.cedula);
+      }
+    }
 
     const customer = new Customer({
-      name: command.payload.name,
-      lastName: command.payload.lastName,
+      id: randomUUID(),
       cedula: command.payload.cedula,
+      firstName: command.payload.firstName,
+      lastName: command.payload.lastName,
       email: command.payload.email,
       phone: command.payload.phone,
-      address: command.payload.address,
+      address: command.payload.address ?? '',
+      isActive: true,
     });
 
     return this.customerRepository.create(customer);

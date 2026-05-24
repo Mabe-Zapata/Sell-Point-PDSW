@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Put,
-  Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -18,23 +18,24 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { CreateCustomerCommand } from '../../application/cqrs/customer/commands/create-customer/create-customer.command';
 import { GetCustomerQuery } from '../../application/cqrs/customer/queries/get-customer/get-customer.query';
-import { ListCustomersQuery } from '../../application/cqrs/customer/queries/list-customers/list-customers.query';
+import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/queries/list-customers-with-stock/list-customers-with-stock.query';
 import { UpdateCustomerCommand } from '../../application/cqrs/customer/commands/update-customer/update-customer.command';
-import { DeleteCustomerCommand } from '../../application/cqrs/customer/commands/delete-customer/delete-customer.command';
+import { ActivateCustomerCommand } from '../../application/cqrs/customer/commands/activate-customer/activate-customer.command';
+import { DeactivateCustomerCommand } from '../../application/cqrs/customer/commands/deactivate-customer/deactivate-customer.command';
 
 import { CreateCustomerDto } from '../../application/dto/customer/create-customer.dto';
 import { UpdateCustomerDto } from '../../application/dto/customer/update-customer.dto';
 import { CustomerResponseDto } from '../../application/dto/customer/customer-response.dto';
-import {
-  PaginationParams,
-  CustomerFilters,
-} from '../../domain/repositories/customer.repository.interface';
+import { CustomerListResponseDto } from '../../application/dto/customer/customer-list-response.dto';
+import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('customers')
+@ApiBearerAuth('access-token')
 @Controller('customers')
 export class CustomerController {
   constructor(
@@ -87,28 +88,13 @@ export class CustomerController {
 
   @Get()
   @ApiOperation({
-    summary: 'List customers with pagination and search',
-    description:
-      'Retrieves a paginated list of customers. Provides a generic search parameter `q` to filter by cedula, name, or last name.',
+    summary: 'List customers (pg query service)',
+    description: 'Retrieves a paginated list of customers using pg raw SQL for optimal read performance.',
   })
-  @ApiQuery({
-    name: 'page',
-    description: 'Page number (default: 1)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of items per page (default: 20)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'q',
-    description: 'Search query (searches in name, lastName, cedula)',
-    required: false,
-    type: String,
-  })
+  @ApiQuery({ name: 'page', description: 'Page number (default: 1)', required: false, type: Number })
+  @ApiQuery({ name: 'limit', description: 'Number of items per page (default: 20)', required: false, type: Number })
+  @ApiQuery({ name: 'q', description: 'Search query (searches in names, cedula)', required: false, type: String })
+  @ApiQuery({ name: 'cedula', description: 'Filter by cedula', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'List of customers retrieved successfully',
@@ -117,8 +103,9 @@ export class CustomerController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') searchQuery?: string,
+    @Query('cedula') cedula?: string,
   ): Promise<{
-    data: CustomerResponseDto[];
+    data: CustomerListResponseDto[];
     total: number;
     page: number;
     limit: number;
@@ -128,16 +115,13 @@ export class CustomerController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const filters: CustomerFilters = {
-      q: searchQuery,
-    };
-
     const result = await this.queryBus.execute(
-      new ListCustomersQuery(pagination, filters),
+      // identificationType replaced by cedula (simplify-schema-uta SDD)
+      new ListCustomersWithStockQuery(pagination, searchQuery, cedula),
     );
 
     return {
-      data: CustomerResponseDto.fromEntities(result.data),
+      data: CustomerListResponseDto.fromQueryResults(result.data),
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -172,16 +156,42 @@ export class CustomerController {
     return CustomerResponseDto.fromEntity(customer);
   }
 
-  @Delete(':id')
+  @Patch(':id/activate')
   @ApiOperation({
-    summary: 'Delete a customer (soft delete)',
-    description: 'Marks a customer as deleted (soft delete)',
+    summary: 'Activate a customer',
+    description: 'Sets a customer as active. Only ADMIN role can perform this action.',
   })
   @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
-  @ApiResponse({ status: 204, description: 'Customer deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer activated successfully',
+    type: CustomerResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Customer not found' })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.commandBus.execute(new DeleteCustomerCommand(id));
+  async activate(@Param('id') id: string): Promise<CustomerResponseDto> {
+    const customer = await this.commandBus.execute(
+      new ActivateCustomerCommand(id),
+    );
+    return CustomerResponseDto.fromEntity(customer);
   }
+
+  @Patch(':id/deactivate')
+  @ApiOperation({
+    summary: 'Deactivate a customer',
+    description: 'Sets a customer as inactive. Only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer deactivated successfully',
+    type: CustomerResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async deactivate(@Param('id') id: string): Promise<CustomerResponseDto> {
+    const customer = await this.commandBus.execute(
+      new DeactivateCustomerCommand(id),
+    );
+    return CustomerResponseDto.fromEntity(customer);
+  }
+
 }

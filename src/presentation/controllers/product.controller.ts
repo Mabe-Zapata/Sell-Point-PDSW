@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -18,23 +19,25 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { CreateProductCommand } from '../../application/cqrs/product/commands/create-product/create-product.command';
 import { GetProductQuery } from '../../application/cqrs/product/queries/get-product/get-product.query';
-import { ListProductsQuery } from '../../application/cqrs/product/queries/list-products/list-products.query';
+import { ListProductsWithStockQuery } from '../../application/cqrs/product/queries/list-products-with-stock/list-products-with-stock.query';
 import { UpdateProductCommand } from '../../application/cqrs/product/commands/update-product/update-product.command';
 import { DeleteProductCommand } from '../../application/cqrs/product/commands/delete-product/delete-product.command';
+import { ActivateProductCommand } from '../../application/cqrs/product/commands/activate-product/activate-product.command';
+import { DeactivateProductCommand } from '../../application/cqrs/product/commands/deactivate-product/deactivate-product.command';
 
 import { CreateProductDto } from '../../application/dto/product/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/product/update-product.dto';
 import { ProductResponseDto } from '../../application/dto/product/product-response.dto';
-import {
-  PaginationParams,
-  ProductFilters,
-} from '../../domain/repositories/product.repository.interface';
+import { ProductWithStockResponseDto } from '../../application/dto/product/product-with-stock-response.dto';
+import { PaginationParams } from '../../domain/repositories/pagination.types';
 
 @ApiTags('products')
+@ApiBearerAuth('access-token')
 @Controller('products')
 export class ProductController {
   constructor(
@@ -83,28 +86,14 @@ export class ProductController {
 
   @Get()
   @ApiOperation({
-    summary: 'List products with pagination and search',
-    description:
-      'Retrieves a paginated list of products. Provides a generic search parameter `q` to filter by product ID or name.',
+    summary: 'List products with stock (pg query service)',
+    description: 'Retrieves a paginated list of products using pg raw SQL for optimal read performance.',
   })
-  @ApiQuery({
-    name: 'page',
-    description: 'Page number (default: 1)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of items per page (default: 20)',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'q',
-    description: 'Search query (searches in id, code, name)',
-    required: false,
-    type: String,
-  })
+  @ApiQuery({ name: 'page', description: 'Page number (default: 1)', required: false, type: Number })
+  @ApiQuery({ name: 'limit', description: 'Number of items per page (default: 20)', required: false, type: Number })
+  @ApiQuery({ name: 'q', description: 'Search query (searches in code, name)', required: false, type: String })
+  @ApiQuery({ name: 'categoryId', description: 'Filter by category UUID', required: false, type: String })
+  @ApiQuery({ name: 'isActive', description: 'Filter by active status', required: false, type: Boolean })
   @ApiResponse({
     status: 200,
     description: 'List of products retrieved successfully',
@@ -113,8 +102,10 @@ export class ProductController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') searchQuery?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('isActive') isActive?: string,
   ): Promise<{
-    data: ProductResponseDto[];
+    data: ProductWithStockResponseDto[];
     total: number;
     page: number;
     limit: number;
@@ -124,16 +115,12 @@ export class ProductController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const filters: ProductFilters = {
-      q: searchQuery,
-    };
-
     const result = await this.queryBus.execute(
-      new ListProductsQuery(pagination, filters),
+      new ListProductsWithStockQuery(pagination, searchQuery, categoryId, isActive === 'true'),
     );
 
     return {
-      data: ProductResponseDto.fromEntities(result.data),
+      data: ProductWithStockResponseDto.fromQueryResults(result.data),
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -160,6 +147,44 @@ export class ProductController {
   ): Promise<ProductResponseDto> {
     const product = await this.commandBus.execute(
       new UpdateProductCommand(id, updateProductDto),
+    );
+    return ProductResponseDto.fromEntity(product);
+  }
+
+  @Patch(':id/activate')
+  @ApiOperation({
+    summary: 'Activate a product',
+    description: 'Sets a product as active. Only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Product activated successfully',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async activate(@Param('id') id: string): Promise<ProductResponseDto> {
+    const product = await this.commandBus.execute(
+      new ActivateProductCommand(id),
+    );
+    return ProductResponseDto.fromEntity(product);
+  }
+
+  @Patch(':id/deactivate')
+  @ApiOperation({
+    summary: 'Deactivate a product',
+    description: 'Sets a product as inactive. Only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Product deactivated successfully',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async deactivate(@Param('id') id: string): Promise<ProductResponseDto> {
+    const product = await this.commandBus.execute(
+      new DeactivateProductCommand(id),
     );
     return ProductResponseDto.fromEntity(product);
   }

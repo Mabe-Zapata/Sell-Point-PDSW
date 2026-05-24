@@ -4,47 +4,55 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
-  Check,
+  Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { CategoryTypeOrmEntity } from './category.typeorm.entity';
+import { dbBooleanColumn, dbLongTextColumn } from './db-column.helper';
 
 @Entity('PRODUCTS')
-@Check('CHECK_POSITIVE_STOCK', 'QTY_DIS_PRO >= 0')
 export class ProductTypeOrmEntity {
-  @ApiProperty({ description: 'Product unique identifier' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @ApiProperty({ description: 'Product code' })
+  // Legacy compatibility fields used by older seed/application code
+  unitPrice?: number;
+
+  availableQuantity?: number;
+
+  @Column({ name: 'CAT_ID', type: 'uuid' })
+  categoryId!: string;
+
+  @ManyToOne(() => CategoryTypeOrmEntity)
+  @JoinColumn({ name: 'CAT_ID' })
+  category!: CategoryTypeOrmEntity;
+
   @Column({ name: 'COD_PRO', length: 50, unique: true })
-  code: string;
+  code!: string;
 
-  @ApiProperty({ description: 'Product name' })
   @Column({ name: 'NAM_PRO', length: 255 })
-  name: string;
+  name!: string;
 
-  @ApiProperty({ description: 'Product description' })
-  @Column({ name: 'DES_PRO', type: 'text', nullable: true })
+  @Column({ name: 'DES_PRO', ...dbLongTextColumn(true) })
   description?: string;
 
-  @ApiProperty({ description: 'Product unit price' })
-  @Column({ name: 'PRI_UNI_PRO', type: 'decimal', precision: 10, scale: 2 })
-  unitPrice: number;
+  @Column({ name: 'SAL_PRI_PRO', type: 'decimal', precision: 12, scale: 2 })
+  salePrice!: number;
 
-  @ApiProperty({ description: 'Available stock quantity' })
-  @Column({ name: 'QTY_DIS_PRO', type: 'int' })
-  availableQuantity: number;
+  @Column({ name: 'COS_PRI_PRO', type: 'decimal', precision: 12, scale: 2 })
+  costPrice!: number;
 
-  @ApiProperty({ description: 'Creation timestamp' })
+  @Index('IDX_PRO_ACT')
+  @Column({ name: 'ACT_PRO', ...dbBooleanColumn() })
+  isActive!: boolean;
+
+  @Column({ name: 'CUR_STO_PRO', type: 'int', default: 0 })
+  currentStock!: number;
+
   @CreateDateColumn({ name: 'CRE_AT' })
-  createdAt: Date;
+  createdAt!: Date;
 
-  @ApiProperty({ description: 'Last update timestamp' })
   @UpdateDateColumn({ name: 'UPD_AT' })
-  updatedAt: Date;
-
-  @ApiProperty({ description: 'Soft delete timestamp' })
-  @DeleteDateColumn({ name: 'DEL_AT' })
-  deletedAt?: Date;
+  updatedAt!: Date;
 }

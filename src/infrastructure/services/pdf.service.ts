@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 import { Injectable } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
 import { Invoice } from '../../domain/entities/invoice.entity';
@@ -110,7 +111,7 @@ export class PdfService implements IPdfService {
       .font('Helvetica-Bold')
       .fontSize(10)
       .fillColor('#111111')
-      .text(this.formatDate(invoice.invoiceDate), this.ML, y + 12, {
+      .text(this.formatDate(invoice.invoiceDate ?? invoice.issueDate ?? new Date()), this.ML, y + 12, {
         lineBreak: false,
       });
 
@@ -159,7 +160,7 @@ export class PdfService implements IPdfService {
       .font('Helvetica')
       .fontSize(9)
       .fillColor('#444444')
-      .text(`ID / Cédula: ${invoice.customerId}`, this.ML, y + 30);
+      .text(`ID: ${invoice.customerId ?? invoice.saleId ?? ''}`, this.ML, y + 30);
 
     // Right column — thin box with totals preview
     const boxX = this.W - this.MR - 170;
@@ -175,7 +176,7 @@ export class PdfService implements IPdfService {
       .font('Helvetica-Bold')
       .fontSize(22)
       .fillColor('#111111')
-      .text(this.formatCurrency(invoice.total), boxX + 12, y + 18, {
+      .text(this.formatCurrency(invoice.total ?? 0), boxX + 12, y + 18, {
         width: 146,
         align: 'right',
       });
@@ -263,8 +264,8 @@ export class PdfService implements IPdfService {
         .text(value, valueX, y, { width: valueW, align: 'right', lineBreak: false });
     };
 
-    row('Subtotal',   this.formatCurrency(invoice.subtotal), startY);
-    row('IVA (15%)',  this.formatCurrency(invoice.iva),      startY + 18);
+    row('Subtotal',   this.formatCurrency(invoice.subtotal ?? 0), startY);
+    row('IVA (15%)',  this.formatCurrency(invoice.iva ?? 0),      startY + 18);
 
     // Divider
     const divY = startY + 40;
@@ -286,7 +287,7 @@ export class PdfService implements IPdfService {
       .font('Helvetica-Bold')
       .fontSize(13)
       .fillColor('#ffffff')
-      .text(this.formatCurrency(invoice.total), valueX, divY + 9, {
+      .text(this.formatCurrency(invoice.total ?? 0), valueX, divY + 9, {
         width: valueW,
         align: 'right',
         lineBreak: false,
