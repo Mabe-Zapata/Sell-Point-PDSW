@@ -15,6 +15,10 @@ export { ListCustomersValidator } from './customer/queries/list-customers/list-c
 export { ListCustomersWithStockHandler } from './customer/queries/list-customers-with-stock/list-customers-with-stock.handler';
 export { ListCustomersWithStockValidator } from './customer/queries/list-customers-with-stock/list-customers-with-stock.validator';
 
+// User Commands
+export { UnlockUserHandler } from './user/commands/unlock-user/unlock-user.handler';
+export { UnlockUserValidator } from './user/commands/unlock-user/unlock-user.validator';
+
 // Product Commands
 export { CreateProductHandler } from './product/commands/create-product/create-product.handler';
 export { CreateProductValidator } from './product/commands/create-product/create-product.validator';

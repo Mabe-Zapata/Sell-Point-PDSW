@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, ForbiddenException } from '@nestjs/common';
-import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, ForbiddenException, Param } from '@nestjs/common';
+import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { AuthService } from '../../infrastructure/services/auth.service';
 import { LoginDto } from '../dto/login.dto';
@@ -92,6 +92,24 @@ export class AuthController {
     return AuthMeResponseDto.fromEntity(user);
   }
 
+  @Post('unlock/:id')
+  @ApiBearerAuth('access-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Unlock a blocked user (admin only)' })
+  @ApiParam({ name: 'id', description: 'User ID to unlock' })
+  @ApiResponse({ status: 200, description: 'User unlocked successfully' })
+  async unlockUser(
+    @Req() req: { user?: { role?: string } },
+    @Param('id') id: string,
+  ): Promise<{ message: string }> {
+    if (req.user?.role !== 'ADMIN') {
+      throw new ForbiddenException('Only ADMIN can unlock users');
+    }
+
+    await this.authService.unlockUser(id);
+    return { message: 'User unlocked successfully' };
+  }
+
   @Get('users')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List users (admin only)' })
@@ -143,5 +161,4 @@ export class AuthController {
       limit: result.limit,
     };
   }
-
 }

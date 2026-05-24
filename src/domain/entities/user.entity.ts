@@ -88,4 +88,12 @@ export class User {
     this._status = UserStatus.BLOCKED;
     this._updatedAt = new Date();
   }
+
+  unlock(): void {
+    if (this._status !== UserStatus.BLOCKED) {
+      throw new BusinessRuleException('User is not blocked');
+    }
+    this._status = UserStatus.ACTIVE;
+    this._updatedAt = new Date();
+  }
 }
