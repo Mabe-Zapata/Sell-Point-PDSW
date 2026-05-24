@@ -119,8 +119,9 @@ export class ProductController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
+    const isAct = isActive === undefined ? undefined : isActive === 'true';
     const result = await this.queryBus.execute(
-      new ListProductsWithStockQuery(pagination, searchQuery, categoryId, isActive === 'true'),
+      new ListProductsWithStockQuery(pagination, searchQuery, categoryId, isAct),
     );
 
     return {

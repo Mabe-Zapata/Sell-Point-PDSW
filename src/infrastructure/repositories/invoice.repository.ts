@@ -74,7 +74,7 @@ export class InvoiceRepository implements IInvoiceRepository {
       queryBuilder.andWhere('invoice.status = :status', { status });
     }
     if (authorizationNumber) {
-      queryBuilder.andWhere('invoice.authorizationNumber ILIKE :authorizationNumber', { authorizationNumber: `%${authorizationNumber}%` });
+      queryBuilder.andWhere('LOWER(invoice.authorizationNumber) LIKE LOWER(:authorizationNumber)', { authorizationNumber: `%${authorizationNumber}%` });
     }
 
     const total = await queryBuilder.getCount();

@@ -54,7 +54,7 @@ export class CategoryRepository implements ICategoryRepository {
     const queryBuilder = this.repo.createQueryBuilder('category');
 
     if (q) {
-      queryBuilder.where('category.name ILIKE :q', { q: `%${q}%` });
+      queryBuilder.where('LOWER(category.name) LIKE LOWER(:q)', { q: `%${q}%` });
     }
     if (isActive !== undefined) {
       queryBuilder.andWhere('category.isActive = :isActive', { isActive });

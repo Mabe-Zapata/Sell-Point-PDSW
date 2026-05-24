@@ -63,7 +63,7 @@ export class ProductRepository implements IProductRepository {
     const queryBuilder = this.repo.createQueryBuilder('product');
 
     if (q) {
-      queryBuilder.where('product.name ILIKE :q OR product.code ILIKE :q', { q: `%${q}%` });
+      queryBuilder.where('LOWER(product.name) LIKE LOWER(:q) OR LOWER(product.code) LIKE LOWER(:q)', { q: `%${q}%` });
     }
     if (categoryId) {
       queryBuilder.andWhere('product.categoryId = :categoryId', { categoryId });

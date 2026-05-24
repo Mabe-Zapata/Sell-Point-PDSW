@@ -235,7 +235,7 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'SALE_DETAILS',
         columns: [
-          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: 'identity' }),
+          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: dbType === 'oracle' ? 'increment' : 'identity' }),
           col('SAL_ID', uuidType, { length: uuidLength }),
           col('PRO_ID', uuidType, { length: uuidLength }),
           col('PRO_NAM_SAL', 'varchar', { length: '255' }),
@@ -255,7 +255,7 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'STOCK_MOVEMENTS',
         columns: [
-          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: 'identity' }),
+          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: dbType === 'oracle' ? 'increment' : 'identity' }),
           col('PRO_ID', uuidType, { length: uuidLength }),
           col('TYP_MOV', 'varchar', { length: '30' }),
           col('QTY_MOV', 'decimal', { precision: 10, scale: 3 }),
@@ -279,7 +279,7 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'ERROR_LOGS',
         columns: [
-          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: 'identity' }),
+          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: dbType === 'oracle' ? 'increment' : 'identity' }),
           col('EXC_TYP', 'varchar', { length: '30' }),
           col('MES_ERR', longTextType, { ...longTextOpts }),
           col('STA_TRA', longTextType, { ...longTextOpts, isNullable: true }),
