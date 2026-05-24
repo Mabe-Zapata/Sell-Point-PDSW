@@ -4,7 +4,7 @@ export interface CustomerListItem {
   id: string;
   cedula: string;
   firstName: string;
-  lastName: string | null;
+  lastName: string;
   email: string | null;
   phone: string | null;
   address: string | null;

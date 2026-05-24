@@ -22,11 +22,12 @@ export class CreateCustomerDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   firstName!: string;
 
-  @ApiProperty({ description: 'Customer last name', example: 'Smith', required: false })
+  @ApiProperty({ description: 'Customer last name', example: 'Smith' })
   @IsString()
-  @IsOptional()
+  @IsNotEmpty({ message: 'Last name is required' })
   @MaxLength(100)
-  lastName?: string;
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  lastName!: string;
 
   @ApiProperty({ description: 'Customer email address', example: 'john.smith@example.com', required: false })
   @IsEmail({}, { message: 'Invalid email format' })

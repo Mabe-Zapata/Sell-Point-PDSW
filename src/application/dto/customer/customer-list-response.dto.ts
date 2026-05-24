@@ -10,6 +10,9 @@ export class CustomerListResponseDto {
   @ApiProperty({ description: 'Customer first name', example: 'John' })
   firstName: string;
 
+  @ApiProperty({ description: 'Customer last name', example: 'Smith' })
+  lastName: string;
+
   @ApiProperty({ description: 'Customer email address', example: 'john.smith@example.com', nullable: true })
   email: string | null;
 
@@ -29,6 +32,7 @@ export class CustomerListResponseDto {
     id: string;
     cedula: string;
     firstName: string;
+    lastName: string;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -38,6 +42,7 @@ export class CustomerListResponseDto {
     this.id = data.id;
     this.cedula = data.cedula;
     this.firstName = data.firstName;
+    this.lastName = data.lastName;
     this.email = data.email;
     this.phone = data.phone;
     this.address = data.address;
@@ -49,6 +54,7 @@ export class CustomerListResponseDto {
     id: string;
     cedula: string;
     firstName: string;
+    lastName: string;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -62,6 +68,7 @@ export class CustomerListResponseDto {
     id: string;
     cedula: string;
     firstName: string;
+    lastName: string;
     email: string | null;
     phone: string | null;
     address: string | null;
