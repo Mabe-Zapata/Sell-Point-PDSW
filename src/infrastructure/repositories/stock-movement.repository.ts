@@ -9,7 +9,7 @@ import { PaginationParams, PaginatedResult } from '../../domain/repositories/pag
 import { StockMovementFilters } from '../../domain/repositories/stock-movement.repository.interface';
 
 @Injectable()
-export class StockMovementRepository {
+export class StockMovementRepository implements IStockMovementRepository {
   constructor(
     @InjectRepository(StockMovementTypeOrmEntity)
     private readonly repo: Repository<StockMovementTypeOrmEntity>,
@@ -45,8 +45,8 @@ export class StockMovementRepository {
     };
   }
 
-  async findById(id: number): Promise<StockMovement | null> {
-    const entity = await this.repo.findOne({ where: { id } });
+  async findById(id: string | number): Promise<StockMovement | null> {
+    const entity = await this.repo.findOne({ where: { id: id as number } });
     return entity ? this.mapToDomain(entity) : null;
   }
 

@@ -10,7 +10,7 @@ export interface StockMovementFilters {
 }
 
 export interface IStockMovementRepository {
-  findById(id: string): Promise<StockMovement | null>;
+  findById(id: string | number): Promise<StockMovement | null>;
   findAll(
     pagination?: PaginationParams,
     filters?: StockMovementFilters,
