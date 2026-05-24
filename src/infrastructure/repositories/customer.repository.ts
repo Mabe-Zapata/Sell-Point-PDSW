@@ -4,9 +4,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CustomerTypeOrmEntity } from '../database/entities/customer.typeorm.entity';
-import { Customer } from '../../domain/entities/customer.entity';
-import { ICustomerRepository, CustomerFilters } from '../../domain/repositories/customer.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import { Customer } from '../../domain/entities';
+import type { ICustomerRepository, CustomerFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class CustomerRepository implements ICustomerRepository {

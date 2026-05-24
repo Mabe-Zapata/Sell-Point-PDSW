@@ -18,4 +18,5 @@ export interface ISaleRepository {
   ): Promise<PaginatedResult<Sale>>;
   create(sale: Sale): Promise<Sale>;
   update(sale: Sale): Promise<Sale>;
+  findByIdWithDetails(id: string): Promise<Sale | null>;
 }

@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TaxRateTypeOrmEntity } from '../database/entities/tax-rate.typeorm.entity';
-import { TaxRate } from '../../domain/entities/tax-rate.entity';
-import { ITaxRateRepository } from '../../domain/repositories/tax-rate.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
-import { TaxRateFilters } from '../../domain/repositories/tax-rate.repository.interface';
+import { TaxRate } from '../../domain/entities';
+import type { ITaxRateRepository, TaxRateFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class TaxRateRepository {

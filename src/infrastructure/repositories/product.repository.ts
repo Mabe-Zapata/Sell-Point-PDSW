@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { ProductTypeOrmEntity } from '../database/entities/product.typeorm.entity';
-import { Product } from '../../domain/entities/product.entity';
-import { IProductRepository, ProductFilters } from '../../domain/repositories/product.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import { Product } from '../../domain/entities';
+import type { IProductRepository, ProductFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class ProductRepository implements IProductRepository {
   constructor(
     @InjectRepository(ProductTypeOrmEntity)
     private readonly repo: Repository<ProductTypeOrmEntity>,
+    private readonly dataSource?: DataSource,
   ) {}
 
   private mapToDomain(entity: ProductTypeOrmEntity): Product {
@@ -99,6 +99,30 @@ export class ProductRepository implements IProductRepository {
 
   async softDelete(id: string): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  async findByIdForUpdate(id: string): Promise<Product | null> {
+    if (!this.dataSource) {
+      // Fallback when DataSource is not available
+      const found = await this.repo.findOne({ where: { id } });
+      return found ? this.mapToDomain(found) : null;
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const entity = await queryRunner.manager
+        .createQueryBuilder(ProductTypeOrmEntity, 'product')
+        .where('product.id = :id', { id })
+        .setLock('pessimistic_write')
+        .getOne();
+
+      return entity ? this.mapToDomain(entity) : null;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async decrementStock(_id: number, _quantity: number): Promise<void> {

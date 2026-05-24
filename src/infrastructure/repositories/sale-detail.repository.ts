@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SaleDetailTypeOrmEntity } from '../database/entities/sale-detail.typeorm.entity';
-import { SaleDetail } from '../../domain/entities/sale-detail.entity';
+import { SaleDetail } from '../../domain/entities';
 import { ISaleDetailRepository } from '../../domain/repositories/sale-detail.repository.interface';
 
 @Injectable()

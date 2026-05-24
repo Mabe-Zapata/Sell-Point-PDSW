@@ -12,6 +12,10 @@ import { AppService } from './app.service';
 import { configuration } from './config/configuration';
 import { typeormConfig } from './config/typeorm.config';
 import { createSwaggerConfig } from './config/swagger.config';
+import { TypeOrmUnitOfWork } from './application/unit-of-work/typeorm-unit-of-work';
+import { UNIT_OF_WORK } from './application/tokens';
+import { ConfirmSaleUseCase } from './application/use-cases/sale/confirm-sale.use-case';
+import { CancelSaleUseCase } from './application/use-cases/sale/cancel-sale.use-case';
 
 // Application - DI Tokens + CQRS Handlers (reducers)
 import { TAX_CALCULATOR } from './application/tokens';
@@ -193,6 +197,12 @@ const entities = [
     // Infrastructure - Services
     { provide: PDF_SERVICE, useClass: PdfService },
     AuthService,
+    // Unit of Work
+    { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
+    TypeOrmUnitOfWork,
+    // Use Cases
+    ConfirmSaleUseCase,
+    CancelSaleUseCase,
 
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },

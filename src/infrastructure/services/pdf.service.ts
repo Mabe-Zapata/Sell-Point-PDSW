@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 import { Injectable } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
-import { Invoice } from '../../domain/entities/invoice.entity';
-import { InvoiceItem } from '../../domain/entities/invoice-item.entity';
+import { Invoice, InvoiceItem } from '../../domain/entities';
 import { IPdfService } from '../../application/services/pdf-service.interface';
 
 type PDFKitDocument = InstanceType<typeof PDFDocument>;

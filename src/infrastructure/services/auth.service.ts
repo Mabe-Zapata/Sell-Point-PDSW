@@ -2,9 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from '../../domain/entities/user.entity';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
-import { UserFilters } from '../../domain/repositories/user.repository.interface';
+import { User } from '../../domain/entities';
+import type { PaginationParams, PaginatedResult, UserFilters } from '../../domain/repositories';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService, RefreshTokenPayload } from '../redis/redis.service';
 

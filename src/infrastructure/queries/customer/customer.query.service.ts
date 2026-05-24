@@ -8,7 +8,7 @@ import {
   CustomerListItem,
   ICustomerQueryService,
 } from '../../../domain/query-services/customer.query-service.interface';
-import { Customer } from '../../../domain/entities/customer.entity';
+import { Customer } from '../../../domain/entities';
 import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
 
 @Injectable()

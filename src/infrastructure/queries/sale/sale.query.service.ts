@@ -10,9 +10,7 @@ import {
   SaleListItem,
   SaleWithDetails,
 } from '../../../domain/query-services/sale.query-service.interface';
-import { Sale } from '../../../domain/entities/sale.entity';
-import { SaleDetail } from '../../../domain/entities/sale-detail.entity';
-import { Customer } from '../../../domain/entities/customer.entity';
+import { Sale, SaleDetail, Customer } from '../../../domain/entities';
 import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
 import { SaleDetailTypeOrmEntity } from '../../database/entities/sale-detail.typeorm.entity';
 import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';

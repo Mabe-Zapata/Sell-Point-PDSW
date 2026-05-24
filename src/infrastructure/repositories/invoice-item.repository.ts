@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InvoiceItemTypeOrmEntity } from '../database/entities/invoice-item.typeorm.entity';
-import { InvoiceItem } from '../../domain/entities/invoice-item.entity';
+import { InvoiceItem } from '../../domain/entities';
 import { IInvoiceItemRepository } from '../../domain/repositories/invoice-item.repository.interface';
 
 @Injectable()

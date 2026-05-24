@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InvoiceSeriesTypeOrmEntity } from '../database/entities/invoice-series.typeorm.entity';
-import { InvoiceSeries } from '../../domain/entities/invoice-series.entity';
-import { IInvoiceSeriesRepository } from '../../domain/repositories/invoice-series.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
-import { InvoiceSeriesFilters } from '../../domain/repositories/invoice-series.repository.interface';
+import { InvoiceSeries } from '../../domain/entities';
+import type { IInvoiceSeriesRepository, InvoiceSeriesFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class InvoiceSeriesRepository {

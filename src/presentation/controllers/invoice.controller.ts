@@ -26,17 +26,14 @@ import { ConfigService } from '@nestjs/config';
 import { CreateInvoiceDto } from '../../application/dto/invoice/create-invoice.dto';
 import { InvoiceResponseDto } from '../../application/dto/invoice/invoice-response.dto';
 import { InvoiceListResponseDto } from '../../application/dto/invoice/invoice-list-response.dto';
-import { PaginationParams } from '../../domain/repositories/pagination.types';
+import type { PaginationParams, IInvoiceRepository, IInvoiceItemRepository } from '../../domain/repositories';
 
 import { INVOICE_QUERY_SERVICE } from '../../application/query-tokens';
 import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
 import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY } from '../../application/tokens';
 import type { IInvoiceQueryService } from '../../domain/query-services/invoice.query-service.interface';
 import type { IPdfService } from '../../application/services/pdf-service.interface';
-import type { IInvoiceRepository } from '../../domain/repositories/invoice.repository.interface';
-import type { IInvoiceItemRepository } from '../../domain/repositories/invoice-item.repository.interface';
-import { Invoice } from '../../domain/entities/invoice.entity';
-import { InvoiceItem } from '../../domain/entities/invoice-item.entity';
+import { Invoice, InvoiceItem } from '../../domain/entities';
 
 @ApiTags('invoices')
 @ApiBearerAuth('access-token')

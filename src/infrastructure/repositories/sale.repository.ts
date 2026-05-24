@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { SaleTypeOrmEntity } from '../database/entities/sale.typeorm.entity';
-import { Sale } from '../../domain/entities/sale.entity';
+import { SaleDetailTypeOrmEntity } from '../database/entities/sale-detail.typeorm.entity';
+import { Sale, SaleDetail } from '../../domain/entities';
 import { SaleStatusMapper } from '../database/entities/enums/sale-status.db-enum';
-import { ISaleRepository, SaleFilters } from '../../domain/repositories/sale.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import type { ISaleRepository, SaleFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class SaleRepository implements ISaleRepository {
   constructor(
     @InjectRepository(SaleTypeOrmEntity)
     private readonly repo: Repository<SaleTypeOrmEntity>,
+    private readonly dataSource?: DataSource,
   ) {}
 
   private mapToDomain(entity: SaleTypeOrmEntity): Sale {
@@ -30,6 +31,23 @@ export class SaleRepository implements ISaleRepository {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
+  }
+
+  private mapToDomainWithDetails(entity: SaleTypeOrmEntity, details: SaleDetailTypeOrmEntity[]): Sale {
+    const sale = this.mapToDomain(entity);
+    sale.details = details.map((d) =>
+      new SaleDetail({
+        id: d.id,
+        saleId: d.saleId,
+        productId: d.productId,
+        productName: d.productNameSnapshot,
+        productCode: d.productCodeSnapshot,
+        quantity: Number(d.quantity),
+        unitPrice: Number(d.unitPrice),
+        createdAt: d.createdAt,
+      }),
+    );
+    return sale;
   }
 
   private mapToEntity(sale: Sale): Partial<SaleTypeOrmEntity> {
@@ -104,5 +122,40 @@ export class SaleRepository implements ISaleRepository {
     const updated = await this.repo.findOne({ where: { id: sale.id } });
     if (!updated) throw new Error('Sale not found after update');
     return this.mapToDomain(updated);
+  }
+
+  async findByIdWithDetails(id: string): Promise<Sale | null> {
+    if (!this.dataSource) {
+      // Fallback when DataSource is not available
+      const entity = await this.repo.findOne({ where: { id } });
+      return entity ? this.mapToDomain(entity) : null;
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Use pessimistic write lock on sale
+      const saleEntity = await queryRunner.manager
+        .createQueryBuilder(SaleTypeOrmEntity, 'sale')
+        .where('sale.id = :id', { id })
+        .setLock('pessimistic_write')
+        .getOne();
+
+      if (!saleEntity) {
+        return null;
+      }
+
+      // Load sale details
+      const detailEntities = await queryRunner.manager
+        .createQueryBuilder(SaleDetailTypeOrmEntity, 'sd')
+        .where('sd.saleId = :saleId', { saleId: id })
+        .getMany();
+
+      return this.mapToDomainWithDetails(saleEntity, detailEntities);
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

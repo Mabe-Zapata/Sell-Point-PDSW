@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '../../../domain/entities/user.entity';
+import { User } from '../../../domain/entities';
 
 export class AuthMeResponseDto {
   @ApiProperty({ example: 'ff9f4735-6723-4e7a-828b-f2f9fec1b0b3' })

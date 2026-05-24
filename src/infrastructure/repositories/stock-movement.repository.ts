@@ -2,11 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StockMovementTypeOrmEntity } from '../database/entities/stock-movement.typeorm.entity';
-import { StockMovement } from '../../domain/entities/stock-movement.entity';
+import { StockMovement } from '../../domain/entities';
 import { StockMovementTypeMapper } from '../database/entities/enums/stock-movement-type.db-enum';
-import { IStockMovementRepository } from '../../domain/repositories/stock-movement.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
-import { StockMovementFilters } from '../../domain/repositories/stock-movement.repository.interface';
+import type { IStockMovementRepository, StockMovementFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class StockMovementRepository {

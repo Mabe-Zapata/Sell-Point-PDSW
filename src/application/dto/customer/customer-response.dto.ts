@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Customer } from '../../../domain/entities/customer.entity';
+import { Customer } from '../../../domain/entities';
 
 export class CustomerResponseDto {
   @ApiProperty({ description: 'Unique customer identifier', example: '550e8400-e29b-41d4-a716-446655440000' })

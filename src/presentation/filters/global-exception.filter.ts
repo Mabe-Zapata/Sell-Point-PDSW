@@ -7,11 +7,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { DomainException } from '../../domain/exceptions/domain.exception';
-import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
-import { DuplicateCedulaException } from '../../domain/exceptions/duplicate-cedula.exception';
-import { InsufficientStockException } from '../../domain/exceptions/insufficient-stock.exception';
-import { BusinessRuleException } from '../../domain/exceptions/business-rule.exception';
+import {
+  DomainException,
+  EntityNotFoundException,
+  DuplicateCedulaException,
+  InsufficientStockException,
+  BusinessRuleException,
+} from '../../domain/exceptions';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
