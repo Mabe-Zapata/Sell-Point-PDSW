@@ -4,7 +4,6 @@ import {
   Post,
   Put,
   Patch,
-  Delete,
   Body,
   Param,
   Query,
@@ -25,7 +24,6 @@ import { CreateCustomerCommand } from '../../application/cqrs/customer/commands/
 import { GetCustomerQuery } from '../../application/cqrs/customer/queries/get-customer/get-customer.query';
 import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/queries/list-customers-with-stock/list-customers-with-stock.query';
 import { UpdateCustomerCommand } from '../../application/cqrs/customer/commands/update-customer/update-customer.command';
-import { DeleteCustomerCommand } from '../../application/cqrs/customer/commands/delete-customer/delete-customer.command';
 import { ActivateCustomerCommand } from '../../application/cqrs/customer/commands/activate-customer/activate-customer.command';
 import { DeactivateCustomerCommand } from '../../application/cqrs/customer/commands/deactivate-customer/deactivate-customer.command';
 
@@ -194,16 +192,4 @@ export class CustomerController {
     return CustomerResponseDto.fromEntity(customer);
   }
 
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete a customer (soft delete)',
-    description: 'Marks a customer as deleted (soft delete)',
-  })
-  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
-  @ApiResponse({ status: 204, description: 'Customer deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Customer not found' })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.commandBus.execute(new DeleteCustomerCommand(id));
-  }
 }

@@ -2,37 +2,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Pool } from 'pg';
-import { getPgPool } from '../base/pg-pool';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   CustomerListItem,
   ICustomerQueryService,
 } from '../../../domain/query-services/customer.query-service.interface';
 import { Customer } from '../../../domain/entities/customer.entity';
-
-interface CountRow {
-  total: number;
-}
-
-interface CustomerRow {
-  id: string;
-  cedula: string;
-  firstName: string;
-  lastName: string | null;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
-  createdAt: Date;
-}
+import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
 
 @Injectable()
 export class CustomerQueryService implements ICustomerQueryService {
-  private readonly pool: Pool;
-
-  constructor(private readonly configService: ConfigService) {
-    this.pool = getPgPool(configService);
-  }
+  constructor(
+    @InjectRepository(CustomerTypeOrmEntity)
+    private readonly customerRepository: Repository<CustomerTypeOrmEntity>,
+  ) {}
 
   async listCustomers(params: {
     page: number;
@@ -44,85 +28,59 @@ export class CustomerQueryService implements ICustomerQueryService {
     const offset = (page - 1) * limit;
     const searchPattern = q ? `%${q}%` : null;
 
-    const countQuery = `
-      SELECT COUNT(*)::integer AS total
-      FROM "CUSTOMERS" c
-      WHERE ($1::varchar IS NULL OR c."NOM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
-        AND ($2::varchar IS NULL OR c."CED_CUS" = $2);
-    `;
+    const queryBuilder = this.customerRepository
+      .createQueryBuilder('customer')
+      .where(
+        q
+          ? '(LOWER(customer.firstName) LIKE LOWER(:search) OR LOWER(customer.cedula) LIKE LOWER(:search))'
+          : '1=1',
+        { search: searchPattern },
+      )
+      .andWhere(cedula ? 'customer.cedula = :cedula' : '1=1', { cedula })
+      .orderBy('customer.createdAt', 'DESC')
+      .skip(offset)
+      .take(limit);
 
-const listQuery = `
-      SELECT
-        c.id,
-        c."CED_CUS" AS "cedula",
-        c."NOM_CUS" AS "firstName",
-        c."APE_CUS" AS "lastName",
-        c."EMA_CUS" AS "email",
-        c."PHO_CUS" AS "phone",
-        c."ADD_CUS" AS "address",
-        c."CRE_AT" AS "createdAt"
-      FROM "CUSTOMERS" c
-      WHERE ($1::varchar IS NULL OR c."NOM_CUS" ILIKE $1 OR c."CED_CUS" ILIKE $1)
-        AND ($2::varchar IS NULL OR c."CED_CUS" = $2)
-      ORDER BY c."CRE_AT" DESC
-      LIMIT $3 OFFSET $4;
-    `;
-
-    const [countResult, listResult] = await Promise.all([
-      this.pool.query<CountRow>(countQuery, [searchPattern, cedula ?? null]),
-      this.pool.query<CustomerRow>(listQuery, [searchPattern, cedula ?? null, limit, offset]),
-    ]);
+    const [rows, total] = await queryBuilder.getManyAndCount();
 
     return {
-      data: listResult.rows.map((row): CustomerListItem => ({
+      data: rows.map((row): CustomerListItem => ({
         id: row.id,
-        cedula: row.cedula,
+        cedula: row.cedula ?? '',
         firstName: row.firstName,
-        lastName: row.lastName,
-        email: row.email,
-        phone: row.phone,
-        address: row.address,
+        lastName: row.lastName ?? null,
+        email: row.email ?? null,
+        phone: row.phone ?? null,
+        address: row.address ?? null,
+        isActive: row.isActive,
         createdAt: row.createdAt,
       })),
-      total: countResult.rows[0].total,
+      total,
       page,
       limit,
     };
   }
 
   async getCustomerByIdentification(cedula: string): Promise<Customer | null> {
-    const query = `
-      SELECT
-        c.id,
-        c."CED_CUS" AS "cedula",
-        c."NOM_CUS" AS "firstName",
-        c."APE_CUS" AS "lastName",
-        c."EMA_CUS" AS "email",
-        c."PHO_CUS" AS "phone",
-        c."ADD_CUS" AS "address",
-        c."CRE_AT" AS "createdAt",
-        c."UPD_AT" AS "updatedAt"
-      FROM "CUSTOMERS" c
-      WHERE c."CED_CUS" = $1
-      LIMIT 1;
-    `;
+    const customer = await this.customerRepository.findOne({
+      where: { cedula },
+    });
 
-    const result = await this.pool.query<CustomerRow>(query, [cedula]);
-    if (result.rows.length === 0) {
+    if (!customer) {
       return null;
     }
 
     return new Customer({
-      id: result.rows[0].id,
-      cedula: result.rows[0].cedula,
-      firstName: result.rows[0].firstName,
-      lastName: result.rows[0].lastName ?? undefined,
-      email: result.rows[0].email ?? undefined,
-      phone: result.rows[0].phone ?? undefined,
-      address: result.rows[0].address ?? undefined,
-      isActive: true,
-      createdAt: result.rows[0].createdAt,
-      updatedAt: result.rows[0].updatedAt,
+      id: customer.id,
+      cedula: customer.cedula,
+      firstName: customer.firstName,
+      lastName: customer.lastName ?? undefined,
+      email: customer.email ?? undefined,
+      phone: customer.phone ?? undefined,
+      address: customer.address ?? undefined,
+      isActive: customer.isActive,
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt,
     });
   }
 }

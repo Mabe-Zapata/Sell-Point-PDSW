@@ -1,4 +1,5 @@
 import { UserStatus } from './enums';
+import { BusinessRuleException } from '../exceptions';
 
 export class User {
   readonly id!: string;
@@ -66,7 +67,7 @@ export class User {
 
   activate(): void {
     if (this._status === UserStatus.ACTIVE) {
-      throw new Error('User is already active');
+      throw new BusinessRuleException('User is already active');
     }
     this._status = UserStatus.ACTIVE;
     this._updatedAt = new Date();
@@ -74,7 +75,7 @@ export class User {
 
   deactivate(): void {
     if (this._status === UserStatus.INACTIVE) {
-      throw new Error('User is already inactive');
+      throw new BusinessRuleException('User is already inactive');
     }
     this._status = UserStatus.INACTIVE;
     this._updatedAt = new Date();
@@ -82,7 +83,7 @@ export class User {
 
   block(): void {
     if (this._status === UserStatus.BLOCKED) {
-      throw new Error('User is already blocked');
+      throw new BusinessRuleException('User is already blocked');
     }
     this._status = UserStatus.BLOCKED;
     this._updatedAt = new Date();

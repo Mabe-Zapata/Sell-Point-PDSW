@@ -1,3 +1,5 @@
+import { BusinessRuleException } from '../exceptions';
+
 export class TaxRate {
   readonly id!: string;
   readonly name!: string;
@@ -33,7 +35,7 @@ export class TaxRate {
 
   activate(): void {
     if (this._isActive) {
-      throw new Error('TaxRate is already active');
+      throw new BusinessRuleException('TaxRate is already active');
     }
     this._isActive = true;
     this._updatedAt = new Date();
@@ -41,7 +43,7 @@ export class TaxRate {
 
   deactivate(): void {
     if (!this._isActive) {
-      throw new Error('TaxRate is already inactive');
+      throw new BusinessRuleException('TaxRate is already inactive');
     }
     this._isActive = false;
     this._updatedAt = new Date();

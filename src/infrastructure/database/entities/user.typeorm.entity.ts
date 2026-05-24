@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserStatusDb } from './enums/user-status.db-enum';
+import { dbBooleanColumn } from './db-column.helper';
 
 @Entity('USERS')
 export class UserTypeOrmEntity {
@@ -21,7 +22,7 @@ export class UserTypeOrmEntity {
   @Column({ name: 'CED_USR', length: 20, nullable: true })
   cedula?: string;
 
-  @Column({ name: 'ACT_USR', type: 'boolean', default: true })
+  @Column({ name: 'ACT_USR', ...dbBooleanColumn() })
   isActive!: boolean;
 
   @Column({ name: 'ROL_USR', length: 50, nullable: true })

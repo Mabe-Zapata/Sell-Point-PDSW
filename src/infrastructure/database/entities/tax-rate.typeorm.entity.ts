@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
+import { dbBooleanColumn } from './db-column.helper';
 
 @Entity('TAX_RATES')
 export class TaxRateTypeOrmEntity {
@@ -19,7 +20,7 @@ export class TaxRateTypeOrmEntity {
   percentage!: number;
 
   @Index('IDX_TAX_ACT')
-  @Column({ name: 'ACT_TAX', type: 'boolean', default: true })
+  @Column({ name: 'ACT_TAX', ...dbBooleanColumn() })
   isActive!: boolean;
 
   @CreateDateColumn({ name: 'CRE_AT' })

@@ -8,6 +8,7 @@ export interface CustomerListItem {
   email: string | null;
   phone: string | null;
   address: string | null;
+  isActive: boolean;
   createdAt: Date;
 }
 

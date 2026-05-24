@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
@@ -16,14 +15,15 @@ import { typeormConfig } from './config/typeorm.config';
 import { TAX_CALCULATOR } from './application/tokens';
 import {
   PRODUCT_QUERY_SERVICE, CUSTOMER_QUERY_SERVICE, INVOICE_QUERY_SERVICE,
-  DASHBOARD_QUERY_SERVICE, SALE_QUERY_SERVICE, INVENTORY_QUERY_SERVICE,
+  DASHBOARD_QUERY_SERVICE, SALE_QUERY_SERVICE,
   ERROR_LOG_QUERY_SERVICE
 } from './application/query-tokens';
 import { PDF_SERVICE } from './application/services/pdf-service.interface';
 import {
   CreateCustomerHandler, CreateCustomerValidator,
   UpdateCustomerHandler, UpdateCustomerValidator,
-  DeleteCustomerHandler, DeleteCustomerValidator,
+  ActivateCustomerHandler, ActivateCustomerValidator,
+  DeactivateCustomerHandler, DeactivateCustomerValidator,
   GetCustomerHandler, GetCustomerValidator,
   ListCustomersHandler, ListCustomersValidator,
   ListCustomersWithStockHandler, ListCustomersWithStockValidator,
@@ -90,7 +90,8 @@ import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 const CommandHandlers = [
   CreateCustomerHandler, CreateCustomerValidator,
   UpdateCustomerHandler, UpdateCustomerValidator,
-  DeleteCustomerHandler, DeleteCustomerValidator,
+  ActivateCustomerHandler, ActivateCustomerValidator,
+  DeactivateCustomerHandler, DeactivateCustomerValidator,
   CreateProductHandler, CreateProductValidator,
   UpdateProductHandler, UpdateProductValidator,
   DeleteProductHandler, DeleteProductValidator,
@@ -152,18 +153,10 @@ const entities = [
     CqrsModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService): TypeOrmModuleOptions => ({
-        type: 'postgres',
-        host: configService.get<string>('database.host'),
-        port: configService.get<number>('database.port'),
-        username: configService.get<string>('database.username'),
-        password: configService.get<string>('database.password'),
-        database: configService.get<string>('database.name'),
+      useFactory: (): TypeOrmModuleOptions => ({
+        ...typeormConfig,
         entities,
-        synchronize: typeormConfig.synchronize,
-        logging: typeormConfig.logging,
       }),
-      inject: [ConfigService],
     }),
     TypeOrmModule.forFeature(entities),
   ],

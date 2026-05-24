@@ -3,8 +3,10 @@ export { CreateCustomerHandler } from './customer/commands/create-customer/creat
 export { CreateCustomerValidator } from './customer/commands/create-customer/create-customer.validator';
 export { UpdateCustomerHandler } from './customer/commands/update-customer/update-customer.handler';
 export { UpdateCustomerValidator } from './customer/commands/update-customer/update-customer.validator';
-export { DeleteCustomerHandler } from './customer/commands/delete-customer/delete-customer.handler';
-export { DeleteCustomerValidator } from './customer/commands/delete-customer/delete-customer.validator';
+export { ActivateCustomerHandler } from './customer/commands/activate-customer/activate-customer.handler';
+export { ActivateCustomerValidator } from './customer/commands/activate-customer/activate-customer.validator';
+export { DeactivateCustomerHandler } from './customer/commands/deactivate-customer/deactivate-customer.handler';
+export { DeactivateCustomerValidator } from './customer/commands/deactivate-customer/deactivate-customer.validator';
 // Customer Queries
 export { GetCustomerHandler } from './customer/queries/get-customer/get-customer.handler';
 export { GetCustomerValidator } from './customer/queries/get-customer/get-customer.validator';

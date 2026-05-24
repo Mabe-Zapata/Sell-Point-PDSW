@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { dbBooleanColumn } from './db-column.helper';
 
 @Entity('INVOICE_SERIES')
 export class InvoiceSeriesTypeOrmEntity {
@@ -26,7 +27,7 @@ export class InvoiceSeriesTypeOrmEntity {
   @Column({ name: 'CUR_SEQ', type: 'int', default: 0 })
   currentSequence!: number;
 
-  @Column({ name: 'ACT_INV_SER', type: 'boolean', default: true })
+  @Column({ name: 'ACT_INV_SER', ...dbBooleanColumn() })
   isActive!: boolean;
 
   @CreateDateColumn({ name: 'CRE_AT' })

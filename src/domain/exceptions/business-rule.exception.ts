@@ -1,7 +1,9 @@
 /**
  * Exception for business rule violations
  */
-export class BusinessRuleException extends Error {
+import { DomainException } from './domain.exception';
+
+export class BusinessRuleException extends DomainException {
   constructor(message: string) {
     super(message);
     this.name = 'BusinessRuleException';

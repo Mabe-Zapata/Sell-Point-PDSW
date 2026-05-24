@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { ExceptionTypeDb } from './enums/exception-type.db-enum';
 import { UserTypeOrmEntity } from './user.typeorm.entity';
+import { dbLongTextColumn } from './db-column.helper';
 
 @Entity('ERROR_LOGS')
 export class ErrorLogTypeOrmEntity {
@@ -22,10 +23,10 @@ export class ErrorLogTypeOrmEntity {
   })
   exceptionType!: string;
 
-  @Column({ name: 'MES_ERR', type: 'text' })
+  @Column({ name: 'MES_ERR', ...dbLongTextColumn() })
   message!: string;
 
-  @Column({ name: 'STA_TRA', type: 'text', nullable: true })
+  @Column({ name: 'STA_TRA', ...dbLongTextColumn(true) })
   stackTrace?: string;
 
   @Column({ name: 'SRC_ERR', length: 100, nullable: true })

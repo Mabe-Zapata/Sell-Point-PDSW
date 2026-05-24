@@ -70,7 +70,7 @@ export class AuthService {
     const payload: TokenPayload = {
       employeeId: user.id,
       employeeCode: user.employeeId,
-      role: user.role,
+      role: user.role ?? '',
     };
 
     const accessToken = this.generateAccessToken(payload);

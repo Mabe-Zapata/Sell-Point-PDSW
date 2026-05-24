@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { dbBooleanColumn } from './db-column.helper';
 
 @Entity('CATEGORIES')
 export class CategoryTypeOrmEntity {
@@ -17,7 +18,7 @@ export class CategoryTypeOrmEntity {
   @Column({ name: 'DES_CAT', length: 255, nullable: true })
   description?: string;
 
-  @Column({ name: 'ACT_CAT', type: 'boolean', default: true })
+  @Column({ name: 'ACT_CAT', ...dbBooleanColumn() })
   isActive!: boolean;
 
   @CreateDateColumn({ name: 'CRE_AT' })

@@ -1,3 +1,5 @@
+import { BusinessRuleException } from '../exceptions';
+
 export class Product {
   readonly id!: string;
   readonly categoryId!: string;
@@ -51,7 +53,7 @@ export class Product {
 
   activate(): void {
     if (this._isActive) {
-      throw new Error('Product is already active');
+      throw new BusinessRuleException('Product is already active');
     }
     this._isActive = true;
     this._updatedAt = new Date();
@@ -59,7 +61,7 @@ export class Product {
 
   deactivate(): void {
     if (!this._isActive) {
-      throw new Error('Product is already inactive');
+      throw new BusinessRuleException('Product is already inactive');
     }
     this._isActive = false;
     this._updatedAt = new Date();

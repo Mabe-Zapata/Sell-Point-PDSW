@@ -50,22 +50,28 @@ export class DashboardRepository implements IDashboardRepository {
 
     const result = await this.invoiceRepository
       .createQueryBuilder('invoice')
-      .select('SUM(invoice.total)', 'total')
+      .innerJoin('invoice.sale', 'sale')
+      .select('SUM(sale.total)', 'total')
       .where('invoice.deletedAt IS NULL')
-      .andWhere('invoice.invoiceDate >= :startOfDay', { startOfDay })
-      .andWhere('invoice.invoiceDate <= :endOfDay', { endOfDay })
+      .andWhere('invoice.issueDate >= :startOfDay', { startOfDay })
+      .andWhere('invoice.issueDate <= :endOfDay', { endOfDay })
       .getRawOne();
 
     return Number(result?.total) || 0;
   }
 
   async sumSalesByMonth(year: number, month: number): Promise<number> {
+    // Use date range instead of YEAR()/MONTH() for engine-agnostic queries
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
     const result = await this.invoiceRepository
       .createQueryBuilder('invoice')
-      .select('SUM(invoice.total)', 'total')
+      .innerJoin('invoice.sale', 'sale')
+      .select('SUM(sale.total)', 'total')
       .where('invoice.deletedAt IS NULL')
-      .andWhere('YEAR(invoice.invoiceDate) = :year', { year })
-      .andWhere('MONTH(invoice.invoiceDate) = :month', { month })
+      .andWhere('invoice.issueDate >= :startDate', { startDate })
+      .andWhere('invoice.issueDate <= :endDate', { endDate })
       .getRawOne();
 
     return Number(result?.total) || 0;
@@ -75,7 +81,7 @@ export class DashboardRepository implements IDashboardRepository {
     const result = await this.productRepository
       .createQueryBuilder('product')
       .where('product.deletedAt IS NULL')
-      .andWhere('product.availableQuantity < 10')
+      .andWhere('product.currentStock < 10')
       .getCount();
 
     return result;

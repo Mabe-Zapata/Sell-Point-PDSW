@@ -9,6 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { CategoryTypeOrmEntity } from './category.typeorm.entity';
+import { dbBooleanColumn, dbLongTextColumn } from './db-column.helper';
 
 @Entity('PRODUCTS')
 export class ProductTypeOrmEntity {
@@ -33,7 +34,7 @@ export class ProductTypeOrmEntity {
   @Column({ name: 'NAM_PRO', length: 255 })
   name!: string;
 
-  @Column({ name: 'DES_PRO', type: 'text', nullable: true })
+  @Column({ name: 'DES_PRO', ...dbLongTextColumn(true) })
   description?: string;
 
   @Column({ name: 'SAL_PRI_PRO', type: 'decimal', precision: 12, scale: 2 })
@@ -43,7 +44,7 @@ export class ProductTypeOrmEntity {
   costPrice!: number;
 
   @Index('IDX_PRO_ACT')
-  @Column({ name: 'ACT_PRO', type: 'boolean', default: true })
+  @Column({ name: 'ACT_PRO', ...dbBooleanColumn() })
   isActive!: boolean;
 
   @Column({ name: 'CUR_STO_PRO', type: 'int', default: 0 })

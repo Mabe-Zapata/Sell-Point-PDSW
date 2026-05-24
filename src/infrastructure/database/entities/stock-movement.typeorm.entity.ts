@@ -10,6 +10,7 @@ import {
 import { StockMovementTypeDb } from './enums/stock-movement-type.db-enum';
 import { ProductTypeOrmEntity } from './product.typeorm.entity';
 import { UserTypeOrmEntity } from './user.typeorm.entity';
+import { dbLongTextColumn } from './db-column.helper';
 
 @Entity('STOCK_MOVEMENTS')
 export class StockMovementTypeOrmEntity {
@@ -52,7 +53,7 @@ export class StockMovementTypeOrmEntity {
   @Column({ name: 'REF_ID', type: 'uuid', nullable: true })
   referenceId?: string;
 
-  @Column({ name: 'DES_MOV', type: 'text', nullable: true })
+  @Column({ name: 'DES_MOV', ...dbLongTextColumn(true) })
   description?: string;
 
   @Index('IDX_STR_MOV_CREATED_AT')

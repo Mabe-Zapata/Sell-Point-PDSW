@@ -19,6 +19,9 @@ export class CustomerListResponseDto {
   @ApiProperty({ description: 'Customer physical address', example: 'Av. Amazonas N35-42', nullable: true })
   address: string | null;
 
+  @ApiProperty({ description: 'Whether the customer is active', example: true })
+  isActive: boolean;
+
   @ApiProperty({ description: 'Customer creation timestamp' })
   createdAt: Date;
 
@@ -29,6 +32,7 @@ export class CustomerListResponseDto {
     email: string | null;
     phone: string | null;
     address: string | null;
+    isActive: boolean;
     createdAt: Date;
   }) {
     this.id = data.id;
@@ -37,6 +41,7 @@ export class CustomerListResponseDto {
     this.email = data.email;
     this.phone = data.phone;
     this.address = data.address;
+    this.isActive = data.isActive;
     this.createdAt = data.createdAt;
   }
 
@@ -47,6 +52,7 @@ export class CustomerListResponseDto {
     email: string | null;
     phone: string | null;
     address: string | null;
+    isActive: boolean;
     createdAt: Date;
   }): CustomerListResponseDto {
     return new CustomerListResponseDto(result);
@@ -59,6 +65,7 @@ export class CustomerListResponseDto {
     email: string | null;
     phone: string | null;
     address: string | null;
+    isActive: boolean;
     createdAt: Date;
   }[]): CustomerListResponseDto[] {
     return results.map((r) => CustomerListResponseDto.fromQueryResult(r));

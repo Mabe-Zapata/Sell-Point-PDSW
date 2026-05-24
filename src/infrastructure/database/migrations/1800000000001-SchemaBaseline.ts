@@ -2,6 +2,7 @@ import {
   MigrationInterface,
   QueryRunner,
   Table,
+  TableColumn,
   TableIndex,
   TableCheck,
 } from 'typeorm';
@@ -10,34 +11,47 @@ import {
  * Migration: SchemaBaseline1800000000001
  *
  * Multimotor baseline using TypeORM abstraction APIs (Table, TableIndex,
- * TableCheck) instead of raw SQL. TypeORM translates to the correct dialect
- * at runtime (PostgreSQL, Oracle, MySQL, etc.).
+ * TableCheck) + engine-aware type branching via queryRunner.connection.options.type.
  *
- * Design decisions for multimotor compatibility:
- * - UUIDs generated in domain/entity layer (application), not DB
- * - CURRENT_TIMESTAMP instead of NOW() (ANSI SQL standard)
- * - No gen_random_uuid() defaults — Oracle incompatible
+ * Engine-specific handling:
+ * - Postgres: uuid type for ID columns
+ * - Oracle: varchar2(36) for ID columns (no native UUID type)
+ * - Both: number(1) for booleans, varchar2(4000) for text fields
  *
  * Tables: ROLES, USERS, USER_ROLES, USER_BRANCHES, CUSTOMERS,
  *         CATEGORIES, TAX_RATES, PRODUCTS, SALES, SALE_DETAILS,
  *         STOCK_MOVEMENTS, ERROR_LOGS, INVOICE_SERIES, INVOICES,
  *         INVOICE_ITEMS
- *
- * Previous MySQL migrations (1776824191160, 1776900000000, 0001) deleted.
  */
 export class SchemaBaseline1800000000001 implements MigrationInterface {
   name = 'SchemaBaseline1800000000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // ROLES
+    const dbType = queryRunner.connection.options.type;
+    const uuidType = dbType === 'postgres' ? 'uuid' : 'varchar';
+    const uuidLength = dbType === 'postgres' ? undefined : '36';
+    const boolType = dbType === 'oracle' ? 'number' : 'boolean';
+    const boolDefault = dbType === 'oracle' ? 1 : true;
+    const longTextType = dbType === 'oracle' ? 'varchar2' : 'text';
+    const longTextOpts = dbType === 'oracle' ? { length: '4000' } : {};
+
+    // Helper to build column definition respecting engine
+    const col = (name: string, type: string, opts: Partial<TableColumn> = {}): TableColumn => {
+      const column = new TableColumn({ name, type, ...opts });
+      return column;
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 1. ROLES
+    // ─────────────────────────────────────────────────────────────────────────
     await queryRunner.createTable(
       new Table({
         name: 'ROLES',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'NAM_ROL', type: 'varchar', length: '50' },
-          { name: 'DES_ROL', type: 'varchar', length: '255', isNullable: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('NAM_ROL', 'varchar', { length: '50' }),
+          col('DES_ROL', 'varchar', { length: '255', isNullable: true }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
@@ -46,66 +60,59 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new TableIndex({ name: 'IDX_ROLE_NAME', columnNames: ['NAM_ROL'], isUnique: true }),
     );
 
-    // USERS
+    // ─────────────────────────────────────────────────────────────────────────
+    // 2. USERS
+    // ─────────────────────────────────────────────────────────────────────────
     await queryRunner.createTable(
       new Table({
         name: 'USERS',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'FIR_NAM_USR', type: 'varchar', length: '100', isNullable: true },
-          { name: 'LAS_NAM_USR', type: 'varchar', length: '100', isNullable: true },
-          { name: 'CED_USR', type: 'varchar', length: '20', isNullable: true },
-          { name: 'ACT_USR', type: 'boolean', default: true },
-          { name: 'ROL_USR', type: 'varchar', length: '50', isNullable: true },
-          { name: 'EMP_ID', type: 'varchar', length: '50' },
-          { name: 'USR_USR', type: 'varchar', length: '100' },
-          { name: 'EMA_USR', type: 'varchar', length: '255' },
-          { name: 'PAS_HASH', type: 'varchar', length: '255' },
-          { name: 'STA_USR', type: 'varchar', length: '30', default: "'ACTIVE'" },
-          { name: 'DEF_BRA_ID', type: 'uuid', isNullable: true },
-          { name: 'failed_attempts', type: 'integer', default: 0 },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
-          { name: 'UPD_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('FIR_NAM_USR', 'varchar', { length: '100', isNullable: true }),
+          col('LAS_NAM_USR', 'varchar', { length: '100', isNullable: true }),
+          col('CED_USR', 'varchar', { length: '20', isNullable: true }),
+          col('ACT_USR', boolType, { default: boolDefault }),
+          col('ROL_USR', 'varchar', { length: '50', isNullable: true }),
+          col('EMP_ID', 'varchar', { length: '50' }),
+          col('USR_USR', 'varchar', { length: '100' }),
+          col('EMA_USR', 'varchar', { length: '255' }),
+          col('PAS_HASH', 'varchar', { length: '255' }),
+          col('STA_USR', 'varchar', { length: '30', default: "'ACTIVE'" }),
+          col('DEF_BRA_ID', uuidType, { isNullable: true, length: uuidLength }),
+          col('failed_attempts', 'integer', { default: 0 }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
+          col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'USERS',
-      new TableIndex({ name: 'IDX_USR_USERNAME', columnNames: ['USR_USR'], isUnique: true }),
-    );
-    await queryRunner.createIndex(
-      'USERS',
-      new TableIndex({ name: 'IDX_USR_EMAIL', columnNames: ['EMA_USR'], isUnique: true }),
-    );
-    await queryRunner.createIndex(
-      'USERS',
-      new TableIndex({ name: 'IDX_USR_EMP_ID', columnNames: ['EMP_ID'], isUnique: true }),
-    );
+    await queryRunner.createIndex('USERS', new TableIndex({ name: 'IDX_USR_USERNAME', columnNames: ['USR_USR'], isUnique: true }));
+    await queryRunner.createIndex('USERS', new TableIndex({ name: 'IDX_USR_EMAIL', columnNames: ['EMA_USR'], isUnique: true }));
+    await queryRunner.createIndex('USERS', new TableIndex({ name: 'IDX_USR_EMP_ID', columnNames: ['EMP_ID'], isUnique: true }));
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 3. USER_ROLES (composite PK — no auto PK column)
+    // 3. USER_ROLES (composite PK)
     // ─────────────────────────────────────────────────────────────────────────
     await queryRunner.createTable(
       new Table({
         name: 'USER_ROLES',
         columns: [
-          { name: 'USR_ID', type: 'uuid' },
-          { name: 'ROL_ID', type: 'uuid' },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('USR_ID', uuidType, { length: uuidLength }),
+          col('ROL_ID', uuidType, { length: uuidLength }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
-      true, // ifExist: false — fresh table
+      true,
     );
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 4. USER_BRANCHES (composite PK — no auto PK column)
+    // 4. USER_BRANCHES (composite PK)
     // ─────────────────────────────────────────────────────────────────────────
     await queryRunner.createTable(
       new Table({
         name: 'USER_BRANCHES',
         columns: [
-          { name: 'USR_ID', type: 'uuid' },
-          { name: 'BRA_ID', type: 'uuid' },
+          col('USR_ID', uuidType, { length: uuidLength }),
+          col('BRA_ID', uuidType, { length: uuidLength }),
         ],
       }),
       true,
@@ -118,23 +125,20 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'CUSTOMERS',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'CED_CUS', type: 'varchar', length: '20', isNullable: true },
-          { name: 'NOM_CUS', type: 'varchar', length: '100' },
-          { name: 'APE_CUS', type: 'varchar', length: '100', isNullable: true },
-          { name: 'EMA_CUS', type: 'varchar', length: '255', isNullable: true },
-          { name: 'PHO_CUS', type: 'varchar', length: '20', isNullable: true },
-          { name: 'ADD_CUS', type: 'varchar', length: '255', isNullable: true },
-          { name: 'ACT_CUS', type: 'boolean', default: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
-          { name: 'UPD_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('CED_CUS', 'varchar', { length: '20', isNullable: true }),
+          col('NOM_CUS', 'varchar', { length: '100' }),
+          col('APE_CUS', 'varchar', { length: '100', isNullable: true }),
+          col('EMA_CUS', 'varchar', { length: '255', isNullable: true }),
+          col('PHO_CUS', 'varchar', { length: '20', isNullable: true }),
+          col('ADD_CUS', 'varchar', { length: '255', isNullable: true }),
+          col('ACT_CUS', boolType, { default: boolDefault }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
+          col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'CUSTOMERS',
-      new TableIndex({ name: 'IDX_CUS_CEDULA', columnNames: ['CED_CUS'], isUnique: true }),
-    );
+    await queryRunner.createIndex('CUSTOMERS', new TableIndex({ name: 'IDX_CUS_CEDULA', columnNames: ['CED_CUS'], isUnique: true }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 6. CATEGORIES
@@ -143,12 +147,12 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'CATEGORIES',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'NAM_CAT', type: 'varchar', length: '100' },
-          { name: 'DES_CAT', type: 'varchar', length: '255', isNullable: true },
-          { name: 'ACT_CAT', type: 'boolean', default: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
-          { name: 'UPD_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('NAM_CAT', 'varchar', { length: '100' }),
+          col('DES_CAT', 'varchar', { length: '255', isNullable: true }),
+          col('ACT_CAT', boolType, { default: boolDefault }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
+          col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
@@ -160,19 +164,16 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'TAX_RATES',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'NAM_TAX', type: 'varchar', length: '100' },
-          { name: 'PCT_TAX', type: 'decimal', precision: 5, scale: 2 },
-          { name: 'ACT_TAX', type: 'boolean', default: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
-          { name: 'UPD_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('NAM_TAX', 'varchar', { length: '100' }),
+          col('PCT_TAX', 'decimal', { precision: 5, scale: 2 }),
+          col('ACT_TAX', boolType, { default: boolDefault }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
+          col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'TAX_RATES',
-      new TableIndex({ name: 'IDX_TAX_ACT', columnNames: ['ACT_TAX'] }),
-    );
+    await queryRunner.createIndex('TAX_RATES', new TableIndex({ name: 'IDX_TAX_ACT', columnNames: ['ACT_TAX'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 8. PRODUCTS
@@ -181,32 +182,23 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'PRODUCTS',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'CAT_ID', type: 'uuid' },
-          { name: 'COD_PRO', type: 'varchar', length: '50' },
-          { name: 'NAM_PRO', type: 'varchar', length: '255' },
-          { name: 'DES_PRO', type: 'text', isNullable: true },
-          { name: 'SAL_PRI_PRO', type: 'decimal', precision: 12, scale: 2 },
-          { name: 'COS_PRI_PRO', type: 'decimal', precision: 12, scale: 2 },
-          { name: 'ACT_PRO', type: 'boolean', default: true },
-          { name: 'CUR_STO_PRO', type: 'integer', default: 0 },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
-          { name: 'UPD_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('CAT_ID', uuidType, { length: uuidLength }),
+          col('COD_PRO', 'varchar', { length: '50' }),
+          col('NAM_PRO', 'varchar', { length: '255' }),
+          col('DES_PRO', longTextType, { ...longTextOpts, isNullable: true }),
+          col('SAL_PRI_PRO', 'decimal', { precision: 12, scale: 2 }),
+          col('COS_PRI_PRO', 'decimal', { precision: 12, scale: 2 }),
+          col('ACT_PRO', boolType, { default: boolDefault }),
+          col('CUR_STO_PRO', 'integer', { default: 0 }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
+          col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'PRODUCTS',
-      new TableIndex({ name: 'IDX_PRO_CODE', columnNames: ['COD_PRO'], isUnique: true }),
-    );
-    await queryRunner.createIndex(
-      'PRODUCTS',
-      new TableIndex({ name: 'IDX_PRO_ACT', columnNames: ['ACT_PRO'] }),
-    );
-    await queryRunner.createIndex(
-      'PRODUCTS',
-      new TableIndex({ name: 'IDX_PRO_CAT', columnNames: ['CAT_ID'] }),
-    );
+    await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CODE', columnNames: ['COD_PRO'], isUnique: true }));
+    await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_ACT', columnNames: ['ACT_PRO'] }));
+    await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CAT', columnNames: ['CAT_ID'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 9. SALES
@@ -215,38 +207,26 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'SALES',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'BRA_ID', type: 'uuid' },
-          { name: 'CUS_ID', type: 'uuid' },
-          { name: 'CAS_USR_ID', type: 'uuid' },
-          { name: 'TAX_RAT_ID', type: 'uuid' },
-          { name: 'SAL_NUM', type: 'varchar', length: '50' },
-          { name: 'STA_SAL', type: 'varchar', length: '30', default: "'DRAFT'" },
-          { name: 'SUB_SAL', type: 'decimal', precision: 12, scale: 2 },
-          { name: 'TAX_AMO_SAL', type: 'decimal', precision: 12, scale: 2 },
-          { name: 'DIS_AMO_SAL', type: 'decimal', precision: 12, scale: 2, default: 0 },
-          { name: 'TOT_SAL', type: 'decimal', precision: 12, scale: 2 },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
-          { name: 'UPD_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('BRA_ID', uuidType, { length: uuidLength }),
+          col('CUS_ID', uuidType, { length: uuidLength }),
+          col('CAS_USR_ID', uuidType, { length: uuidLength }),
+          col('TAX_RAT_ID', uuidType, { length: uuidLength }),
+          col('SAL_NUM', 'varchar', { length: '50' }),
+          col('STA_SAL', 'varchar', { length: '30', default: "'DRAFT'" }),
+          col('SUB_SAL', 'decimal', { precision: 12, scale: 2 }),
+          col('TAX_AMO_SAL', 'decimal', { precision: 12, scale: 2 }),
+          col('DIS_AMO_SAL', 'decimal', { precision: 12, scale: 2, default: 0 }),
+          col('TOT_SAL', 'decimal', { precision: 12, scale: 2 }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
+          col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'SALES',
-      new TableIndex({ name: 'IDX_SAL_NUM', columnNames: ['SAL_NUM'], isUnique: true }),
-    );
-    await queryRunner.createIndex(
-      'SALES',
-      new TableIndex({ name: 'IDX_SAL_STA', columnNames: ['STA_SAL'] }),
-    );
-    await queryRunner.createIndex(
-      'SALES',
-      new TableIndex({ name: 'IDX_SAL_CREATED_AT', columnNames: ['CRE_AT'] }),
-    );
-    await queryRunner.createIndex(
-      'SALES',
-      new TableIndex({ name: 'IDX_SAL_BRA_STA_CRE', columnNames: ['BRA_ID', 'STA_SAL', 'CRE_AT'] }),
-    );
+    await queryRunner.createIndex('SALES', new TableIndex({ name: 'IDX_SAL_NUM', columnNames: ['SAL_NUM'], isUnique: true }));
+    await queryRunner.createIndex('SALES', new TableIndex({ name: 'IDX_SAL_STA', columnNames: ['STA_SAL'] }));
+    await queryRunner.createIndex('SALES', new TableIndex({ name: 'IDX_SAL_CREATED_AT', columnNames: ['CRE_AT'] }));
+    await queryRunner.createIndex('SALES', new TableIndex({ name: 'IDX_SAL_BRA_STA_CRE', columnNames: ['BRA_ID', 'STA_SAL', 'CRE_AT'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 10. SALE_DETAILS (increment PK via IDENTITY)
@@ -255,21 +235,18 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'SALE_DETAILS',
         columns: [
-          { name: 'id', type: 'int', isPrimary: true, isGenerated: true, generationStrategy: 'identity' },
-          { name: 'SAL_ID', type: 'uuid' },
-          { name: 'PRO_ID', type: 'uuid' },
-          { name: 'PRO_NAM_SAL', type: 'varchar', length: '255' },
-          { name: 'PRO_COD_SAL', type: 'varchar', length: '50' },
-          { name: 'QTY_SAL_DET', type: 'decimal', precision: 10, scale: 3 },
-          { name: 'UNT_PRI_SAL', type: 'decimal', precision: 12, scale: 2 },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: 'identity' }),
+          col('SAL_ID', uuidType, { length: uuidLength }),
+          col('PRO_ID', uuidType, { length: uuidLength }),
+          col('PRO_NAM_SAL', 'varchar', { length: '255' }),
+          col('PRO_COD_SAL', 'varchar', { length: '50' }),
+          col('QTY_SAL_DET', 'decimal', { precision: 10, scale: 3 }),
+          col('UNT_PRI_SAL', 'decimal', { precision: 12, scale: 2 }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'SALE_DETAILS',
-      new TableIndex({ name: 'IDX_SAL_DET_SAL_ID', columnNames: ['SAL_ID'] }),
-    );
+    await queryRunner.createIndex('SALE_DETAILS', new TableIndex({ name: 'IDX_SAL_DET_SAL_ID', columnNames: ['SAL_ID'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 11. STOCK_MOVEMENTS (increment PK via IDENTITY)
@@ -278,28 +255,22 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'STOCK_MOVEMENTS',
         columns: [
-          { name: 'id', type: 'int', isPrimary: true, isGenerated: true, generationStrategy: 'identity' },
-          { name: 'PRO_ID', type: 'uuid' },
-          { name: 'TYP_MOV', type: 'varchar', length: '30' },
-          { name: 'QTY_MOV', type: 'decimal', precision: 10, scale: 3 },
-          { name: 'PRE_STO_MOV', type: 'int' },
-          { name: 'NEW_STO_MOV', type: 'int' },
-          { name: 'USR_ID', type: 'uuid', isNullable: true },
-          { name: 'REF_TYP', type: 'varchar', length: '50', isNullable: true },
-          { name: 'REF_ID', type: 'uuid', isNullable: true },
-          { name: 'DES_MOV', type: 'text', isNullable: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: 'identity' }),
+          col('PRO_ID', uuidType, { length: uuidLength }),
+          col('TYP_MOV', 'varchar', { length: '30' }),
+          col('QTY_MOV', 'decimal', { precision: 10, scale: 3 }),
+          col('PRE_STO_MOV', 'int'),
+          col('NEW_STO_MOV', 'int'),
+          col('USR_ID', uuidType, { isNullable: true, length: uuidLength }),
+          col('REF_TYP', 'varchar', { length: '50', isNullable: true }),
+          col('REF_ID', uuidType, { isNullable: true, length: uuidLength }),
+          col('DES_MOV', longTextType, { ...longTextOpts, isNullable: true }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'STOCK_MOVEMENTS',
-      new TableIndex({ name: 'IDX_STR_MOV_CREATED_AT', columnNames: ['CRE_AT'] }),
-    );
-    await queryRunner.createIndex(
-      'STOCK_MOVEMENTS',
-      new TableIndex({ name: 'IDX_STR_MOV_PRO_CRE', columnNames: ['PRO_ID', 'CRE_AT'] }),
-    );
+    await queryRunner.createIndex('STOCK_MOVEMENTS', new TableIndex({ name: 'IDX_STR_MOV_CREATED_AT', columnNames: ['CRE_AT'] }));
+    await queryRunner.createIndex('STOCK_MOVEMENTS', new TableIndex({ name: 'IDX_STR_MOV_PRO_CRE', columnNames: ['PRO_ID', 'CRE_AT'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 12. ERROR_LOGS (increment PK via IDENTITY)
@@ -308,22 +279,19 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'ERROR_LOGS',
         columns: [
-          { name: 'id', type: 'int', isPrimary: true, isGenerated: true, generationStrategy: 'identity' },
-          { name: 'EXC_TYP', type: 'varchar', length: '30' },
-          { name: 'MES_ERR', type: 'text' },
-          { name: 'STA_TRA', type: 'text', isNullable: true },
-          { name: 'SRC_ERR', type: 'varchar', length: '100', isNullable: true },
-          { name: 'SRC_SCR_ERR', type: 'varchar', length: '100', isNullable: true },
-          { name: 'SRC_EVT_ERR', type: 'varchar', length: '100', isNullable: true },
-          { name: 'USR_ID', type: 'uuid', isNullable: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', 'int', { isPrimary: true, isGenerated: true, generationStrategy: 'identity' }),
+          col('EXC_TYP', 'varchar', { length: '30' }),
+          col('MES_ERR', longTextType, { ...longTextOpts }),
+          col('STA_TRA', longTextType, { ...longTextOpts, isNullable: true }),
+          col('SRC_ERR', 'varchar', { length: '100', isNullable: true }),
+          col('SRC_SCR_ERR', 'varchar', { length: '100', isNullable: true }),
+          col('SRC_EVT_ERR', 'varchar', { length: '100', isNullable: true }),
+          col('USR_ID', uuidType, { isNullable: true, length: uuidLength }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'ERROR_LOGS',
-      new TableIndex({ name: 'IDX_ERR_LOG_CREATED_AT', columnNames: ['CRE_AT'] }),
-    );
+    await queryRunner.createIndex('ERROR_LOGS', new TableIndex({ name: 'IDX_ERR_LOG_CREATED_AT', columnNames: ['CRE_AT'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 13. INVOICE_SERIES
@@ -332,15 +300,15 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'INVOICE_SERIES',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'BRA_ID', type: 'uuid' },
-          { name: 'EST_CODE', type: 'varchar', length: '10' },
-          { name: 'EMI_PNT', type: 'varchar', length: '10' },
-          { name: 'SEQ_NUM', type: 'int' },
-          { name: 'CUR_SEQ', type: 'int', default: 0 },
-          { name: 'ACT_INV_SER', type: 'boolean', default: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
-          { name: 'UPD_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('BRA_ID', uuidType, { length: uuidLength }),
+          col('EST_CODE', 'varchar', { length: '10' }),
+          col('EMI_PNT', 'varchar', { length: '10' }),
+          col('SEQ_NUM', 'int'),
+          col('CUR_SEQ', 'int', { default: 0 }),
+          col('ACT_INV_SER', boolType, { default: boolDefault }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
+          col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
@@ -352,22 +320,19 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'INVOICES',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'SAL_ID', type: 'uuid' },
-          { name: 'SER_ID', type: 'uuid' },
-          { name: 'INV_NUM', type: 'varchar', length: '50' },
-          { name: 'AUTH_NUM', type: 'varchar', length: '100', isNullable: true },
-          { name: 'ISS_DAT', type: 'timestamp' },
-          { name: 'STA_INV', type: 'varchar', length: '30', default: "'ISSUED'" },
-          { name: 'CAN_DAT', type: 'timestamp', isNullable: true },
-          { name: 'CRE_AT', type: 'timestamp', precision: 6, default: 'CURRENT_TIMESTAMP' },
+          col('id', uuidType, { isPrimary: true }),
+          col('SAL_ID', uuidType, { length: uuidLength }),
+          col('SER_ID', uuidType, { length: uuidLength }),
+          col('INV_NUM', 'varchar', { length: '50' }),
+          col('AUTH_NUM', 'varchar', { length: '100', isNullable: true }),
+          col('ISS_DAT', 'timestamp'),
+          col('STA_INV', 'varchar', { length: '30', default: "'ISSUED'" }),
+          col('CAN_DAT', 'timestamp', { isNullable: true }),
+          col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
       }),
     );
-    await queryRunner.createIndex(
-      'INVOICES',
-      new TableIndex({ name: 'IDX_INV_NUM', columnNames: ['INV_NUM'], isUnique: true }),
-    );
+    await queryRunner.createIndex('INVOICES', new TableIndex({ name: 'IDX_INV_NUM', columnNames: ['INV_NUM'], isUnique: true }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 15. INVOICE_ITEMS
@@ -376,72 +341,32 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
       new Table({
         name: 'INVOICE_ITEMS',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true },
-          { name: 'ID_INV_DET', type: 'uuid' },
-          { name: 'ID_PRO_DET', type: 'uuid' },
-          { name: 'CAN_VEN', type: 'int' },
-          { name: 'PRI_UNI_VEN', type: 'decimal', precision: 10, scale: 2 },
+          col('id', uuidType, { isPrimary: true }),
+          col('ID_INV_DET', uuidType, { length: uuidLength }),
+          col('ID_PRO_DET', uuidType, { length: uuidLength }),
+          col('CAN_VEN', 'int'),
+          col('PRI_UNI_VEN', 'decimal', { precision: 10, scale: 2 }),
         ],
       }),
     );
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 16. CHECK CONSTRAINTS (via TypeORM TableCheck — dialect-agnostic)
+    // 16. CHECK CONSTRAINTS
     // ─────────────────────────────────────────────────────────────────────────
-    await queryRunner.createCheckConstraint(
-      'USERS',
-      new TableCheck({
-        name: 'CK_USR_STA',
-        expression: `"STA_USR" IN ('ACTIVE', 'INACTIVE', 'BLOCKED')`,
-      }),
-    );
-
-    await queryRunner.createCheckConstraint(
-      'SALES',
-      new TableCheck({
-        name: 'CK_SAL_STA',
-        expression: `"STA_SAL" IN ('DRAFT', 'CONFIRMED', 'CANCELLED')`,
-      }),
-    );
-
-    await queryRunner.createCheckConstraint(
-      'INVOICES',
-      new TableCheck({
-        name: 'CK_INV_STA',
-        expression: `"STA_INV" IN ('ISSUED', 'CANCELLED')`,
-      }),
-    );
-
-    await queryRunner.createCheckConstraint(
-      'STOCK_MOVEMENTS',
-      new TableCheck({
-        name: 'CK_STR_TYP',
-        expression: `"TYP_MOV" IN ('IN', 'OUT', 'SALE', 'ADJUSTMENT')`,
-      }),
-    );
-
-    await queryRunner.createCheckConstraint(
-      'ERROR_LOGS',
-      new TableCheck({
-        name: 'CK_ERR_TYP',
-        expression: `"EXC_TYP" IN (
-          'VALIDATION_ERROR', 'DATABASE_ERROR', 'AUTHENTICATION_ERROR',
-          'AUTHORIZATION_ERROR', 'BUSINESS_RULE_ERROR',
-          'EXTERNAL_SERVICE_ERROR', 'UNEXPECTED_ERROR'
-        )`,
-      }),
-    );
+    await queryRunner.createCheckConstraint('USERS', new TableCheck({ name: 'CK_USR_STA', expression: `"STA_USR" IN ('ACTIVE', 'INACTIVE', 'BLOCKED')` }));
+    await queryRunner.createCheckConstraint('SALES', new TableCheck({ name: 'CK_SAL_STA', expression: `"STA_SAL" IN ('DRAFT', 'CONFIRMED', 'CANCELLED')` }));
+    await queryRunner.createCheckConstraint('INVOICES', new TableCheck({ name: 'CK_INV_STA', expression: `"STA_INV" IN ('ISSUED', 'CANCELLED')` }));
+    await queryRunner.createCheckConstraint('STOCK_MOVEMENTS', new TableCheck({ name: 'CK_STR_TYP', expression: `"TYP_MOV" IN ('IN', 'OUT', 'SALE', 'ADJUSTMENT')` }));
+    await queryRunner.createCheckConstraint('ERROR_LOGS', new TableCheck({ name: 'CK_ERR_TYP', expression: `"EXC_TYP" IN ('VALIDATION_ERROR', 'DATABASE_ERROR', 'AUTHENTICATION_ERROR', 'AUTHORIZATION_ERROR', 'BUSINESS_RULE_ERROR', 'EXTERNAL_SERVICE_ERROR', 'UNEXPECTED_ERROR')` }));
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop CHECK constraints first
     await queryRunner.dropCheckConstraint('USERS', 'CK_USR_STA');
     await queryRunner.dropCheckConstraint('SALES', 'CK_SAL_STA');
     await queryRunner.dropCheckConstraint('INVOICES', 'CK_INV_STA');
     await queryRunner.dropCheckConstraint('STOCK_MOVEMENTS', 'CK_STR_TYP');
     await queryRunner.dropCheckConstraint('ERROR_LOGS', 'CK_ERR_TYP');
 
-    // Drop tables in reverse dependency order
     await queryRunner.dropTable('INVOICE_ITEMS');
     await queryRunner.dropTable('INVOICES');
     await queryRunner.dropTable('INVOICE_SERIES');

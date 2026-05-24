@@ -11,6 +11,7 @@ import { DomainException } from '../../domain/exceptions/domain.exception';
 import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
 import { DuplicateCedulaException } from '../../domain/exceptions/duplicate-cedula.exception';
 import { InsufficientStockException } from '../../domain/exceptions/insufficient-stock.exception';
+import { BusinessRuleException } from '../../domain/exceptions/business-rule.exception';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -35,6 +36,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof InsufficientStockException) {
+        status = HttpStatus.UNPROCESSABLE_ENTITY;
+        message = exception.message;
+      } else if (exception instanceof BusinessRuleException) {
         status = HttpStatus.UNPROCESSABLE_ENTITY;
         message = exception.message;
       } else {

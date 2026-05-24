@@ -3,44 +3,31 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Pool } from 'pg';
-import { getPgPool } from '../base/pg-pool';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { PaginatedResult } from '../../../domain/repositories/pagination.types';
 import {
   IInvoiceQueryService,
   InvoiceListItem,
 } from '../../../domain/query-services/invoice.query-service.interface';
-
-interface InvoiceListRow {
-  id: string;
-  invoiceNumber: string;
-  authorizationNumber: string | null;
-  issueDate: Date;
-  status: string;
-  cancelledAt: Date | null;
-  createdAt: Date;
-  saleId: string;
-  seriesId: string;
-  saleNumber: string;
-  customerName: string;
-  customerCedula: string;
-  // branchName removed — branch entity deleted (simplify-schema-uta SDD)
-  total: string | number;
-  establishmentCode: string;
-  emissionPointCode: string;
-}
-
-interface CountRow {
-  total: number;
-}
+import { InvoiceTypeOrmEntity } from '../../database/entities/invoice.typeorm.entity';
+import { InvoiceSeriesTypeOrmEntity } from '../../database/entities/invoice-series.typeorm.entity';
+import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
+import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
 
 @Injectable()
 export class InvoiceQueryService implements IInvoiceQueryService {
-  private readonly pool: Pool;
+  constructor(
+    @InjectRepository(InvoiceTypeOrmEntity)
+    private readonly invoiceRepository: Repository<InvoiceTypeOrmEntity>,
+  ) {}
 
-  constructor(private readonly configService: ConfigService) {
-    this.pool = getPgPool(configService);
+  private buildInvoiceQuery() {
+    return this.invoiceRepository
+      .createQueryBuilder('i')
+      .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
+      .innerJoin(InvoiceSeriesTypeOrmEntity, 'ser', 'ser.id = i.seriesId')
+      .innerJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId');
   }
 
   async listInvoices(params: {
@@ -56,148 +43,113 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     const offset = (page - 1) * limit;
     const searchPattern = invoiceNumber ? `%${invoiceNumber}%` : null;
 
-    const countQuery = `
-      SELECT COUNT(*)::integer AS total
-      FROM "INVOICES" i
-      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
-      WHERE ($1::uuid IS NULL OR ser."BRA_ID" = $1)
-        AND ($2::varchar IS NULL OR i."STA_INV" = $2)
-        AND ($3::varchar IS NULL OR i."INV_NUM" ILIKE $3)
-        AND ($4::timestamp IS NULL OR i."CRE_AT" >= $4)
-        AND ($5::timestamp IS NULL OR i."CRE_AT" <= $5);
-    `;
+    const baseQuery = this.buildInvoiceQuery()
+      .where(branchId ? 'ser.branchId = :branchId' : '1=1', { branchId })
+      .andWhere(status ? 'i.status = :status' : '1=1', { status })
+      .andWhere(
+        searchPattern ? 'LOWER(i.invoiceNumber) LIKE LOWER(:searchPattern)' : '1=1',
+        { searchPattern },
+      )
+      .andWhere(startDate ? 'i.createdAt >= :startDate' : '1=1', { startDate })
+      .andWhere(endDate ? 'i.createdAt <= :endDate' : '1=1', { endDate });
 
-    const listQuery = `
-      SELECT
-        i.id,
-        i."INV_NUM" AS "invoiceNumber",
-        i."AUT_NUM" AS "authorizationNumber",
-        i."ISS_DAT_INV" AS "issueDate",
-        i."STA_INV" AS "status",
-        i."CAN_AT_INV" AS "cancelledAt",
-        i."CRE_AT" AS "createdAt",
-        i."SAL_ID" AS "saleId",
-        i."SER_ID" AS "seriesId",
-        sal."SAL_NUM" AS "saleNumber",
-        ser."EST_COD_SER" AS "establishmentCode",
-        ser."EMI_POI_COD_SER" AS "emissionPointCode",
-        sal."TOT_SAL" AS "total",
-        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
-        cus."CED_CUS" AS "customerCedula"
-      FROM "INVOICES" i
-      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
-      INNER JOIN "SALES" sal ON i."SAL_ID" = sal.id
-      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
-      WHERE ($1::uuid IS NULL OR ser."BRA_ID" = $1)
-        AND ($2::varchar IS NULL OR i."STA_INV" = $2)
-        AND ($3::varchar IS NULL OR i."INV_NUM" ILIKE $3)
-        AND ($4::timestamp IS NULL OR i."CRE_AT" >= $4)
-        AND ($5::timestamp IS NULL OR i."CRE_AT" <= $5)
-      ORDER BY i."CRE_AT" DESC
-      LIMIT $6 OFFSET $7;
-    `;
-
-    const [countResult, listResult] = await Promise.all([
-      this.pool.query<CountRow>(countQuery, [
-        branchId ?? null,
-        status ?? null,
-        searchPattern,
-        startDate ?? null,
-        endDate ?? null,
-      ]),
-      this.pool.query<InvoiceListRow>(listQuery, [
-        branchId ?? null,
-        status ?? null,
-        searchPattern,
-        startDate ?? null,
-        endDate ?? null,
-        limit,
-        offset,
-      ]),
-    ]);
+    const total = await baseQuery.clone().getCount();
+    const rows = await baseQuery
+      .clone()
+      .select([
+        'i.id AS "id"',
+        'i.saleId AS "saleId"',
+        'i.seriesId AS "seriesId"',
+        'i.invoiceNumber AS "invoiceNumber"',
+        'i.authorizationNumber AS "authorizationNumber"',
+        'i.issueDate AS "issueDate"',
+        'i.status AS "status"',
+        'i.cancelledAt AS "cancelledAt"',
+        'i.createdAt AS "createdAt"',
+        'sal.saleNumber AS "saleNumber"',
+        'ser.establishmentCode AS "establishmentCode"',
+        'ser.emissionPointCode AS "emissionPointCode"',
+        'sal.total AS "total"',
+        'TRIM(COALESCE(cus."FIR_NAM_CUS", \'\') || \' \' || COALESCE(cus."APE_CUS", \'\')) AS "customerName"',
+        'cus.cedula AS "customerCedula"',
+      ])
+      .orderBy('i.createdAt', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getRawMany<InvoiceListItem>();
 
     return {
-      data: listResult.rows.map((row) => ({
+      data: rows.map((row) => ({
         ...row,
         total: Number(row.total),
       })),
-      total: countResult.rows[0].total,
+      total,
       page,
       limit,
     };
   }
 
   async getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null> {
-    const query = `
-      SELECT
-        i.id,
-        i."INV_NUM" AS "invoiceNumber",
-        i."AUT_NUM" AS "authorizationNumber",
-        i."ISS_DAT_INV" AS "issueDate",
-        i."STA_INV" AS "status",
-        i."CAN_AT_INV" AS "cancelledAt",
-        i."CRE_AT" AS "createdAt",
-        i."SAL_ID" AS "saleId",
-        i."SER_ID" AS "seriesId",
-        sal."SAL_NUM" AS "saleNumber",
-        ser."EST_COD_SER" AS "establishmentCode",
-        ser."EMI_POI_COD_SER" AS "emissionPointCode",
-        sal."TOT_SAL" AS "total",
-        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
-        cus."CED_CUS" AS "customerCedula"
-      FROM "INVOICES" i
-      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
-      INNER JOIN "SALES" sal ON i."SAL_ID" = sal.id
-      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
-      WHERE i."SAL_ID" = $1
-      LIMIT 1;
-    `;
+    const row = await this.buildInvoiceQuery()
+      .where('i.saleId = :saleId', { saleId })
+      .select([
+        'i.id AS "id"',
+        'i.saleId AS "saleId"',
+        'i.seriesId AS "seriesId"',
+        'i.invoiceNumber AS "invoiceNumber"',
+        'i.authorizationNumber AS "authorizationNumber"',
+        'i.issueDate AS "issueDate"',
+        'i.status AS "status"',
+        'i.cancelledAt AS "cancelledAt"',
+        'i.createdAt AS "createdAt"',
+        'sal.saleNumber AS "saleNumber"',
+        'ser.establishmentCode AS "establishmentCode"',
+        'ser.emissionPointCode AS "emissionPointCode"',
+        'sal.total AS "total"',
+        'TRIM(COALESCE(cus."FIR_NAM_CUS", \'\') || \' \' || COALESCE(cus."APE_CUS", \'\')) AS "customerName"',
+        'cus.cedula AS "customerCedula"',
+      ])
+      .getRawOne<InvoiceListItem>();
 
-    const result = await this.pool.query<InvoiceListRow>(query, [saleId]);
-    if (result.rows.length === 0) {
+    if (!row) {
       return null;
     }
 
     return {
-      ...result.rows[0],
-      total: Number(result.rows[0].total),
+      ...row,
+      total: Number(row.total),
     };
   }
 
   async getInvoiceById(id: string): Promise<InvoiceListItem | null> {
-    const query = `
-      SELECT
-        i.id,
-        i."INV_NUM" AS "invoiceNumber",
-        i."AUT_NUM" AS "authorizationNumber",
-        i."ISS_DAT_INV" AS "issueDate",
-        i."STA_INV" AS "status",
-        i."CAN_AT_INV" AS "cancelledAt",
-        i."CRE_AT" AS "createdAt",
-        i."SAL_ID" AS "saleId",
-        i."SER_ID" AS "seriesId",
-        sal."SAL_NUM" AS "saleNumber",
-        ser."EST_COD_SER" AS "establishmentCode",
-        ser."EMI_POI_COD_SER" AS "emissionPointCode",
-        sal."TOT_SAL" AS "total",
-        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
-        cus."CED_CUS" AS "customerCedula"
-      FROM "INVOICES" i
-      INNER JOIN "INVOICE_SERIES" ser ON i."SER_ID" = ser.id
-      INNER JOIN "SALES" sal ON i."SAL_ID" = sal.id
-      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
-      WHERE i.id = $1
-      LIMIT 1;
-    `;
+    const row = await this.buildInvoiceQuery()
+      .where('i.id = :id', { id })
+      .select([
+        'i.id AS "id"',
+        'i.saleId AS "saleId"',
+        'i.seriesId AS "seriesId"',
+        'i.invoiceNumber AS "invoiceNumber"',
+        'i.authorizationNumber AS "authorizationNumber"',
+        'i.issueDate AS "issueDate"',
+        'i.status AS "status"',
+        'i.cancelledAt AS "cancelledAt"',
+        'i.createdAt AS "createdAt"',
+        'sal.saleNumber AS "saleNumber"',
+        'ser.establishmentCode AS "establishmentCode"',
+        'ser.emissionPointCode AS "emissionPointCode"',
+        'sal.total AS "total"',
+        'TRIM(COALESCE(cus."FIR_NAM_CUS", \'\') || \' \' || COALESCE(cus."APE_CUS", \'\')) AS "customerName"',
+        'cus.cedula AS "customerCedula"',
+      ])
+      .getRawOne<InvoiceListItem>();
 
-    const result = await this.pool.query<InvoiceListRow>(query, [id]);
-    if (result.rows.length === 0) {
+    if (!row) {
       return null;
     }
 
     return {
-      ...result.rows[0],
-      total: Number(result.rows[0].total),
+      ...row,
+      total: Number(row.total),
     };
   }
 }

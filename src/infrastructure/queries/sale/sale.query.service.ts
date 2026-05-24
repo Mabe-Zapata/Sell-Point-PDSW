@@ -3,21 +3,35 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Pool } from 'pg';
-import { getPgPool } from '../base/pg-pool';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   ISaleQueryService,
   SaleListItem,
   SaleWithDetails,
 } from '../../../domain/query-services/sale.query-service.interface';
+import { Sale } from '../../../domain/entities/sale.entity';
+import { SaleDetail } from '../../../domain/entities/sale-detail.entity';
+import { Customer } from '../../../domain/entities/customer.entity';
+import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
+import { SaleDetailTypeOrmEntity } from '../../database/entities/sale-detail.typeorm.entity';
+import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
+import { UserTypeOrmEntity } from '../../database/entities/user.typeorm.entity';
 
 @Injectable()
 export class SaleQueryService implements ISaleQueryService {
-  private readonly pool: Pool;
+  constructor(
+    @InjectRepository(SaleTypeOrmEntity)
+    private readonly saleRepository: Repository<SaleTypeOrmEntity>,
+    @InjectRepository(SaleDetailTypeOrmEntity)
+    private readonly saleDetailRepository: Repository<SaleDetailTypeOrmEntity>,
+  ) {}
 
-  constructor(private readonly configService: ConfigService) {
-    this.pool = getPgPool(configService);
+  private buildSaleQuery() {
+    return this.saleRepository
+      .createQueryBuilder('sal')
+      .innerJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId')
+      .innerJoin(UserTypeOrmEntity, 'usr', 'usr.id = sal.cashierUserId');
   }
 
   async listSales(params: {
@@ -32,119 +46,142 @@ export class SaleQueryService implements ISaleQueryService {
     const { page, limit, branchId, customerId, status, startDate, endDate } = params;
     const offset = (page - 1) * limit;
 
-    const countQuery = `
-      SELECT COUNT(*)::integer AS total
-      FROM "SALES" sal
-      WHERE ($1::uuid IS NULL OR sal."BRA_ID" = $1)
-        AND ($2::uuid IS NULL OR sal."CUS_ID" = $2)
-        AND ($3::varchar IS NULL OR sal."STA_SAL" = $3)
-        AND ($4::timestamp IS NULL OR sal."CRE_AT" >= $4)
-        AND ($5::timestamp IS NULL OR sal."CRE_AT" <= $5);
-    `;
+    const baseQuery = this.buildSaleQuery()
+      .where(branchId ? 'sal.branchId = :branchId' : '1=1', { branchId })
+      .andWhere(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
+      .andWhere(status ? 'sal.status = :status' : '1=1', { status })
+      .andWhere(startDate ? 'sal.createdAt >= :startDate' : '1=1', { startDate })
+      .andWhere(endDate ? 'sal.createdAt <= :endDate' : '1=1', { endDate });
 
-    const listQuery = `
-      SELECT
-        sal.id,
-        sal."SAL_NUM" AS "saleNumber",
-        sal."STA_SAL" AS "status",
-        sal."SUB_SAL" AS subtotal,
-        sal."TAX_AMO_SAL" AS "taxAmount",
-        sal."DIS_AMO_SAL" AS "discountAmount",
-        sal."TOT_SAL" AS total,
-        sal."CRE_AT" AS "createdAt",
-        sal."BRA_ID" AS "branchId",
-        sal."CUS_ID" AS "customerId",
-        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
-        usr."USR_USR" AS "cashierUsername"
-      FROM "SALES" sal
-      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
-      INNER JOIN "USERS" usr ON sal."CAS_USR_ID" = usr.id
-      WHERE ($1::uuid IS NULL OR sal."BRA_ID" = $1)
-        AND ($2::uuid IS NULL OR sal."CUS_ID" = $2)
-        AND ($3::varchar IS NULL OR sal."STA_SAL" = $3)
-        AND ($4::timestamp IS NULL OR sal."CRE_AT" >= $4)
-        AND ($5::timestamp IS NULL OR sal."CRE_AT" <= $5)
-      ORDER BY sal."CRE_AT" DESC
-      LIMIT $6 OFFSET $7;
-    `;
-
-    const countResult = await this.pool.query(countQuery, [
-      branchId ?? null,
-      customerId ?? null,
-      status ?? null,
-      startDate ?? null,
-      endDate ?? null,
-    ]);
-
-    const listResult = await this.pool.query(listQuery, [
-      branchId ?? null,
-      customerId ?? null,
-      status ?? null,
-      startDate ?? null,
-      endDate ?? null,
-      limit,
-      offset,
-    ]);
+    const total = await baseQuery.clone().getCount();
+    const rows = await baseQuery
+      .clone()
+      .select([
+        'sal.id AS "id"',
+        'sal.saleNumber AS "saleNumber"',
+        'sal.status AS "status"',
+        'sal.subtotal AS "subtotal"',
+        'sal.taxAmount AS "taxAmount"',
+        'sal.discountAmount AS "discountAmount"',
+        'sal.total AS "total"',
+        'sal.createdAt AS "createdAt"',
+        'sal.branchId AS "branchId"',
+        'sal.customerId AS "customerId"',
+        'TRIM(COALESCE(cus."FIR_NAM_CUS", \'\') || \' \' || COALESCE(cus."APE_CUS", \'\')) AS "customerName"',
+        'usr.username AS "cashierUsername"',
+      ])
+      .orderBy('sal.createdAt', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getRawMany<SaleListItem>();
 
     return {
-      data: listResult.rows,
-      total: Number(countResult.rows[0].total),
+      data: rows.map((row) => ({
+        ...row,
+        subtotal: Number(row.subtotal),
+        taxAmount: Number(row.taxAmount),
+        discountAmount: Number(row.discountAmount),
+        total: Number(row.total),
+      })),
+      total,
       page,
       limit,
     };
   }
 
   async getSaleWithDetails(id: string): Promise<SaleWithDetails | null> {
-    // Note: customerIdentificationType/Number replaced by cedula (simplify-schema-uta SDD)
-    const saleQuery = `
-      SELECT
-        sal.id,
-        sal."SAL_NUM" AS "saleNumber",
-        sal."STA_SAL" AS "status",
-        sal."SUB_SAL" AS subtotal,
-        sal."TAX_AMO_SAL" AS "taxAmount",
-        sal."DIS_AMO_SAL" AS "discountAmount",
-        sal."TOT_SAL" AS total,
-        sal."CRE_AT" AS "createdAt",
-        sal."UPD_AT" AS "updatedAt",
-        sal."BRA_ID" AS "branchId",
-        sal."CUS_ID" AS "customerId",
-        sal."CAS_USR_ID" AS "cashierUserId",
-        sal."TAX_RAT_ID" AS "taxRateId",
-        CONCAT(cus."NOM_CUS", ' ', cus."APE_CUS") AS "customerName",
-        cus."CED_CUS" AS "customerCedula",
-        usr."USR_USR" AS "cashierUsername"
-      FROM "SALES" sal
-      INNER JOIN "CUSTOMERS" cus ON sal."CUS_ID" = cus.id
-      INNER JOIN "USERS" usr ON sal."CAS_USR_ID" = usr.id
-      WHERE sal.id = $1;
-    `;
+    const saleRow = await this.buildSaleQuery()
+      .where('sal.id = :id', { id })
+      .select([
+        'sal.id AS "id"',
+        'sal.branchId AS "branchId"',
+        'sal.customerId AS "customerId"',
+        'sal.cashierUserId AS "cashierUserId"',
+        'sal.taxRateId AS "taxRateId"',
+        'sal.saleNumber AS "saleNumber"',
+        'sal.status AS "status"',
+        'sal.subtotal AS "subtotal"',
+        'sal.taxAmount AS "taxAmount"',
+        'sal.discountAmount AS "discountAmount"',
+        'sal.total AS "total"',
+        'sal.createdAt AS "createdAt"',
+        'sal.updatedAt AS "updatedAt"',
+        'cus.firstName AS "customerFirstName"',
+        'cus.lastName AS "customerLastName"',
+        'cus.cedula AS "customerCedula"',
+        'cus.email AS "customerEmail"',
+        'cus.phone AS "customerPhone"',
+        'cus.address AS "customerAddress"',
+        'TRIM(COALESCE(cus."FIR_NAM_CUS", \'\') || \' \' || COALESCE(cus."APE_CUS", \'\')) AS "customerName"',
+        'usr.username AS "cashierUsername"',
+      ])
+      .getRawOne();
 
-    const detailsQuery = `
-      SELECT
-        sd.id,
-        sd."SAL_ID" AS "saleId",
-        sd."PRO_ID" AS "productId",
-        sd."PRO_NAM_SAL" AS "productName",
-        sd."PRO_COD_SAL" AS "productCode",
-        sd."QTY_SAL_DET" AS quantity,
-        sd."UNT_PRI_SAL" AS "unitPrice",
-        sd."CRE_AT" AS "createdAt"
-      FROM "SALE_DETAILS" sd
-      WHERE sd."SAL_ID" = $1;
-    `;
-
-    const saleResult = await this.pool.query(saleQuery, [id]);
-    if (saleResult.rows.length === 0) {
+    if (!saleRow) {
       return null;
     }
 
-    const detailsResult = await this.pool.query(detailsQuery, [id]);
+    const detailsRows = await this.saleDetailRepository
+      .createQueryBuilder('sd')
+      .where('sd.saleId = :id', { id })
+      .select([
+        'sd.id AS "id"',
+        'sd.saleId AS "saleId"',
+        'sd.productId AS "productId"',
+        'sd.productNameSnapshot AS "productName"',
+        'sd.productCodeSnapshot AS "productCode"',
+        'sd.quantity AS "quantity"',
+        'sd.unitPrice AS "unitPrice"',
+        'sd.createdAt AS "createdAt"',
+      ])
+      .orderBy('sd.createdAt', 'ASC')
+      .getRawMany();
 
-    const sale = saleResult.rows[0];
-    return {
-      ...sale,
-      details: detailsResult.rows,
-    };
+    const customer = new Customer({
+      id: saleRow.customerId,
+      firstName: saleRow.customerFirstName ?? saleRow.customerName,
+      lastName: saleRow.customerLastName ?? undefined,
+      cedula: saleRow.customerCedula,
+      email: saleRow.customerEmail ?? undefined,
+      phone: saleRow.customerPhone ?? undefined,
+      address: saleRow.customerAddress ?? undefined,
+      isActive: true,
+      createdAt: saleRow.createdAt,
+      updatedAt: saleRow.updatedAt,
+    });
+
+    const sale = new Sale({
+      id: saleRow.id,
+      branchId: saleRow.branchId,
+      customerId: saleRow.customerId,
+      cashierUserId: saleRow.cashierUserId,
+      taxRateId: saleRow.taxRateId,
+      saleNumber: saleRow.saleNumber,
+      status: saleRow.status,
+      subtotal: Number(saleRow.subtotal),
+      taxAmount: Number(saleRow.taxAmount),
+      discountAmount: Number(saleRow.discountAmount),
+      total: Number(saleRow.total),
+      createdAt: saleRow.createdAt,
+      updatedAt: saleRow.updatedAt,
+    });
+
+    return Object.assign(sale, {
+      customer,
+      cashierUsername: saleRow.cashierUsername,
+      details: detailsRows.map(
+        (row) =>
+          new SaleDetail({
+            id: Number(row.id),
+            saleId: row.saleId,
+            productId: row.productId,
+            productName: row.productName,
+            productCode: row.productCode,
+            quantity: Number(row.quantity),
+            unitPrice: Number(row.unitPrice),
+            createdAt: row.createdAt,
+          }),
+      ),
+    }) as SaleWithDetails;
   }
 }

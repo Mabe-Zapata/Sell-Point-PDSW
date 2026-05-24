@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -6,9 +9,18 @@ import { DataSource } from 'typeorm';
 import { configuration } from './configuration';
 
 const config = configuration();
+const isOracle = config.database.type === 'oracle';
+
+// Oracle: usuario en mayúsculas, connectString al mismo nivel
+const oracleOptions = isOracle
+  ? {
+      username: config.database.username.toUpperCase(),
+      connectString: `${config.database.host}:${config.database.port}/${config.database.name}`,
+    }
+  : {};
 
 export const typeormConfig: TypeOrmModuleOptions = {
-  type: 'postgres',
+  type: config.database.type as 'postgres' | 'oracle' | 'mysql' | 'mariadb',
   host: config.database.host,
   port: config.database.port,
   username: config.database.username,
@@ -22,10 +34,11 @@ export const typeormConfig: TypeOrmModuleOptions = {
   // which can cause data loss in production and bypasses migration versioning.
   synchronize: false,
   logging: true,
+  ...oracleOptions,
 };
 
 export const dataSource = new DataSource({
-  type: 'postgres',
+  type: config.database.type as 'postgres' | 'oracle' | 'mysql' | 'mariadb',
   host: config.database.host,
   port: config.database.port,
   username: config.database.username,
@@ -39,4 +52,5 @@ export const dataSource = new DataSource({
   // which can cause data loss in production and bypasses migration versioning.
   synchronize: false,
   logging: true,
+  ...oracleOptions,
 });

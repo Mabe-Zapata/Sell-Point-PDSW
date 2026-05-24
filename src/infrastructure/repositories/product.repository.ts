@@ -37,7 +37,7 @@ export class ProductRepository implements IProductRepository {
       salePrice: product.salePrice,
       costPrice: product.costPrice,
       isActive: product.isActive,
-      availableQuantity: product.availableQuantity ?? product.currentStock,
+      availableQuantity: product.currentStock,
     };
   }
 

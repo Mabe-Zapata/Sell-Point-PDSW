@@ -18,6 +18,27 @@ services:
       retries: 10
       start_period: 20s
 
+  oracle:
+    image: gvenzl/oracle-free:latest
+    container_name: sellpoint-oracle
+    restart: unless-stopped
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD}
+      ORACLE_DATABASE: ${ORACLE_DATABASE}
+      APP_USER: ${ORACLE_APP_USER}
+      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD}
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./docker/oracle/startdb:/container-entrypoint-startdb.d
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
   redis:
     image: redis:7-alpine
     container_name: sellpoint-redis
@@ -30,4 +51,5 @@ services:
 
 volumes:
   postgres_data:
+  oracle_data:
   redis_data:
