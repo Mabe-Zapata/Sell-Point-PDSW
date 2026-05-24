@@ -1,0 +1,124 @@
+# ============================================================
+# Sell-Point — Deployment Docker Compose
+# ============================================================
+# Uses prebuilt multi-arch images.
+# Run from Sell-Point-PDSW/ so it picks the same .env file.
+#
+# Usage:
+#   docker compose -f docker-compose.deploy.yml up -d
+#   docker compose -f docker-compose.deploy.yml down -v
+#
+# Ports:
+#   frontend  -> http://localhost:80
+#   backend   -> http://localhost:3000
+#   swagger   -> http://localhost:3000/api/docs
+# ============================================================
+
+services:
+  backend:
+    image: meliodasdev/sellpoint-backend:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      APP_MODE: ${APP_MODE:-local}
+      PORT: ${PORT:-3000}
+      DB_TYPE: ${DB_TYPE:-postgres}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-sellpoint}
+      POSTGRES_USER: ${POSTGRES_USER:-sellpoint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sellpoint}
+      POSTGRES_URL: ${POSTGRES_URL:-}
+      POSTGRES_URL_PROD: ${POSTGRES_URL_PROD:-}
+      POSTGRES_CLOUD_URL: ${POSTGRES_CLOUD_URL:-}
+      ORACLE_HOST: ${ORACLE_HOST:-localhost}
+      ORACLE_PORT: ${ORACLE_PORT:-1521}
+      ORACLE_DATABASE: ${ORACLE_DATABASE:-FREEPDB1}
+      ORACLE_APP_USER: ${ORACLE_APP_USER:-SELL_POINT}
+      ORACLE_APP_PASSWORD: ${ORACLE_APP_PASSWORD:-sellpoint123}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_URL_PROD: ${REDIS_URL_PROD:-}
+      IVA_PERCENTAGE: ${IVA_PERCENTAGE:-15}
+      ADMIN_EMPLOYEE_ID: ${ADMIN_EMPLOYEE_ID:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@billflow.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
+      ADMIN_ROLE: ${ADMIN_ROLE:-ADMIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/docs || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - sellpoint-network
+
+  frontend:
+    image: meliodasdev/sellpoint-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - sellpoint-network
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sellpoint}
+      POSTGRES_USER: ${POSTGRES_USER:-sellpoint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sellpoint}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sellpoint} -d ${POSTGRES_DB:-sellpoint}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - sellpoint-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-} ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - sellpoint-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  sellpoint-network:
+    driver: bridge

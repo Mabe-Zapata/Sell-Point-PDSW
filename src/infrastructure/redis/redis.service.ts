@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
+import { configuration } from '../../config/configuration';
 
 export interface RefreshTokenPayload {
   employeeId: string;
@@ -21,13 +22,16 @@ export class RedisService implements OnModuleDestroy {
   }
 
   constructor() {
-    const redisUrl = process.env.REDIS_URL;
-    if (redisUrl) {
-      this.redis = new Redis(redisUrl);
+    const redis = configuration().redis;
+
+    if (redis.url) {
+      this.redis = new Redis(redis.url);
     } else {
-      const host = process.env.REDIS_HOST || 'localhost';
-      const port = parseInt(process.env.REDIS_PORT || '6379', 10);
-      this.redis = new Redis({ host, port });
+      this.redis = new Redis({
+        host: redis.host,
+        port: redis.port,
+        password: redis.password,
+      });
     }
   }
 

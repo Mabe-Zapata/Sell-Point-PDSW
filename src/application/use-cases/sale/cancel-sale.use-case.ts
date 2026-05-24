@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { UNIT_OF_WORK } from '../../tokens';
-import { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
+import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
 import { Sale, StockMovement, StockMovementType } from '../../../domain/entities';
 import { SaleCancelledEvent } from '../../../domain/events/sale-cancelled.event';
 import { BusinessRuleException } from '../../../domain/exceptions';

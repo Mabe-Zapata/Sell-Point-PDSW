@@ -11,9 +11,7 @@ describe('AuthController', () => {
   const mockAuthService = {
     login: jest.fn(),
     validateRefreshToken: jest.fn(),
-    revokeRefreshToken: jest.fn(),
     generateAccessToken: jest.fn(),
-    generateRefreshToken: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -91,21 +89,18 @@ describe('AuthController', () => {
       role: 'ADMIN' as const,
     };
 
-    it('should return new access token and refresh token on valid refresh', async () => {
+    it('should return new access token and the same refresh token on valid refresh', async () => {
       mockAuthService.validateRefreshToken.mockResolvedValue(mockPayload);
-      mockAuthService.revokeRefreshToken.mockResolvedValue(undefined);
       mockAuthService.generateAccessToken.mockReturnValue('new-access-token');
-      mockAuthService.generateRefreshToken.mockResolvedValue('new-refresh-token-uuid');
 
       const result = await controller.refresh({ refreshToken: 'valid-uuid' });
 
       expect(result).toEqual({
         accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token-uuid',
+        refreshToken: 'valid-uuid',
         expiresIn: 900,
       });
       expect(mockAuthService.validateRefreshToken).toHaveBeenCalledWith('valid-uuid');
-      expect(mockAuthService.revokeRefreshToken).toHaveBeenCalledWith('valid-uuid');
     });
 
     it('should throw UnauthorizedException when refresh token is invalid', async () => {

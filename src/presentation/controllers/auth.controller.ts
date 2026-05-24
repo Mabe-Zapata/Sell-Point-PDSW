@@ -65,14 +65,11 @@ export class AuthController {
       });
     }
 
-    await this.authService.revokeRefreshToken(refreshToken);
-
     const accessToken = this.authService.generateAccessToken(payload);
-    const newRefreshToken = await this.authService.generateRefreshToken(payload, false);
 
     return {
       accessToken,
-      refreshToken: newRefreshToken,
+      refreshToken,
       expiresIn: 900,
     };
   }

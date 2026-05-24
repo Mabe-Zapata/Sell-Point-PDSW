@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import * as bcrypt from 'bcrypt';
+import { v5 as uuidv5 } from 'uuid';
 import { dataSource } from '../../config/typeorm.config';
 import { UserTypeOrmEntity } from './entities/user.typeorm.entity';
 
@@ -8,6 +9,7 @@ const ADMIN_USERNAME = 'admin';
 const ADMIN_EMAIL = 'admin@billflow.com';
 const ADMIN_PASSWORD = 'Admin1234!';
 const SALT_ROUNDS = 10;
+const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 
 async function main() {
   await dataSource.initialize();
@@ -22,6 +24,7 @@ async function main() {
 
   // Insert new admin
   const admin = userRepo.create({
+    id: uuidv5(ADMIN_EMPLOYEE_ID, UUID_NAMESPACE),
     employeeId: ADMIN_EMPLOYEE_ID,
     username: ADMIN_USERNAME,
     email: ADMIN_EMAIL,

@@ -2,7 +2,7 @@ export interface RedisConfig {
   host: string;
   port: number;
   url?: string;
-  token?: string;
+  password?: string;
 }
 
 export interface JwtConfig {
@@ -16,43 +16,86 @@ export interface DatabaseConfig {
   username: string;
   password: string;
   name: string;
+  url?: string;
 }
 
+type AppMode = 'local' | 'production';
+
+const normalizeMode = (value?: string): AppMode =>
+  value?.toLowerCase() === 'production' ? 'production' : 'local';
+
+const pick = (primary?: string, fallback?: string): string | undefined =>
+  primary && primary.trim() !== '' ? primary : fallback;
+
+const intFrom = (value: string | undefined, fallback: string): number =>
+  parseInt(value || fallback, 10);
+
 export const configuration = () => {
+  const appMode = normalizeMode(process.env.APP_MODE);
   const dbType = (process.env.DB_TYPE || 'postgres') as 'postgres' | 'oracle';
 
-  const postgresConfig = {
+  const postgresLocal = {
     host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+    port: intFrom(process.env.POSTGRES_PORT, '5432'),
     username: process.env.POSTGRES_USER || 'sellpoint',
     password: process.env.POSTGRES_PASSWORD || 'sellpoint',
     name: process.env.POSTGRES_DB || 'sellpoint',
+    url: pick(process.env.POSTGRES_URL, process.env.DATABASE_URL),
+  };
+
+  const postgresProduction = {
+    host: process.env.POSTGRES_HOST || 'localhost',
+    port: intFrom(process.env.POSTGRES_PORT, '5432'),
+    username: process.env.POSTGRES_USER || 'sellpoint',
+    password: process.env.POSTGRES_PASSWORD || 'sellpoint',
+    name: process.env.POSTGRES_DB || 'sellpoint',
+    url: pick(process.env.POSTGRES_URL_PROD, pick(process.env.POSTGRES_CLOUD_URL, process.env.DATABASE_URL)),
   };
 
   const oracleConfig = {
     host: process.env.ORACLE_HOST || 'localhost',
-    port: parseInt(process.env.ORACLE_PORT || '1521', 10),
+    port: intFrom(process.env.ORACLE_PORT, '1521'),
     username: process.env.ORACLE_APP_USER || 'sell_point',
     password: process.env.ORACLE_APP_PASSWORD || process.env.ORACLE_PASSWORD || 'sellpoint123',
     name: process.env.ORACLE_DATABASE || 'FREEPDB1',
   };
 
+  const redisLocal = {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: intFrom(process.env.REDIS_PORT, '6379'),
+    url: pick(process.env.REDIS_URL, undefined),
+    password: pick(process.env.REDIS_PASSWORD, process.env.REDIS_TOKEN),
+  };
+
+  const redisProduction = {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: intFrom(process.env.REDIS_PORT, '6379'),
+    url: pick(process.env.REDIS_URL_PROD, process.env.REDIS_URL),
+    password: pick(process.env.REDIS_PASSWORD, process.env.REDIS_TOKEN),
+  };
+
+  const database: DatabaseConfig =
+    dbType === 'postgres'
+      ? {
+          type: dbType,
+          ...(appMode === 'production' ? postgresProduction : postgresLocal),
+        }
+      : {
+          type: dbType,
+          ...oracleConfig,
+        };
+
   return {
-    database: {
-      type: dbType,
-      ...(dbType === 'postgres' ? postgresConfig : oracleConfig),
+    app: {
+      mode: appMode,
+      port: intFrom(process.env.PORT, '3000'),
     },
+    database,
     tax: {
       percentage: parseFloat(process.env.IVA_PERCENTAGE || '15'),
     },
-    app: {
-      port: parseInt(process.env.PORT || '3000', 10),
-    },
     redis: {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      url: process.env.REDIS_URL,
-      token: process.env.REDIS_TOKEN,
+      ...(appMode === 'production' ? redisProduction : redisLocal),
     },
     jwt: {
       secret: process.env.JWT_SECRET || 'change-me-min-32-chars',
