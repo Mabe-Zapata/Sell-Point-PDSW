@@ -51,11 +51,11 @@ export class AuthService {
   }
 
   async login(
-    employeeId: string,
+    email: string,
     password: string,
     rememberMe = false,
   ): Promise<AuthTokens | null> {
-    const user = await this.userRepository.findByEmployeeId(employeeId);
+    const user = await this.userRepository.findByEmail(email);
     if (!user) return null;
 
     if (user.status === UserStatus.BLOCKED) {

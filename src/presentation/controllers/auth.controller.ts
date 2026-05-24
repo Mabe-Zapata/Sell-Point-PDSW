@@ -31,9 +31,9 @@ export class AuthController {
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Authenticate with employee code and password' })
+  @ApiOperation({ summary: 'Authenticate with email and password' })
   async login(@Body() dto: LoginDto) {
-    const tokens = await this.authService.login(dto.employeeCode, dto.password, dto.rememberMe);
+    const tokens = await this.authService.login(dto.email, dto.password, dto.rememberMe);
     if (!tokens) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',

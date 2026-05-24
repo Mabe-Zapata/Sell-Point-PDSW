@@ -16,6 +16,8 @@ describe('AuthService', () => {
 
   const mockUserRepository = {
     findByEmployeeId: jest.fn(),
+    findByEmail: jest.fn(),
+    updateFailedLoginAttempts: jest.fn(),
   };
 
   const mockJwtService = {
@@ -177,11 +179,11 @@ describe('AuthService', () => {
     };
 
     it('should return AuthTokens with accessToken, refreshToken, and expiresIn: 900', async () => {
-      mockUserRepository.findByEmployeeId.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       mockJwtService.sign.mockReturnValue('signed-jwt-token');
       mockRedisService.setRefreshToken.mockResolvedValue(undefined);
 
-      const result = await authService.login('EMP-001', 'password123', false);
+      const result = await authService.login('admin@test.com', 'password123', false);
 
       expect(result).toEqual({
         accessToken: 'signed-jwt-token',
@@ -196,17 +198,17 @@ describe('AuthService', () => {
     });
 
     it('should return null when user does not exist', async () => {
-      mockUserRepository.findByEmployeeId.mockResolvedValue(null);
+      mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      const result = await authService.login('INVALID-EMP', 'password123', false);
+      const result = await authService.login('unknown@test.com', 'password123', false);
 
       expect(result).toBeNull();
     });
 
     it('should return null when password is incorrect', async () => {
-      mockUserRepository.findByEmployeeId.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
-      const result = await authService.login('EMP-001', 'wrong-password', false);
+      const result = await authService.login('admin@test.com', 'wrong-password', false);
 
       expect(result).toBeNull();
     });
@@ -223,11 +225,11 @@ describe('AuthService', () => {
     };
 
     it('should set expiresIn to 900 regardless of rememberMe flag (false)', async () => {
-      mockUserRepository.findByEmployeeId.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       mockJwtService.sign.mockReturnValue('signed-jwt-token');
       mockRedisService.setRefreshToken.mockResolvedValue(undefined);
 
-      const result = await authService.login('EMP-001', 'password123', false);
+      const result = await authService.login('admin@test.com', 'password123', false);
 
       if (!result) {
         throw new Error('Expected login result to be defined');
@@ -236,11 +238,11 @@ describe('AuthService', () => {
     });
 
     it('should set expiresIn to 900 regardless of rememberMe flag (true)', async () => {
-      mockUserRepository.findByEmployeeId.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       mockJwtService.sign.mockReturnValue('signed-jwt-token');
       mockRedisService.setRefreshToken.mockResolvedValue(undefined);
 
-      const result = await authService.login('EMP-001', 'password123', true);
+      const result = await authService.login('admin@test.com', 'password123', true);
 
       if (!result) {
         throw new Error('Expected login result to be defined');
