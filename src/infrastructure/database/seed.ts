@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { v5 as uuidv5 } from 'uuid';
 import { dataSource } from '../../config/typeorm.config';
 import { RoleTypeOrmEntity } from './entities/role.typeorm.entity';
 // import { BranchTypeOrmEntity } from './entities/branch.typeorm.entity';
@@ -6,6 +7,8 @@ import { RoleTypeOrmEntity } from './entities/role.typeorm.entity';
 // Branches and Warehouses deleted — simplify-schema-uta SDD
 import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
+
+const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 
 async function main() {
   await dataSource.initialize();
@@ -30,7 +33,12 @@ async function main() {
     if (existing) {
       console.log(`Role ${roleData.name} already exists, skipping.`);
     } else {
-      await roleRepo.save(roleRepo.create(roleData));
+      await roleRepo.save(
+        roleRepo.create({
+          id: uuidv5(roleData.name, UUID_NAMESPACE),
+          ...roleData,
+        }),
+      );
       console.log(`Role ${roleData.name} created.`);
     }
   }
@@ -83,7 +91,12 @@ async function main() {
     if (existing) {
       console.log(`TaxRate ${taxData.name} already exists, skipping.`);
     } else {
-      await taxRateRepo.save(taxRateRepo.create(taxData));
+      await taxRateRepo.save(
+        taxRateRepo.create({
+          id: uuidv5(taxData.name, UUID_NAMESPACE),
+          ...taxData,
+        }),
+      );
       console.log(`TaxRate ${taxData.name} created.`);
     }
   }
@@ -100,7 +113,12 @@ async function main() {
   if (consumerFinal) {
     console.log('Consumer Final customer already exists, skipping.');
   } else {
-    consumerFinal = await customerRepo.save(customerRepo.create(consumerFinalData));
+    consumerFinal = await customerRepo.save(
+      customerRepo.create({
+        id: uuidv5(consumerFinalData.cedula, UUID_NAMESPACE),
+        ...consumerFinalData,
+      }),
+    );
     console.log('Consumer Final customer created.');
   }
 

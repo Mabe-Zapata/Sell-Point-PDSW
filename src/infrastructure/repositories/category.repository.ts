@@ -4,9 +4,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CategoryTypeOrmEntity } from '../database/entities/category.typeorm.entity';
-import { Category } from '../../domain/entities/category.entity';
-import { ICategoryRepository, CategoryFilters } from '../../domain/repositories/category.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import { Category } from '../../domain/entities';
+import type { ICategoryRepository, CategoryFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class CategoryRepository implements ICategoryRepository {

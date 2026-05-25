@@ -1,5 +1,4 @@
-import { Invoice } from '../../domain/entities/invoice.entity';
-import { InvoiceItem } from '../../domain/entities/invoice-item.entity';
+import { Invoice, InvoiceItem } from '../../domain/entities';
 
 /**
  * Injection token for the PDF service

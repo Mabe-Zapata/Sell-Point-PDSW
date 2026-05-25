@@ -73,7 +73,8 @@ describe('CustomerController', () => {
     it('should call queryBus.execute with GetCustomerQuery', async () => {
       const mockCustomer = {
         id: 'cust-123',
-        names: 'John Doe',
+        firstName: 'John',
+        lastName: 'Doe',
       };
       mockQueryBus.execute.mockResolvedValue(mockCustomer);
 
@@ -88,14 +89,15 @@ describe('CustomerController', () => {
     it('should call commandBus.execute with CreateCustomerCommand', async () => {
       const mockCustomer = {
         id: 'cust-123',
-        names: 'John Doe',
+        firstName: 'John',
+        lastName: 'Doe',
       };
       mockCommandBus.execute.mockResolvedValue(mockCustomer);
 
       const createDto = {
-        cedula: '9999999999999',
-        identificationNumber: '0901234567',
-        names: 'John Doe',
+        cedula: '0901234567',
+        firstName: 'John',
+        lastName: 'Doe',
       };
 
       const result = await controller.create(createDto);

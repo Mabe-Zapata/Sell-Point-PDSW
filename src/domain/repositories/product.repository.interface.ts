@@ -17,6 +17,7 @@ export interface IProductRepository {
   create(product: Product): Promise<Product>;
   update(product: Product): Promise<Product>;
   softDelete(id: string): Promise<void>;
+  findByIdForUpdate(id: string): Promise<Product | null>;
   incrementStock(id: string, quantity: number): Promise<void>;
   decrementStock(id: string, quantity: number): Promise<void>;
 }

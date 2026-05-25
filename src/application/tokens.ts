@@ -16,3 +16,4 @@ export const ERROR_LOG_REPOSITORY = 'ERROR_LOG_REPOSITORY';
 
 // Service Injection Tokens
 export const TAX_CALCULATOR = 'TAX_CALCULATOR';
+export const UNIT_OF_WORK = 'UNIT_OF_WORK';

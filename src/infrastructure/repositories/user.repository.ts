@@ -2,11 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserTypeOrmEntity } from '../database/entities/user.typeorm.entity';
-import { User } from '../../domain/entities/user.entity';
+import { User } from '../../domain/entities';
 import { UserStatusMapper } from '../database/entities/enums/user-status.db-enum';
-import { IUserRepository } from '../../domain/repositories/user.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
-import { UserFilters } from '../../domain/repositories/user.repository.interface';
+import type { IUserRepository, UserFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class UserRepository implements IUserRepository {

@@ -18,6 +18,7 @@ const oracleOptions = isOracle
 
 export const typeormConfig: TypeOrmModuleOptions = {
   type: config.database.type as 'postgres' | 'oracle' | 'mysql' | 'mariadb',
+  url: config.database.url,
   host: config.database.host,
   port: config.database.port,
   username: config.database.username,
@@ -36,6 +37,7 @@ export const typeormConfig: TypeOrmModuleOptions = {
 
 export const dataSource = new DataSource({
   type: config.database.type as 'postgres' | 'oracle' | 'mysql' | 'mariadb',
+  url: config.database.url,
   host: config.database.host,
   port: config.database.port,
   username: config.database.username,

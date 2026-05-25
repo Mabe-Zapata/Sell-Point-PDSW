@@ -2,10 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ErrorLogTypeOrmEntity } from '../database/entities/error-log.typeorm.entity';
-import { ErrorLog } from '../../domain/entities/error-log.entity';
+import { ErrorLog } from '../../domain/entities';
 import { ExceptionTypeMapper } from '../database/entities/enums/exception-type.db-enum';
-import { IErrorLogRepository, ErrorLogFilters } from '../../domain/repositories/error-log.repository.interface';
-import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import type { IErrorLogRepository, ErrorLogFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
 export class ErrorLogRepository implements IErrorLogRepository {

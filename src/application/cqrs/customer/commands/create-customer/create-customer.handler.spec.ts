@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 import { CreateCustomerHandler } from './create-customer.handler';
 import { CreateCustomerValidator } from './create-customer.validator';
 import { CUSTOMER_REPOSITORY } from '../../../../tokens';
 import type { ICustomerRepository } from '../../../../../domain/repositories';
-import { Customer } from '../../../../../domain/entities/customer.entity';
+import { Customer } from '../../../../../domain/entities';
 import { CreateCustomerCommand } from './create-customer.command';
-import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
+import { DuplicateCedulaException } from '../../../../../domain/exceptions';
 import { CreateCustomerDto } from '../../../../dto/customer/create-customer.dto';
 
 describe('CreateCustomerHandler', () => {
@@ -40,22 +39,24 @@ describe('CreateCustomerHandler', () => {
   });
 
   it('should check for duplicate and create customer', async () => {
-    const mockCustomer = {
+    const mockCustomer = new Customer({
       id: 'cust-123',
+      firstName: 'John',
+      lastName: 'Doe',
       cedula: '0901234567',
-      names: 'John Doe',
       email: 'john@test.com',
       phone: '0991234567',
       address: 'Test address',
       isActive: true,
-    } as Customer;
+    });
 
     mockRepository.findByIdentificationNumber.mockResolvedValue(null);
     mockRepository.create.mockResolvedValue(mockCustomer);
 
     const dto: CreateCustomerDto = {
       cedula: '0901234567',
-      names: 'John Doe',
+      firstName: 'John',
+      lastName: 'Doe',
       email: 'john@test.com',
       phone: '0991234567',
       address: 'Test address',
@@ -68,7 +69,7 @@ describe('CreateCustomerHandler', () => {
     expect(mockRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
         cedula: '0901234567',
-        names: 'John Doe',
+        firstName: 'John',
       }),
     );
     expect(result).toEqual(mockCustomer);
@@ -80,7 +81,7 @@ describe('CreateCustomerHandler', () => {
 
     const dto: CreateCustomerDto = {
       cedula: '0901234567',
-      names: 'John Doe',
+      firstName: 'John',
     };
 
     const command = new CreateCustomerCommand(dto);

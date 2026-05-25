@@ -8,7 +8,7 @@ export class Product {
   readonly description?: string;
   readonly salePrice!: number;
   readonly costPrice!: number;
-  readonly currentStock!: number;
+  currentStock!: number;
   readonly createdAt!: Date;
   readonly deletedAt?: Date;
 
