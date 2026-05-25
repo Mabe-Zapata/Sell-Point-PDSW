@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { DataSource, QueryRunner } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { IUnitOfWork } from '../../../../application/unit-of-work/unit-of-work.interface';
 import type {
   ISaleRepository,
@@ -21,7 +22,10 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   private started = false;
   private pendingEvents: any[] = [];
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly eventBus: EventBus,
+  ) {}
 
   async start(): Promise<void> {
     if (!this.started) {
@@ -36,7 +40,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
     if (this.started) {
       await this.queryRunner.commitTransaction();
       for (const event of this.pendingEvents) {
-        console.info('Event dispatched:', event);
+        this.eventBus.publish(event);
       }
       this.pendingEvents = [];
       this.started = false;
