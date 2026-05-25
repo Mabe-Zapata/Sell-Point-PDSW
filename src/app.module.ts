@@ -12,7 +12,7 @@ import { AppService } from './app.service';
 import { configuration } from './config/configuration';
 import { typeormConfig } from './config/typeorm.config';
 import { createSwaggerConfig } from './config/swagger.config';
-import { TypeOrmUnitOfWork } from './application/unit-of-work/typeorm-unit-of-work';
+import { TypeOrmUnitOfWork } from './infrastructure/persistence/typeorm/unit-of-work/typeorm-unit-of-work';
 import { UNIT_OF_WORK } from './application/tokens';
 import { ConfirmSaleUseCase } from './application/use-cases/sale/confirm-sale.use-case';
 import { CancelSaleUseCase } from './application/use-cases/sale/cancel-sale.use-case';

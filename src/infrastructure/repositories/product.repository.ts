@@ -93,7 +93,7 @@ export class ProductRepository implements IProductRepository {
   }
 
   async update(product: Product): Promise<Product> {
-    await this.repo.update(product.id, this.mapToEntity(product) as any);
+    await this.repo.update(product.id, this.mapToEntity(product));
     const updated = await this.repo.findOne({ where: { id: product.id } });
     if (!updated) throw new Error('Product not found after update');
     return this.mapToDomain(updated);

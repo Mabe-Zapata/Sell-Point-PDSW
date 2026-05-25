@@ -3,7 +3,7 @@ import { UNIT_OF_WORK } from '../../tokens';
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
 import { Sale, StockMovement, StockMovementType } from '../../../domain/entities';
 import { SaleConfirmedEvent } from '../../../domain/events/sale-confirmed.event';
-import { InsufficientStockException, BusinessRuleException } from '../../../domain/exceptions';
+import { BusinessRuleException } from '../../../domain/exceptions';
 
 @Injectable()
 export class ConfirmSaleUseCase {
@@ -25,27 +25,17 @@ export class ConfirmSaleUseCase {
 
       // Process each sale detail
       for (const detail of sale.details) {
-        // Find product with pessimistic lock for update
+        // Find product with pessimistic lock to capture previousStock
         const product = await this.uow.products.findByIdForUpdate(detail.productId);
 
         if (!product) {
           throw new BusinessRuleException(`Product ${detail.productId} not found`);
         }
 
-        // Validate sufficient stock
-        if (product.currentStock < detail.quantity) {
-          throw new InsufficientStockException(
-            detail.productName || 'Unknown',
-            detail.quantity,
-            product.currentStock,
-          );
-        }
-
-        // Deduct stock
+        // Deduct stock atomically (decrementStock validates CUR_STO_PRO >= qty)
         const previousStock = product.currentStock;
+        await this.uow.products.decrementStock(detail.productId, detail.quantity);
         const newStock = previousStock - detail.quantity;
-        product.currentStock = newStock;
-        await this.uow.products.update(product);
 
         // Create stock movement record
         const movement = new StockMovement({

@@ -22,15 +22,14 @@ export class CancelSaleUseCase {
 
       // Process each sale detail to restore stock
       for (const detail of sale.details) {
-        // Find product with pessimistic lock for update
+        // Find product with pessimistic lock to capture previousStock
         const product = await this.uow.products.findByIdForUpdate(detail.productId);
 
         if (product) {
-          // Restore stock
+          // Restore stock atomically
           const previousStock = product.currentStock;
+          await this.uow.products.incrementStock(detail.productId, detail.quantity);
           const newStock = previousStock + detail.quantity;
-          product.currentStock = newStock;
-          await this.uow.products.update(product);
 
           // Create stock movement for ADJUSTMENT (return)
           const movement = new StockMovement({
