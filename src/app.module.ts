@@ -64,6 +64,12 @@ import {
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
   GetDashboardStatsHandler, UnlockUserHandler, UnlockUserValidator,
+  CreateUserHandler, CreateUserValidator,
+UpdateUserHandler, UpdateUserValidator,
+ActivateUserHandler, ActivateUserValidator,
+DeactivateUserHandler, DeactivateUserValidator,
+GetUserHandler, GetUserValidator,
+ListUsersHandler, ListUsersValidator,
 } from './application/cqrs';
 
 // Domain + Infrastructure (barrel imports)
@@ -93,7 +99,7 @@ import {
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController } from './presentation/controllers';
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
@@ -121,6 +127,10 @@ const CommandHandlers = [
   ConfirmSaleHandler, ConfirmSaleValidator,
   CancelSaleHandler, CancelSaleValidator,
   AdjustStockHandler, AdjustStockValidator,
+  CreateUserHandler, CreateUserValidator,
+UpdateUserHandler, UpdateUserValidator,
+ActivateUserHandler, ActivateUserValidator,
+DeactivateUserHandler, DeactivateUserValidator,
 ];
 
 const QueryHandlers = [
@@ -141,6 +151,8 @@ const QueryHandlers = [
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
   GetDashboardStatsHandler,
+  GetUserHandler, GetUserValidator,
+ListUsersHandler, ListUsersValidator,
 ];
 
 // All TypeORM entities
@@ -176,7 +188,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController],
   providers: [
     AppService,
     // Domain Services

@@ -18,6 +18,19 @@ export { ListCustomersWithStockValidator } from './customer/queries/list-custome
 // User Commands
 export { UnlockUserHandler } from './user/commands/unlock-user/unlock-user.handler';
 export { UnlockUserValidator } from './user/commands/unlock-user/unlock-user.validator';
+export { CreateUserHandler } from './user/commands/create-user/create-user.handler';
+export { CreateUserValidator } from './user/commands/create-user/create-user.validator';
+export { UpdateUserHandler } from './user/commands/update-user/update-user.handler';
+export { UpdateUserValidator } from './user/commands/update-user/update-user.validator';
+export { ActivateUserHandler } from './user/commands/activate-user/activate-user.handler';
+export { ActivateUserValidator } from './user/commands/activate-user/activate-user.validator';
+export { DeactivateUserHandler } from './user/commands/deactivate-user/deactivate-user.handler';
+export { DeactivateUserValidator } from './user/commands/deactivate-user/deactivate-user.validator';
+// User Queries
+export { GetUserHandler } from './user/queries/get-user/get-user.handler';
+export { GetUserValidator } from './user/queries/get-user/get-user.validator';
+export { ListUsersHandler } from './user/queries/list-users/list-users.handler';
+export { ListUsersValidator } from './user/queries/list-users/list-users.validator';
 
 // Product Commands
 export { CreateProductHandler } from './product/commands/create-product/create-product.handler';
