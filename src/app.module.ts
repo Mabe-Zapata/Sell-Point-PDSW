@@ -82,6 +82,7 @@ import {
 } from './infrastructure/queries';
 import { PdfService, AuthService } from './infrastructure/services';
 import { RedisModule } from './infrastructure/redis/redis.module';
+import { EmailModule } from './infrastructure/services/email/email.module';
 import {
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
   ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
@@ -96,6 +97,7 @@ import {
 import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
+import { OrderConfirmedListener } from './application/listeners/order-confirmed.listener';
 
 // CQRS arrays
 const CommandHandlers = [
@@ -167,6 +169,7 @@ const entities = [
     }),
     RedisModule,
     CqrsModule,
+    EmailModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (): TypeOrmModuleOptions => ({
@@ -212,6 +215,8 @@ const entities = [
     // Use Cases
     ConfirmSaleUseCase,
     CancelSaleUseCase,
+    // Application - Listeners
+    OrderConfirmedListener,
 
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },

@@ -43,7 +43,6 @@ export class BrevoEmailAdapter implements IEmailService {
 
     axiosRetry(this.client, {
       retries: 3,
-      waitBetweenAttempts: true,
       retryDelay: (retryCount) => Math.pow(2, retryCount) * 1000,
       retryCondition: (error) => {
         return axiosRetry.isNetworkError(error) || axiosRetry.isRetryableError(error);
