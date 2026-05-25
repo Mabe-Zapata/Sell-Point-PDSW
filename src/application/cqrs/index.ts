@@ -31,7 +31,9 @@ export { GetUserHandler } from './user/queries/get-user/get-user.handler';
 export { GetUserValidator } from './user/queries/get-user/get-user.validator';
 export { ListUsersHandler } from './user/queries/list-users/list-users.handler';
 export { ListUsersValidator } from './user/queries/list-users/list-users.validator';
-
+// Role Queries
+export { ListRolesHandler } from './role/queries/list-roles/list-roles.handler';
+export { ListRolesValidator } from './role/queries/list-roles/list-roles.validator';
 // Product Commands
 export { CreateProductHandler } from './product/commands/create-product/create-product.handler';
 export { CreateProductValidator } from './product/commands/create-product/create-product.validator';

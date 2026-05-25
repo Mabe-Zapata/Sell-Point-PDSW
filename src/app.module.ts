@@ -70,6 +70,7 @@ ActivateUserHandler, ActivateUserValidator,
 DeactivateUserHandler, DeactivateUserValidator,
 GetUserHandler, GetUserValidator,
 ListUsersHandler, ListUsersValidator,
+ListRolesHandler, ListRolesValidator,
 } from './application/cqrs';
 
 // Domain + Infrastructure (barrel imports)
@@ -79,7 +80,7 @@ import {
   DashboardRepository, UserRepository, CategoryRepository,
   ErrorLogRepository, TaxRateRepository,
   StockMovementRepository, SaleRepository, SaleDetailRepository,
-  InvoiceSeriesRepository,
+  InvoiceSeriesRepository,RoleRepository,
 } from './infrastructure/repositories';
 import {
   DashboardQueryService, InvoiceQueryService, CustomerQueryService,
@@ -99,7 +100,7 @@ import {
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController } from './presentation/controllers';
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
@@ -153,6 +154,7 @@ const QueryHandlers = [
   GetDashboardStatsHandler,
   GetUserHandler, GetUserValidator,
 ListUsersHandler, ListUsersValidator,
+ListRolesHandler, ListRolesValidator,
 ];
 
 // All TypeORM entities
@@ -188,7 +190,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController],
   providers: [
     AppService,
     // Domain Services
@@ -200,6 +202,7 @@ const entities = [
     { provide: 'PRODUCT_REPOSITORY', useClass: ProductRepository },
     { provide: 'DASHBOARD_REPOSITORY', useClass: DashboardRepository },
     { provide: 'USER_REPOSITORY', useClass: UserRepository },
+    { provide: 'ROLE_REPOSITORY', useClass: RoleRepository },
     UserRepository, // AuthService needs direct injection
     { provide: 'CATEGORY_REPOSITORY', useClass: CategoryRepository },
     { provide: 'ERROR_LOG_REPOSITORY', useClass: ErrorLogRepository },
