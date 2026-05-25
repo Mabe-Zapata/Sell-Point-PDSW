@@ -128,7 +128,7 @@ export class UserRepository implements IUserRepository {
   }
 
   async update(user: User): Promise<User> {
-    await this.repo.update(user.id, this.mapToEntity(user) as any);
+    await this.repo.update(user.id, this.mapToEntity(user));
     const updated = await this.repo.findOne({ where: { id: user.id } });
     if (!updated) throw new Error('User not found after update');
     return this.mapToDomain(updated);
@@ -139,6 +139,6 @@ export class UserRepository implements IUserRepository {
   }
 
   async updateFailedLoginAttempts(id: string, attempts: number): Promise<void> {
-    await this.repo.update(id, { failedLoginAttempts: attempts } as any);
+    await this.repo.update(id, { failedLoginAttempts: attempts });
   }
 }

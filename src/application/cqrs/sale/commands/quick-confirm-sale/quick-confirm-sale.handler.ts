@@ -7,6 +7,7 @@ import { SaleTypeOrmEntity } from '../../../../../infrastructure/database/entiti
 import { SaleDetailTypeOrmEntity } from '../../../../../infrastructure/database/entities/sale-detail.typeorm.entity';
 import { ProductTypeOrmEntity } from '../../../../../infrastructure/database/entities/product.typeorm.entity';
 import { TaxRateTypeOrmEntity } from '../../../../../infrastructure/database/entities/tax-rate.typeorm.entity';
+import { InvoiceSeriesTypeOrmEntity } from '../../../../../infrastructure/database/entities/invoice-series.typeorm.entity';
 import { UserTypeOrmEntity } from '../../../../../infrastructure/database/entities/user.typeorm.entity';
 import { StockMovementTypeOrmEntity } from '../../../../../infrastructure/database/entities/stock-movement.typeorm.entity';
 import { SaleStatus, StockMovementType } from '../../../../../domain/entities';
@@ -72,9 +73,26 @@ export class QuickConfirmSaleHandler implements ICommandHandler<QuickConfirmSale
         throw new BusinessRuleException('User has no default branch assigned');
       }
 
+      const invoiceSeries = await queryRunner.manager
+        .createQueryBuilder(InvoiceSeriesTypeOrmEntity, 'inv')
+        .where('inv.branchId = :branchId', { branchId: user.defaultBranchId })
+        .andWhere('inv.isActive = :active', { active: true })
+        .setLock('pessimistic_write')
+        .getOne();
+
+      if (!invoiceSeries) {
+        throw new BusinessRuleException(
+          `No active invoice series found for branch ${user.defaultBranchId}. Configure one first.`,
+        );
+      }
+
+      invoiceSeries.currentSequence += 1;
+      await queryRunner.manager.save(invoiceSeries);
+
+      const paddedSeq = String(invoiceSeries.currentSequence).padStart(9, '0');
+      const saleNumber = `${invoiceSeries.establishmentCode}-${invoiceSeries.emissionPointCode}-${paddedSeq}`;
       const saleId = uuidv4();
-      const saleNumber = `SAL-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
-      const customerId = payload.customerId || null;
+      const customerId = payload.customerId || undefined;
 
       let subtotal = 0;
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { SaleTypeOrmEntity } from '../database/entities/sale.typeorm.entity';
 import { Sale } from '../../domain/entities/sale.entity';
 import { SaleStatusMapper } from '../database/entities/enums/sale-status.db-enum';
@@ -12,6 +12,7 @@ export class SaleRepository implements ISaleRepository {
   constructor(
     @InjectRepository(SaleTypeOrmEntity)
     private readonly repo: Repository<SaleTypeOrmEntity>,
+    private readonly dataSource: DataSource,
   ) {}
 
   private mapToDomain(entity: SaleTypeOrmEntity): Sale {
@@ -94,13 +95,33 @@ export class SaleRepository implements ISaleRepository {
   }
 
   async create(sale: Sale): Promise<Sale> {
-    const entity = this.repo.create(this.mapToEntity(sale) as SaleTypeOrmEntity);
-    const saved = await this.repo.save(entity);
-    return this.mapToDomain(saved);
+    const dbData = this.mapToEntity(sale);
+
+    await this.dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(SaleTypeOrmEntity)
+      .values({
+        id: sale.id,
+        branchId: dbData.branchId ?? '',
+        customerId: dbData.customerId ?? '',
+        cashierUserId: dbData.cashierUserId ?? '',
+        taxRateId: dbData.taxRateId ?? '',
+        saleNumber: dbData.saleNumber ?? '',
+        status: dbData.status ?? 'DRAFT',
+        subtotal: dbData.subtotal ?? 0,
+        taxAmount: dbData.taxAmount ?? 0,
+        discountAmount: dbData.discountAmount ?? 0,
+        total: dbData.total ?? 0,
+      })
+      .execute();
+
+    // Return the sale with all fields as passed (already has all domain data)
+    return sale;
   }
 
   async update(sale: Sale): Promise<Sale> {
-    await this.repo.update(sale.id, this.mapToEntity(sale) as any);
+    await this.repo.update(sale.id, this.mapToEntity(sale));
     const updated = await this.repo.findOne({ where: { id: sale.id } });
     if (!updated) throw new Error('Sale not found after update');
     return this.mapToDomain(updated);

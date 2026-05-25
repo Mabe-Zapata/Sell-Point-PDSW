@@ -16,6 +16,6 @@ export class ExceptionTypeMapper {
   }
 
   static toDb(domain: ExceptionType): string {
-    return domain as string;
+    return domain;
   }
 }

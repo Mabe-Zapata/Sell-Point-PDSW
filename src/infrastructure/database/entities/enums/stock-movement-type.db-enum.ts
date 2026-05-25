@@ -13,6 +13,6 @@ export class StockMovementTypeMapper {
   }
 
   static toDb(domain: StockMovementType): string {
-    return domain as string;
+    return domain;
   }
 }

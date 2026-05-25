@@ -13,7 +13,7 @@ describe('ListCustomersWithStockHandler', () => {
     mockQueryService = {
       listCustomers: jest.fn(),
       getCustomerByIdentification: jest.fn(),
-    } as any;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

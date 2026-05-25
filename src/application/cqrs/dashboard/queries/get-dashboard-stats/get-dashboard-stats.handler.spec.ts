@@ -11,7 +11,7 @@ describe('GetDashboardStatsHandler', () => {
   beforeEach(async () => {
     mockQueryService = {
       getStats: jest.fn(),
-    } as any;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

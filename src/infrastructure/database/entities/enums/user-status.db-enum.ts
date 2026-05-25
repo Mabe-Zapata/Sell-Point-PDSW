@@ -12,6 +12,6 @@ export class UserStatusMapper {
   }
 
   static toDb(domain: UserStatus): string {
-    return domain as string;
+    return domain;
   }
 }

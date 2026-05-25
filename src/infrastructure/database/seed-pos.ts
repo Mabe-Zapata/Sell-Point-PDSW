@@ -3,6 +3,7 @@ import { dataSource } from '../../config/typeorm.config';
 import { CategoryTypeOrmEntity } from './entities/category.typeorm.entity';
 import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
+import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 async function main() {
@@ -111,6 +112,28 @@ async function main() {
       );
       console.log(`Customer "${custData.firstName} ${custData.lastName}" created.`);
     }
+  }
+
+  // 4. Seed Invoice Series (for sequential sale numbers)
+  const adminBranchId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+  const existingSeries = await dataSource.getRepository(InvoiceSeriesTypeOrmEntity).findOne({
+    where: { branchId: adminBranchId, isActive: true },
+  });
+
+  if (!existingSeries) {
+    await dataSource.getRepository(InvoiceSeriesTypeOrmEntity).save(
+      dataSource.getRepository(InvoiceSeriesTypeOrmEntity).create({
+        branchId: adminBranchId,
+        establishmentCode: '001',
+        emissionPointCode: '001',
+        sequenceNumber: 0,
+        currentSequence: 0,
+        isActive: true,
+      }),
+    );
+    console.log('Invoice series created for admin branch: 001-001-000000000');
+  } else {
+    console.log('Invoice series already exists, skipping.');
   }
 
   console.log('\n=== POS Seed completed successfully! ===');

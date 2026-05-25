@@ -79,7 +79,7 @@ import {
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
-  UserRoleTypeOrmEntity,
+  UserRoleTypeOrmEntity, IdempotencyEntryTypeOrmEntity,
 } from './infrastructure/database/entities';
 
 // Presentation
@@ -130,8 +130,9 @@ const QueryHandlers = [
 // All TypeORM entities
 const entities = [
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
-  ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
-  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
+  ErrorLogTypeOrmEntity, IdempotencyEntryTypeOrmEntity,
+  InvoiceTypeOrmEntity, InvoiceSeriesTypeOrmEntity,
+  InvoiceItemTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,

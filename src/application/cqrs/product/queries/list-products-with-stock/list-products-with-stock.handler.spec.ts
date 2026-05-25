@@ -13,7 +13,7 @@ describe('ListProductsWithStockHandler', () => {
     mockQueryService = {
       listProducts: jest.fn(),
       getProductWithStock: jest.fn(),
-    } as any;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

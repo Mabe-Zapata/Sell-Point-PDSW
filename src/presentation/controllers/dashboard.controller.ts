@@ -28,6 +28,6 @@ export class DashboardController {
     @Query('branchId') branchId?: string,
   ): Promise<DashboardStatsDto> {
     const stats = await this.queryBus.execute(new GetDashboardStatsQuery(branchId));
-    return stats as unknown as DashboardStatsDto;
+    return stats;
   }
 }

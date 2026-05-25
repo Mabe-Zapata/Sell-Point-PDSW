@@ -105,7 +105,7 @@ export class InvoiceRepository implements IInvoiceRepository {
   }
 
   async update(invoice: Invoice): Promise<Invoice> {
-    await this.repo.update(invoice.id, this.mapToEntity(invoice) as any);
+    await this.repo.update(invoice.id, this.mapToEntity(invoice));
     const updated = await this.repo.findOne({ where: { id: invoice.id } });
     if (!updated) throw new Error('Invoice not found after update');
     return this.mapToDomain(updated);

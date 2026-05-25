@@ -22,11 +22,11 @@ describe('CreateCustomerHandler', () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
-    } as any;
+    };
 
     mockValidator = {
       validate: jest.fn(),
-    } as any;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

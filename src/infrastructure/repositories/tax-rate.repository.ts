@@ -44,7 +44,7 @@ export class TaxRateRepository {
   }
 
   async findByPercentage(percentage: number): Promise<TaxRate | null> {
-    const entity = await this.repo.findOne({ where: { percentage } as any });
+    const entity = await this.repo.findOne({ where: { percentage } });
     return entity ? this.mapToDomain(entity) : null;
   }
 
@@ -85,7 +85,7 @@ export class TaxRateRepository {
   }
 
   async update(taxRate: TaxRate): Promise<TaxRate> {
-    await this.repo.update(taxRate.id, this.mapToEntity(taxRate) as any);
+    await this.repo.update(taxRate.id, this.mapToEntity(taxRate));
     const updated = await this.repo.findOne({ where: { id: taxRate.id } });
     if (!updated) throw new Error('TaxRate not found after update');
     return this.mapToDomain(updated);

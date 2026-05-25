@@ -21,8 +21,8 @@ export class SaleTypeOrmEntity {
   @Column({ name: 'BRA_ID', type: 'uuid' })
   branchId!: string;
 
-  @Column({ name: 'CUS_ID', type: 'uuid' })
-  customerId!: string;
+  @Column({ name: 'CUS_ID', type: 'uuid', nullable: true })
+  customerId?: string;
 
   @ManyToOne(() => CustomerTypeOrmEntity)
   @JoinColumn({ name: 'CUS_ID' })
