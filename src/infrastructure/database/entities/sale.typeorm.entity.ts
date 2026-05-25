@@ -15,7 +15,7 @@ import { TaxRateTypeOrmEntity } from './tax-rate.typeorm.entity';
 
 @Entity('SALES')
 export class SaleTypeOrmEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', { name: 'ID' })
   id!: string;
 
   @Column({ name: 'BRA_ID', type: 'uuid' })

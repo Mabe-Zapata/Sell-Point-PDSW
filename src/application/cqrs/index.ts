@@ -69,6 +69,8 @@ export { ConfirmSaleHandler } from './sale/commands/confirm-sale/confirm-sale.ha
 export { ConfirmSaleValidator } from './sale/commands/confirm-sale/confirm-sale.validator';
 export { CancelSaleHandler } from './sale/commands/cancel-sale/cancel-sale.handler';
 export { CancelSaleValidator } from './sale/commands/cancel-sale/cancel-sale.validator';
+export { QuickConfirmSaleHandler } from './sale/commands/quick-confirm-sale/quick-confirm-sale.handler';
+export { QuickConfirmSaleValidator } from './sale/commands/quick-confirm-sale/quick-confirm-sale.validator';
 // Sale Queries
 export { GetSaleHandler } from './sale/queries/get-sale/get-sale.handler';
 export { GetSaleValidator } from './sale/queries/get-sale/get-sale.validator';

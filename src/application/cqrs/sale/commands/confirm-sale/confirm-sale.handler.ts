@@ -11,6 +11,8 @@ import { ProductTypeOrmEntity } from '../../../../../infrastructure/database/ent
 import { StockMovementTypeOrmEntity } from '../../../../../infrastructure/database/entities/stock-movement.typeorm.entity';
 import { SaleStatus, StockMovementType } from '../../../../../domain/entities';
 import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
+import { IdempotencyService } from '../../../../../infrastructure/services/idempotency.service';
+import { ConflictException } from '@nestjs/common';
 
 @CommandHandler(ConfirmSaleCommand)
 export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
@@ -18,17 +20,25 @@ export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
     private readonly validator: ConfirmSaleValidator,
     @Inject(SALE_REPOSITORY) private readonly saleRepository: ISaleRepository,
     private readonly dataSource: DataSource,
+    private readonly idempotencyService: IdempotencyService,
   ) {}
 
   async execute(command: ConfirmSaleCommand): Promise<void> {
     this.validator.validate(command.saleId);
+
+    // Idempotency check: si el key ya fue procesado, no ejecutar de nuevo
+    if (command.idempotencyKey) {
+      const { isDuplicate } = await this.idempotencyService.checkAndMark(command.idempotencyKey);
+      if (isDuplicate) {
+        return;
+      }
+    }
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Read sale with lock
       const sale = await queryRunner.manager
         .createQueryBuilder(SaleTypeOrmEntity, 'sale')
         .where('sale.id = :id', { id: command.saleId })
@@ -39,20 +49,17 @@ export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
         throw new Error(`Sale with ID '${command.saleId}' not found`);
       }
 
-      // Read sale details
       const saleDetails = await queryRunner.manager
         .createQueryBuilder(SaleDetailTypeOrmEntity, 'sd')
         .where('sd.saleId = :saleId', { saleId: command.saleId })
         .getMany();
 
-      // Validate quantities
       for (const detail of saleDetails) {
         if (detail.quantity <= 0) {
           throw new BusinessRuleException('Sale detail quantity must be greater than 0');
         }
       }
 
-      // Process each item with pessimistic lock on product
       for (const detail of saleDetails) {
         const product = await queryRunner.manager
           .createQueryBuilder(ProductTypeOrmEntity, 'p')
@@ -66,18 +73,16 @@ export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
 
         const currentStock = product.currentStock ?? 0;
         if (currentStock < detail.quantity) {
-          throw new BusinessRuleException(
+          throw new ConflictException(
             `Insufficient stock for product ${detail.productNameSnapshot}. Available: ${currentStock}, Requested: ${detail.quantity}`,
           );
         }
 
-        // Deduct stock
         const previousStock = currentStock;
         const newStock = previousStock - detail.quantity;
         product.currentStock = newStock;
         await queryRunner.manager.save(product);
 
-        // Create stock movement
         const movement = queryRunner.manager.create(StockMovementTypeOrmEntity, {
           productId: detail.productId,
           type: StockMovementType.SALE,
@@ -91,11 +96,14 @@ export class ConfirmSaleHandler implements ICommandHandler<ConfirmSaleCommand> {
         await queryRunner.manager.save(movement);
       }
 
-      // Update sale status
       sale.status = SaleStatus.CONFIRMED;
       await queryRunner.manager.save(sale);
 
       await queryRunner.commitTransaction();
+
+      if (command.idempotencyKey) {
+        await this.idempotencyService.saveResponse(command.idempotencyKey, { success: true, saleId: sale.id });
+      }
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

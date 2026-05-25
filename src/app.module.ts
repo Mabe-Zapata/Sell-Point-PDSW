@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
@@ -49,6 +49,7 @@ import {
   UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
   ConfirmSaleHandler, ConfirmSaleValidator,
   CancelSaleHandler, CancelSaleValidator,
+  QuickConfirmSaleHandler, QuickConfirmSaleValidator,
   GetSaleHandler, GetSaleValidator,
   ListSalesHandler, ListSalesValidator,
   GetStockLevelsHandler, GetStockLevelsValidator,
@@ -73,6 +74,7 @@ import {
   ErrorLogQueryService,
 } from './infrastructure/queries';
 import { PdfService, AuthService } from './infrastructure/services';
+import { IdempotencyService } from './infrastructure/services/idempotency.service';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import {
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
@@ -85,8 +87,9 @@ import {
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController } from './presentation/controllers';
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, SaleController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
+import { CorrelationInterceptor } from './presentation/interceptors/correlation.interceptor';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
 // CQRS arrays
@@ -109,6 +112,7 @@ const CommandHandlers = [
   UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
   ConfirmSaleHandler, ConfirmSaleValidator,
   CancelSaleHandler, CancelSaleValidator,
+  QuickConfirmSaleHandler, QuickConfirmSaleValidator,
 ];
 
 const QueryHandlers = [
@@ -164,7 +168,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, SaleController],
   providers: [
     AppService,
     // Domain Services
@@ -194,10 +198,12 @@ const entities = [
     // Infrastructure - Services
     { provide: PDF_SERVICE, useClass: PdfService },
     AuthService,
+    IdempotencyService,
 
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: CorrelationInterceptor },
     ...CommandHandlers,
     ...QueryHandlers,
   ],
