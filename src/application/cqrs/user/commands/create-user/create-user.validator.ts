@@ -1,9 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { CreateUserDto } from '../../../../dto/user/create-user.dto';
-
-@Injectable()
-export class CreateUserValidator {
-  validate(payload: CreateUserDto): void {
+import { BadRequestException } from '@nestjs/common';
+import { CreateUserDto } from '../../../../dto/user/create-user.dto';export class CreateUserValidator {
+  static validate(payload: CreateUserDto): void {
     if (!payload.employeeId || payload.employeeId.trim().length === 0) {
       throw new BadRequestException('Employee ID is required');
     }

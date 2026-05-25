@@ -12,3 +12,4 @@ export { SaleDetailRepository } from './sale-detail.repository';
 export { StockMovementRepository } from './stock-movement.repository';
 export { TaxRateRepository } from './tax-rate.repository';
 export { UserRepository } from './user.repository';
+export { PasswordResetTokenRepository } from './password-reset-token.repository';

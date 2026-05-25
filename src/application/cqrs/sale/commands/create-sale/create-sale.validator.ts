@@ -1,9 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CreateSalePayload } from './create-sale.command';
-
-@Injectable()
-export class CreateSaleValidator {
-  validate(payload: CreateSalePayload): void {
+import { CreateSalePayload } from './create-sale.command';export class CreateSaleValidator {
+  static validate(payload: CreateSalePayload): void {
     if (!payload.branchId) {
       throw new Error('Branch ID is required');
     }

@@ -1,26 +1,17 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { AdjustStockCommand } from './adjust-stock.command';
-import { AdjustStockValidator } from './adjust-stock.validator';
-import { PRODUCT_REPOSITORY, STOCK_MOVEMENT_REPOSITORY } from '../../../../tokens';
 import type { IProductRepository } from '../../../../../domain/repositories/product.repository.interface';
 import type { IStockMovementRepository } from '../../../../../domain/repositories/stock-movement.repository.interface';
-import { Product } from '../../../../../domain/entities/product.entity';
 import { StockMovement } from '../../../../../domain/entities/stock-movement.entity';
 import { StockMovementType } from '../../../../../domain/entities/enums/stock-movement-type.enum';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 
-@CommandHandler(AdjustStockCommand)
-export class AdjustStockHandler implements ICommandHandler<AdjustStockCommand> {
+export class AdjustStockHandler {
   constructor(
-    private readonly validator: AdjustStockValidator,
-    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
-    @Inject(STOCK_MOVEMENT_REPOSITORY) private readonly stockMovementRepository: IStockMovementRepository,
+    protected readonly productRepository: IProductRepository,
+    protected readonly stockMovementRepository: IStockMovementRepository,
   ) {}
 
   async execute(command: AdjustStockCommand): Promise<StockMovement> {
-    this.validator.validate(command.dto);
-
     const product = await this.productRepository.findById(command.productId);
     if (!product) {
       throw new EntityNotFoundException('Product', command.productId);
@@ -48,7 +39,6 @@ export class AdjustStockHandler implements ICommandHandler<AdjustStockCommand> {
         movementType = StockMovementType.ADJUSTMENT;
     }
 
-    // Atomic stock mutation
     if (delta >= 0) {
       await this.productRepository.incrementStock(command.productId, delta);
     } else {
@@ -57,7 +47,6 @@ export class AdjustStockHandler implements ICommandHandler<AdjustStockCommand> {
 
     const newStock = previousStock + delta;
 
-    // Create movement record
     return this.stockMovementRepository.create(
       new StockMovement({
         productId: command.productId,

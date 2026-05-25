@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -25,18 +26,6 @@ export class InvoiceEmailListener implements IEventHandler<SaleConfirmedEvent> {
 
     try {
       // Build domain entities for PDF generation
-      const invoice = new Invoice({
-        id: event.invoiceId,
-        saleId: event.saleId,
-        seriesNumber: event.invoiceId,
-        issueDate: event.confirmedAt,
-        customerEmail: event.customerEmail,
-        customerName: event.customerName,
-        subtotal: event.total,
-        tax: 0,
-        total: event.total,
-      });
-
       const items: InvoiceItem[] = (event.details ?? []).map((d) => new InvoiceItem({
         id: `item-${d.productId}-${Date.now()}`,
         invoiceId: event.invoiceId!,
@@ -46,7 +35,18 @@ export class InvoiceEmailListener implements IEventHandler<SaleConfirmedEvent> {
         unitPrice: d.unitPrice,
       }));
 
-      const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
+      const invoice = new Invoice({
+        id: event.invoiceId!,
+        saleId: event.saleId,
+        invoiceNumber: event.invoiceId!,
+        issueDate: event.confirmedAt,
+        customerName: event.customerName,
+        customerId: event.customerEmail,
+        total: event.total,
+      });
+
+      await this.pdfService.generateInvoicePdf(invoice, items);
+
 
       const result = await this.emailService.sendInvoice(
         event.customerEmail,

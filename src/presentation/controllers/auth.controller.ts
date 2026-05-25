@@ -5,6 +5,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { CommandBus } from '@nestjs/cqrs';
 import { AuthService } from '../../infrastructure/services/auth.service';
 import { LoginDto } from '../dto/login.dto';
 import { Public } from '../decorators/public.decorator';
@@ -12,6 +13,15 @@ import { Roles } from '../decorators/roles.decorator';
 import { AuthMeResponseDto } from '../../application/dto/auth/auth-me-response.dto';
 import { UserListResponseDto } from '../../application/dto/user/user-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { RegisterEmployeeDto } from '../../application/dto/auth/register-employee.dto';
+import { RequestPasswordResetDto } from '../../application/dto/auth/request-password-reset.dto';
+import { ResetPasswordDto } from '../../application/dto/auth/reset-password.dto';
+import { RegisterEmployeeCommand } from '../../application/cqrs/auth/commands/register-employee/register-employee.command';
+import { RequestPasswordResetCommand } from '../../application/cqrs/auth/commands/request-password-reset/request-password-reset.command';
+import { ResetPasswordCommand } from '../../application/cqrs/auth/commands/reset-password/reset-password.command';
+import { RegisterEmployeeValidator } from '../../application/cqrs/auth/handlers/register-employee/register-employee.validator';
+import { RequestPasswordResetValidator } from '../../application/cqrs/auth/handlers/request-password-reset/request-password-reset.validator';
+import { ResetPasswordValidator } from '../../application/cqrs/auth/handlers/reset-password/reset-password.validator';
 
 export class RefreshTokenDto {
   @ApiProperty({
@@ -27,7 +37,10 @@ export class RefreshTokenDto {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly commandBus: CommandBus,
+  ) {}
 
   @Post('login')
   @Public()
@@ -147,5 +160,42 @@ export class AuthController {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  @Post('register')
+  @Roles('ADMIN')
+  @ApiBearerAuth('access-token')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new employee (admin only)' })
+  @ApiResponse({ status: 201, description: 'Employee registered successfully' })
+  async registerEmployee(@Body() dto: RegisterEmployeeDto) {
+    RegisterEmployeeValidator.validate(dto);
+    const command = new RegisterEmployeeCommand(dto.email, dto.firstName, dto.lastName, dto.role);
+    const result = await this.commandBus.execute(command);
+    return result;
+  }
+
+  @Post('password-reset')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request a password reset email' })
+  @ApiResponse({ status: 200, description: 'Password reset email sent if account exists' })
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
+    RequestPasswordResetValidator.validate(dto);
+    const command = new RequestPasswordResetCommand(dto.email);
+    const result = await this.commandBus.execute(command);
+    return result;
+  }
+
+  @Post('reset-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with a valid token' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    ResetPasswordValidator.validate(dto);
+    const command = new ResetPasswordCommand(dto.token, dto.newPassword, dto.confirmPassword);
+    const result = await this.commandBus.execute(command);
+    return result;
   }
 }

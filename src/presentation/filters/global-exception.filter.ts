@@ -14,6 +14,7 @@ import {
   InsufficientStockException,
   BusinessRuleException,
 } from '../../domain/exceptions';
+import { EmailAlreadyExistsException } from '../../application/exceptions/email-already-exists.exception';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -35,6 +36,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         status = HttpStatus.NOT_FOUND;
         message = exception.message;
       } else if (exception instanceof DuplicateCedulaException) {
+        status = HttpStatus.CONFLICT;
+        message = exception.message;
+      } else if (exception instanceof EmailAlreadyExistsException) {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof InsufficientStockException) {

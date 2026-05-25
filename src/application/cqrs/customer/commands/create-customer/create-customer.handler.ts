@@ -1,23 +1,15 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { CreateCustomerCommand } from './create-customer.command';
-import { CreateCustomerValidator } from './create-customer.validator';
-import { CUSTOMER_REPOSITORY } from '../../../../tokens';
 import type { ICustomerRepository } from '../../../../../domain/repositories';
 import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
 import { Customer } from '../../../../../domain/entities/customer.entity';
 
-@CommandHandler(CreateCustomerCommand)
-export class CreateCustomerHandler implements ICommandHandler<CreateCustomerCommand> {
+export class CreateCustomerHandler {
   constructor(
-    private readonly validator: CreateCustomerValidator,
-    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
+    protected readonly customerRepository: ICustomerRepository,
   ) {}
 
   async execute(command: CreateCustomerCommand): Promise<Customer> {
-    this.validator.validate(command.payload);
-
     if (command.payload.cedula) {
       const existing = await this.customerRepository.findByIdentificationNumber(
         command.payload.cedula,

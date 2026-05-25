@@ -1,9 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { CreateCustomerDto } from '../../../../dto/customer/create-customer.dto';
-
-@Injectable()
-export class CreateCustomerValidator {
-  validate(payload: CreateCustomerDto): void {
+import { BadRequestException } from '@nestjs/common';
+import { CreateCustomerDto } from '../../../../dto/customer/create-customer.dto';export class CreateCustomerValidator {
+  static validate(payload: CreateCustomerDto): void {
     if (!payload.firstName || payload.firstName.trim().length === 0) {
       throw new BadRequestException('Customer first name is required');
     }

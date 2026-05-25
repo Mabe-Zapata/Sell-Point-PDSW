@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull, MoreThan } from 'typeorm';
 import { PasswordResetTokenTypeOrmEntity } from '../database/entities/password-reset-token.typeorm.entity';
 import { PasswordResetToken } from '../../domain/entities/password-reset-token.entity';
 import type { IPasswordResetTokenRepository } from '../../domain/repositories/password-reset-token.repository.interface';
+import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
 
 @Injectable()
 export class PasswordResetTokenRepository implements IPasswordResetTokenRepository {
@@ -43,6 +44,31 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
   async findByHash(hash: string): Promise<PasswordResetToken | null> {
     const entity = await this.repo.findOne({ where: { tokenHash: hash } });
     return entity ? this.mapToDomain(entity) : null;
+  }
+
+  async findAll(pagination: PaginationParams, filters?: { userId?: string }): Promise<PaginatedResult<PasswordResetToken>> {
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {};
+    if (filters?.userId) {
+      whereClause.userId = filters.userId;
+    }
+
+    const [entities, total] = await this.repo.findAndCount({
+      where: whereClause,
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      data: entities.map((e) => this.mapToDomain(e)),
+      total,
+      page,
+      limit,
+    };
   }
 
   async markAsUsed(id: string): Promise<void> {

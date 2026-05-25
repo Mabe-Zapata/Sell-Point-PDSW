@@ -1,7 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ListCustomersWithStockHandler } from './list-customers-with-stock.handler';
-import { ListCustomersWithStockValidator } from './list-customers-with-stock.validator';
-import { CUSTOMER_QUERY_SERVICE } from '../../../../query-tokens';
 import type { ICustomerQueryService } from '../../../../../domain/query-services/customer.query-service.interface';
 import { ListCustomersWithStockQuery } from './list-customers-with-stock.query';
 
@@ -9,21 +6,13 @@ describe('ListCustomersWithStockHandler', () => {
   let handler: ListCustomersWithStockHandler;
   let mockQueryService: jest.Mocked<ICustomerQueryService>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockQueryService = {
       listCustomers: jest.fn(),
       getCustomerByIdentification: jest.fn(),
     } as any;
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ListCustomersWithStockHandler,
-        ListCustomersWithStockValidator,
-        { provide: CUSTOMER_QUERY_SERVICE, useValue: mockQueryService },
-      ],
-    }).compile();
-
-    handler = module.get<ListCustomersWithStockHandler>(ListCustomersWithStockHandler);
+    handler = new ListCustomersWithStockHandler(mockQueryService);
   });
 
   it('should call queryService.listCustomers with correct params', async () => {

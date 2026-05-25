@@ -13,68 +13,153 @@ import { configuration } from './config/configuration';
 import { typeormConfig } from './config/typeorm.config';
 import { createSwaggerConfig } from './config/swagger.config';
 import { TypeOrmUnitOfWork } from './infrastructure/persistence/typeorm/unit-of-work/typeorm-unit-of-work';
-import { UNIT_OF_WORK } from './application/tokens';
+import { UNIT_OF_WORK } from './infrastructure/common/injection-tokens';
 import { ConfirmSaleUseCase } from './application/use-cases/sale/confirm-sale.use-case';
 import { CancelSaleUseCase } from './application/use-cases/sale/cancel-sale.use-case';
 import { RolesGuard } from './presentation/guards/roles.guard';
 
-// Application - DI Tokens + CQRS Handlers (reducers)
-import { TAX_CALCULATOR } from './application/tokens';
+// Application - Validators only (from application/cqrs)
+import {
+  CreateCustomerValidator,
+  UpdateCustomerValidator,
+  ActivateCustomerValidator,
+  DeactivateCustomerValidator,
+  DeleteCustomerValidator,
+  GetCustomerValidator,
+  ListCustomersValidator,
+  ListCustomersWithStockValidator,
+  CreateProductValidator,
+  UpdateProductValidator,
+  DeleteProductValidator,
+  GetProductValidator,
+  ListProductsValidator,
+  ListProductsWithStockValidator,
+  CreateCategoryValidator,
+  UpdateCategoryValidator,
+  DeleteCategoryValidator,
+  ActivateCategoryValidator,
+  DeactivateCategoryValidator,
+  GetCategoryValidator,
+  ListCategoriesValidator,
+  CreateTaxRateValidator,
+  UpdateTaxRateValidator,
+  GetTaxRateValidator,
+  ListTaxRatesValidator,
+  CreateSaleValidator,
+  AddSaleDetailValidator,
+  RemoveSaleDetailValidator,
+  UpdateSaleDetailQuantityValidator,
+  ConfirmSaleValidator,
+  CancelSaleValidator,
+  GetSaleValidator,
+  ListSalesValidator,
+  AdjustStockValidator,
+  GetStockLevelsValidator,
+  GetMovementsHistoryValidator,
+  GetErrorLogValidator,
+  ListErrorLogsValidator,
+  UnlockUserValidator,
+  CreateUserValidator,
+  UpdateUserValidator,
+  ActivateUserValidator,
+  DeactivateUserValidator,
+  GetUserValidator,
+  ListUsersValidator,
+  ListRolesValidator,
+  GetRoleValidator,
+  CreateRoleValidator,
+  UpdateRoleValidator,
+  RegisterEmployeeValidator,
+  RequestPasswordResetValidator,
+  ResetPasswordValidator,
+} from './application/cqrs';
+
+// Infrastructure - CQRS Wrappers (NestJS integration with decorators)
+import {
+  // Customer Commands
+  CreateCustomerHandler,
+  UpdateCustomerHandler,
+  ActivateCustomerHandler,
+  DeactivateCustomerHandler,
+  DeleteCustomerHandler,
+  // Customer Queries
+  GetCustomerHandler,
+  ListCustomersHandler,
+  ListCustomersWithStockHandler,
+  // Product Commands
+  CreateProductHandler,
+  UpdateProductHandler,
+  DeleteProductHandler,
+  ActivateProductHandler,
+  DeactivateProductHandler,
+  // Product Queries
+  GetProductHandler,
+  ListProductsHandler,
+  ListProductsWithStockHandler,
+  // Category Commands
+  CreateCategoryHandler,
+  UpdateCategoryHandler,
+  DeleteCategoryHandler,
+  ActivateCategoryHandler,
+  DeactivateCategoryHandler,
+  // Category Queries
+  GetCategoryHandler,
+  ListCategoriesHandler,
+  // TaxRate Commands
+  CreateTaxRateHandler,
+  UpdateTaxRateHandler,
+  // TaxRate Queries
+  GetTaxRateHandler,
+  ListTaxRatesHandler,
+  // User Commands
+  CreateUserHandler,
+  UpdateUserHandler,
+  ActivateUserHandler,
+  DeactivateUserHandler,
+  UnlockUserHandler,
+  // User Queries
+  GetUserHandler,
+  ListUsersHandler,
+  // Role Commands
+  CreateRoleHandler,
+  UpdateRoleHandler,
+  // Role Queries
+  GetRoleHandler,
+  ListRolesHandler,
+  // Sale Commands
+  CreateSaleHandler,
+  AddSaleDetailHandler,
+  RemoveSaleDetailHandler,
+  UpdateSaleDetailQuantityHandler,
+  ConfirmSaleHandler,
+  CancelSaleHandler,
+  // Sale Queries
+  GetSaleHandler,
+  ListSalesHandler,
+  // Inventory Commands
+  AdjustStockHandler,
+  // Inventory Queries
+  GetStockLevelsHandler,
+  GetMovementsHistoryHandler,
+  // ErrorLog Queries
+  GetErrorLogHandler,
+  ListErrorLogsHandler,
+  // Dashboard Queries
+  GetDashboardStatsHandler,
+  // Auth Handlers
+  RegisterEmployeeHandler,
+  RequestPasswordResetHandler,
+  ResetPasswordHandler,
+} from './infrastructure/cqrs';
+
+// Application - DI Tokens
+import { TAX_CALCULATOR } from './infrastructure/common/injection-tokens';
 import {
   PRODUCT_QUERY_SERVICE, CUSTOMER_QUERY_SERVICE, INVOICE_QUERY_SERVICE,
   DASHBOARD_QUERY_SERVICE, SALE_QUERY_SERVICE,
   ERROR_LOG_QUERY_SERVICE
 } from './application/query-tokens';
 import { PDF_SERVICE } from './application/services/pdf-service.interface';
-import {
-  CreateCustomerHandler, CreateCustomerValidator,
-  UpdateCustomerHandler, UpdateCustomerValidator,
-  ActivateCustomerHandler, ActivateCustomerValidator,
-  DeactivateCustomerHandler, DeactivateCustomerValidator,
-  GetCustomerHandler, GetCustomerValidator,
-  ListCustomersHandler, ListCustomersValidator,
-  ListCustomersWithStockHandler, ListCustomersWithStockValidator,
-  CreateProductHandler, CreateProductValidator,
-  UpdateProductHandler, UpdateProductValidator,
-  DeleteProductHandler, DeleteProductValidator,
-  GetProductHandler, GetProductValidator,
-  ListProductsHandler, ListProductsValidator,
-  ListProductsWithStockHandler, ListProductsWithStockValidator,
-  CreateCategoryHandler, CreateCategoryValidator,
-  UpdateCategoryHandler, UpdateCategoryValidator,
-  DeleteCategoryHandler, DeleteCategoryValidator,
-  ActivateCategoryHandler, ActivateCategoryValidator,
-  DeactivateCategoryHandler, DeactivateCategoryValidator,
-  GetCategoryHandler, GetCategoryValidator,
-  ListCategoriesHandler, ListCategoriesValidator,
-  CreateTaxRateHandler, CreateTaxRateValidator,
-  UpdateTaxRateHandler, UpdateTaxRateValidator,
-  GetTaxRateHandler, GetTaxRateValidator,
-  ListTaxRatesHandler, ListTaxRatesValidator,
-  CreateSaleHandler, CreateSaleValidator,
-  AddSaleDetailHandler, AddSaleDetailValidator,
-  RemoveSaleDetailHandler, RemoveSaleDetailValidator,
-  UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
-  ConfirmSaleHandler, ConfirmSaleValidator,
-  CancelSaleHandler, CancelSaleValidator,
-  GetSaleHandler, GetSaleValidator,
-  ListSalesHandler, ListSalesValidator,
-  AdjustStockHandler, AdjustStockValidator,
-  GetStockLevelsHandler, GetStockLevelsValidator,
-  GetMovementsHistoryHandler, GetMovementsHistoryValidator,
-  GetErrorLogHandler, GetErrorLogValidator,
-  ListErrorLogsHandler, ListErrorLogsValidator,
-  GetDashboardStatsHandler, UnlockUserHandler, UnlockUserValidator,
-  CreateUserHandler, CreateUserValidator,
-UpdateUserHandler, UpdateUserValidator,
-ActivateUserHandler, ActivateUserValidator,
-DeactivateUserHandler, DeactivateUserValidator,
-GetUserHandler, GetUserValidator,
-ListUsersHandler, ListUsersValidator,
-ListRolesHandler, ListRolesValidator, GetRoleHandler, GetRoleValidator,
-CreateRoleHandler, CreateRoleValidator,
-UpdateRoleHandler, UpdateRoleValidator,
-} from './application/cqrs';
 
 // Domain + Infrastructure (barrel imports)
 import { TaxCalculator } from './domain/services';
@@ -83,7 +168,7 @@ import {
   DashboardRepository, UserRepository, CategoryRepository,
   ErrorLogRepository, TaxRateRepository,
   StockMovementRepository, SaleRepository, SaleDetailRepository,
-  InvoiceSeriesRepository,RoleRepository,
+  InvoiceSeriesRepository,RoleRepository, PasswordResetTokenRepository,
 } from './infrastructure/repositories';
 import {
   DashboardQueryService, InvoiceQueryService, CustomerQueryService,
@@ -100,7 +185,7 @@ import {
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
-  UserRoleTypeOrmEntity,
+  UserRoleTypeOrmEntity, PasswordResetTokenTypeOrmEntity,
 } from './infrastructure/database/entities';
 
 // Presentation
@@ -108,62 +193,6 @@ import { CustomerController, ProductController, InvoiceController, DashboardCont
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { OrderConfirmedListener } from './application/listeners/order-confirmed.listener';
-
-// CQRS arrays
-const CommandHandlers = [
-  UnlockUserHandler, UnlockUserValidator,
-  CreateCustomerHandler, CreateCustomerValidator,
-  UpdateCustomerHandler, UpdateCustomerValidator,
-  ActivateCustomerHandler, ActivateCustomerValidator,
-  DeactivateCustomerHandler, DeactivateCustomerValidator,
-  CreateProductHandler, CreateProductValidator,
-  UpdateProductHandler, UpdateProductValidator,
-  DeleteProductHandler, DeleteProductValidator,
-  CreateCategoryHandler, CreateCategoryValidator,
-  UpdateCategoryHandler, UpdateCategoryValidator,
-  DeleteCategoryHandler, DeleteCategoryValidator,
-  ActivateCategoryHandler, ActivateCategoryValidator,
-  DeactivateCategoryHandler, DeactivateCategoryValidator,
-  CreateTaxRateHandler, CreateTaxRateValidator,
-  UpdateTaxRateHandler, UpdateTaxRateValidator,
-  CreateSaleHandler, CreateSaleValidator,
-  AddSaleDetailHandler, AddSaleDetailValidator,
-  RemoveSaleDetailHandler, RemoveSaleDetailValidator,
-  UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
-  ConfirmSaleHandler, ConfirmSaleValidator,
-  CancelSaleHandler, CancelSaleValidator,
-  AdjustStockHandler, AdjustStockValidator,
-  CreateUserHandler, CreateUserValidator,
-UpdateUserHandler, UpdateUserValidator,
-ActivateUserHandler, ActivateUserValidator,
-DeactivateUserHandler, DeactivateUserValidator,
-CreateRoleHandler, CreateRoleValidator,
-UpdateRoleHandler, UpdateRoleValidator,
-];
-
-const QueryHandlers = [
-  GetCustomerHandler, GetCustomerValidator,
-  ListCustomersHandler, ListCustomersValidator,
-  ListCustomersWithStockHandler, ListCustomersWithStockValidator,
-  GetProductHandler, GetProductValidator,
-  ListProductsHandler, ListProductsValidator,
-  ListProductsWithStockHandler, ListProductsWithStockValidator,
-  GetCategoryHandler, GetCategoryValidator,
-  ListCategoriesHandler, ListCategoriesValidator,
-  GetTaxRateHandler, GetTaxRateValidator,
-  ListTaxRatesHandler, ListTaxRatesValidator,
-  GetSaleHandler, GetSaleValidator,
-  ListSalesHandler, ListSalesValidator,
-  GetStockLevelsHandler, GetStockLevelsValidator,
-  GetMovementsHistoryHandler, GetMovementsHistoryValidator,
-  GetErrorLogHandler, GetErrorLogValidator,
-  ListErrorLogsHandler, ListErrorLogsValidator,
-  GetDashboardStatsHandler,
-  GetUserHandler, GetUserValidator,
-ListUsersHandler, ListUsersValidator,
-ListRolesHandler, ListRolesValidator,
-GetRoleHandler, GetRoleValidator,
-];
 
 // All TypeORM entities
 const entities = [
@@ -173,7 +202,7 @@ const entities = [
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
-  UserRoleTypeOrmEntity,
+  UserRoleTypeOrmEntity, PasswordResetTokenTypeOrmEntity,
 ];
 
 @Module({
@@ -220,6 +249,7 @@ const entities = [
     { provide: 'SALE_REPOSITORY', useClass: SaleRepository },
     { provide: 'SALE_DETAIL_REPOSITORY', useClass: SaleDetailRepository },
     { provide: 'INVOICE_SERIES_REPOSITORY', useClass: InvoiceSeriesRepository },
+    { provide: 'PASSWORD_RESET_TOKEN_REPOSITORY', useClass: PasswordResetTokenRepository },
     // Infrastructure - pg Query Services (token-mapped)
     { provide: PRODUCT_QUERY_SERVICE, useClass: ProductQueryService },
     { provide: CUSTOMER_QUERY_SERVICE, useClass: CustomerQueryService },
@@ -233,9 +263,6 @@ const entities = [
     // Unit of Work
     { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
     TypeOrmUnitOfWork,
-    // Use Cases
-    ConfirmSaleUseCase,
-    CancelSaleUseCase,
     // Application - Listeners
     OrderConfirmedListener,
 
@@ -243,8 +270,117 @@ const entities = [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
-    ...CommandHandlers,
-    ...QueryHandlers,
+
+    // CQRS Handlers (from infrastructure/cqrs - NestJS wrappers)
+    CreateCustomerHandler,
+    UpdateCustomerHandler,
+    ActivateCustomerHandler,
+    DeactivateCustomerHandler,
+    DeleteCustomerHandler,
+    GetCustomerHandler,
+    ListCustomersHandler,
+    ListCustomersWithStockHandler,
+    CreateProductHandler,
+    UpdateProductHandler,
+    DeleteProductHandler,
+    ActivateProductHandler,
+    DeactivateProductHandler,
+    GetProductHandler,
+    ListProductsHandler,
+    ListProductsWithStockHandler,
+    CreateCategoryHandler,
+    UpdateCategoryHandler,
+    DeleteCategoryHandler,
+    ActivateCategoryHandler,
+    DeactivateCategoryHandler,
+    GetCategoryHandler,
+    ListCategoriesHandler,
+    CreateTaxRateHandler,
+    UpdateTaxRateHandler,
+    GetTaxRateHandler,
+    ListTaxRatesHandler,
+    CreateSaleHandler,
+    AddSaleDetailHandler,
+    RemoveSaleDetailHandler,
+    UpdateSaleDetailQuantityHandler,
+    ConfirmSaleHandler,
+    CancelSaleHandler,
+    GetSaleHandler,
+    ListSalesHandler,
+    AdjustStockHandler,
+    GetStockLevelsHandler,
+    GetMovementsHistoryHandler,
+    GetErrorLogHandler,
+    ListErrorLogsHandler,
+    GetDashboardStatsHandler,
+    CreateUserHandler,
+    UpdateUserHandler,
+    ActivateUserHandler,
+    DeactivateUserHandler,
+    UnlockUserHandler,
+    GetUserHandler,
+    ListUsersHandler,
+    CreateRoleHandler,
+    UpdateRoleHandler,
+    GetRoleHandler,
+    ListRolesHandler,
+    RegisterEmployeeHandler,
+    RequestPasswordResetHandler,
+    ResetPasswordHandler,
+
+    // CQRS Validators (from application/cqrs - pure TypeScript)
+    CreateCustomerValidator,
+    UpdateCustomerValidator,
+    ActivateCustomerValidator,
+    DeactivateCustomerValidator,
+    DeleteCustomerValidator,
+    GetCustomerValidator,
+    ListCustomersValidator,
+    ListCustomersWithStockValidator,
+    CreateProductValidator,
+    UpdateProductValidator,
+    DeleteProductValidator,
+    GetProductValidator,
+    ListProductsValidator,
+    ListProductsWithStockValidator,
+    CreateCategoryValidator,
+    UpdateCategoryValidator,
+    DeleteCategoryValidator,
+    ActivateCategoryValidator,
+    DeactivateCategoryValidator,
+    GetCategoryValidator,
+    ListCategoriesValidator,
+    CreateTaxRateValidator,
+    UpdateTaxRateValidator,
+    GetTaxRateValidator,
+    ListTaxRatesValidator,
+    CreateSaleValidator,
+    AddSaleDetailValidator,
+    RemoveSaleDetailValidator,
+    UpdateSaleDetailQuantityValidator,
+    ConfirmSaleValidator,
+    CancelSaleValidator,
+    GetSaleValidator,
+    ListSalesValidator,
+    AdjustStockValidator,
+    GetStockLevelsValidator,
+    GetMovementsHistoryValidator,
+    GetErrorLogValidator,
+    ListErrorLogsValidator,
+    CreateUserValidator,
+    UpdateUserValidator,
+    ActivateUserValidator,
+    DeactivateUserValidator,
+    UnlockUserValidator,
+    GetUserValidator,
+    ListUsersValidator,
+    CreateRoleValidator,
+    UpdateRoleValidator,
+    GetRoleValidator,
+    ListRolesValidator,
+    RegisterEmployeeValidator,
+    RequestPasswordResetValidator,
+    ResetPasswordValidator,
   ],
 })
 export class AppModule {

@@ -1,7 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { DeleteCategoryHandler } from './delete-category.handler';
-import { DeleteCategoryValidator } from './delete-category.validator';
-import { CATEGORY_REPOSITORY, PRODUCT_REPOSITORY } from '../../../../tokens';
 import type { ICategoryRepository, IProductRepository } from '../../../../../domain/repositories';
 import { Category } from '../../../../../domain/entities/category.entity';
 import { DeleteCategoryCommand } from './delete-category.command';
@@ -12,9 +9,8 @@ describe('DeleteCategoryHandler', () => {
   let handler: DeleteCategoryHandler;
   let mockCategoryRepository: jest.Mocked<ICategoryRepository>;
   let mockProductRepository: jest.Mocked<IProductRepository>;
-  let mockValidator: DeleteCategoryValidator;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockCategoryRepository = {
       findById: jest.fn(),
       findByName: jest.fn(),
@@ -28,20 +24,7 @@ describe('DeleteCategoryHandler', () => {
       findAll: jest.fn(),
     } as any;
 
-    mockValidator = {
-      validate: jest.fn((id) => id),
-    } as any;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DeleteCategoryHandler,
-        { provide: DeleteCategoryValidator, useValue: mockValidator },
-        { provide: CATEGORY_REPOSITORY, useValue: mockCategoryRepository },
-        { provide: PRODUCT_REPOSITORY, useValue: mockProductRepository },
-      ],
-    }).compile();
-
-    handler = module.get<DeleteCategoryHandler>(DeleteCategoryHandler);
+    handler = new DeleteCategoryHandler(mockCategoryRepository, mockProductRepository);
   });
 
   it('should physically delete category when no products are associated', async () => {
@@ -58,7 +41,6 @@ describe('DeleteCategoryHandler', () => {
     const command = new DeleteCategoryCommand('cat-123');
     await handler.execute(command);
 
-    expect(mockValidator.validate).toHaveBeenCalledWith('cat-123');
     expect(mockCategoryRepository.findById).toHaveBeenCalledWith('cat-123');
     expect(mockProductRepository.findAll).toHaveBeenCalledWith(
       { page: 1, limit: 1 },

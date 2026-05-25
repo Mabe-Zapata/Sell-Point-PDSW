@@ -1,22 +1,15 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { CreateSaleCommand } from './create-sale.command';
-import { CreateSaleValidator } from './create-sale.validator';
-import { SALE_REPOSITORY } from '../../../../tokens';
 import type { ISaleRepository } from '../../../../../domain/repositories';
 import { Sale, SaleStatus } from '../../../../../domain/entities';
 import { v4 as uuidv4 } from 'uuid';
 
-@CommandHandler(CreateSaleCommand)
-export class CreateSaleHandler implements ICommandHandler<CreateSaleCommand> {
+export class CreateSaleHandler {
   constructor(
-    private readonly validator: CreateSaleValidator,
-    @Inject(SALE_REPOSITORY) private readonly saleRepository: ISaleRepository,
+    protected readonly saleRepository: ISaleRepository,
   ) {}
 
   async execute(command: CreateSaleCommand): Promise<Sale> {
-    this.validator.validate(command.payload);
-
+    // TODO: inject IUuidGenerator once ports are wired.
     const saleNumber = `SAL-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
     const sale = new Sale({

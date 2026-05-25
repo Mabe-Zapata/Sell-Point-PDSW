@@ -1,25 +1,18 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, ConflictException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { CreateUserCommand } from './create-user.command';
-import { CreateUserValidator } from './create-user.validator';
-import { USER_REPOSITORY } from '../../../../tokens';
 import { AuthService } from '../../../../../infrastructure/services/auth.service';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
 import { UserStatus } from '../../../../../domain/entities/enums';
 
-@CommandHandler(CreateUserCommand)
-export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
+export class CreateUserHandler {
   constructor(
-    private readonly validator: CreateUserValidator,
-    private readonly authService: AuthService,
-    @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
+    protected readonly authService: AuthService,
+    protected readonly userRepository: IUserRepository,
   ) {}
 
   async execute(command: CreateUserCommand): Promise<User> {
-    this.validator.validate(command.payload);
-
     const existingByEmployeeId = await this.userRepository.findByEmployeeId(command.payload.employeeId);
     if (existingByEmployeeId) {
       throw new ConflictException('Employee ID already exists');
@@ -37,6 +30,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
 
     const passwordHash = await this.authService.hashPassword(command.payload.password);
 
+    // TODO: inject IUuidGenerator once ports are wired.
     const user = new User({
       id: randomUUID(),
       employeeId: command.payload.employeeId,

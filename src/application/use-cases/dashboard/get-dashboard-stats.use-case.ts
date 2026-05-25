@@ -1,8 +1,6 @@
-import { Injectable } from '@nestjs/common';
 import { DashboardRepository } from '../../../infrastructure/repositories/dashboard.repository';
 import { DashboardStatsDto } from '../../dto/dashboard/dashboard-stats.dto';
 
-@Injectable()
 export class GetDashboardStatsUseCase {
   constructor(private readonly dashboardRepository: DashboardRepository) {}
 

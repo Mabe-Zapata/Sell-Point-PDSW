@@ -1,9 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { UpdateCategoryPayload } from './update-category.command';
-
-@Injectable()
-export class UpdateCategoryValidator {
-  validate(id: string, payload: UpdateCategoryPayload): void {
+import { UpdateCategoryPayload } from './update-category.command';export class UpdateCategoryValidator {
+  static validate(id: string, payload: UpdateCategoryPayload): void {
     if (!id) {
       throw new Error('Category ID is required');
     }

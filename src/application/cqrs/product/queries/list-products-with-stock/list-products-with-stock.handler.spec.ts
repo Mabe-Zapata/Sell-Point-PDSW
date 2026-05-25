@@ -1,7 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ListProductsWithStockHandler } from './list-products-with-stock.handler';
-import { ListProductsWithStockValidator } from './list-products-with-stock.validator';
-import { PRODUCT_QUERY_SERVICE } from '../../../../query-tokens';
 import type { IProductQueryService } from '../../../../../domain/query-services/product.query-service.interface';
 import { ListProductsWithStockQuery } from './list-products-with-stock.query';
 
@@ -9,21 +6,13 @@ describe('ListProductsWithStockHandler', () => {
   let handler: ListProductsWithStockHandler;
   let mockQueryService: jest.Mocked<IProductQueryService>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockQueryService = {
       listProducts: jest.fn(),
       getProductWithStock: jest.fn(),
     } as any;
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ListProductsWithStockHandler,
-        ListProductsWithStockValidator,
-        { provide: PRODUCT_QUERY_SERVICE, useValue: mockQueryService },
-      ],
-    }).compile();
-
-    handler = module.get<ListProductsWithStockHandler>(ListProductsWithStockHandler);
+    handler = new ListProductsWithStockHandler(mockQueryService);
   });
 
   it('should call queryService.listProducts with correct params', async () => {

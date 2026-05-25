@@ -1,21 +1,14 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, NotFoundException, ConflictException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UpdateUserCommand } from './update-user.command';
-import { UpdateUserValidator } from './update-user.validator';
-import { USER_REPOSITORY } from '../../../../tokens';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
 
-@CommandHandler(UpdateUserCommand)
-export class UpdateUserHandler implements ICommandHandler<UpdateUserCommand> {
+export class UpdateUserHandler {
   constructor(
-    private readonly validator: UpdateUserValidator,
-    @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
+    protected readonly userRepository: IUserRepository,
   ) {}
 
   async execute(command: UpdateUserCommand): Promise<User> {
-    this.validator.validate(command.userId, command.payload);
-
     const user = await this.userRepository.findById(command.userId);
     if (!user) {
       throw new NotFoundException(`User ${command.userId} not found`);

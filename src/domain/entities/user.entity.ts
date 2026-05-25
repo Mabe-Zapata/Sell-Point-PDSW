@@ -11,7 +11,9 @@ export class User {
   readonly username!: string;
   readonly email!: string;
   readonly passwordHash!: string;
+  readonly currentPasswordHash?: string;
   readonly defaultBranchId?: string;
+  readonly passwordExpired!: boolean;
   readonly failedLoginAttempts!: number;
   readonly createdAt!: Date;
   readonly deletedAt?: Date;
@@ -29,8 +31,10 @@ export class User {
     username: string;
     email: string;
     passwordHash: string;
+    currentPasswordHash?: string;
     defaultBranchId?: string;
     failedLoginAttempts?: number;
+    passwordExpired?: boolean;
     status: UserStatus;
     createdAt?: Date;
     updatedAt?: Date;
@@ -45,7 +49,9 @@ export class User {
     this.username = properties.username;
     this.email = properties.email;
     this.passwordHash = properties.passwordHash;
+    this.currentPasswordHash = properties.currentPasswordHash;
     this.defaultBranchId = properties.defaultBranchId;
+    this.passwordExpired = properties.passwordExpired ?? true;
     this.failedLoginAttempts = properties.failedLoginAttempts ?? 0;
     this._status = properties.status;
     this.createdAt = properties.createdAt || new Date();
@@ -95,5 +101,30 @@ export class User {
     }
     this._status = UserStatus.ACTIVE;
     this._updatedAt = new Date();
+  }
+
+  // Factory method — encapsulates business rules for new employee creation
+  static createNewEmployee(params: {
+    id: string;
+    employeeId: string;
+    email: string;
+    passwordHash: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+  }): User {
+    return new User({
+      id: params.id,
+      employeeId: params.employeeId,
+      username: params.email,
+      email: params.email,
+      passwordHash: params.passwordHash,
+      role: params.role,
+      firstName: params.firstName,
+      lastName: params.lastName,
+      status: UserStatus.ACTIVE,
+      failedLoginAttempts: 0,
+      passwordExpired: true,
+    });
   }
 }

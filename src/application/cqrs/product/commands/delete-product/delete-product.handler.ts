@@ -1,22 +1,16 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { DeleteProductCommand } from './delete-product.command';
-import { DeleteProductValidator } from './delete-product.validator';
-import { PRODUCT_REPOSITORY, STOCK_MOVEMENT_REPOSITORY } from '../../../../tokens';
 import type { IProductRepository, IStockMovementRepository } from '../../../../../domain/repositories';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
-@CommandHandler(DeleteProductCommand)
-export class DeleteProductHandler implements ICommandHandler<DeleteProductCommand> {
+export class DeleteProductHandler {
   constructor(
-    private readonly validator: DeleteProductValidator,
-    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
-    @Inject(STOCK_MOVEMENT_REPOSITORY) private readonly stockMovementRepository: IStockMovementRepository,
+    protected readonly productRepository: IProductRepository,
+    protected readonly stockMovementRepository: IStockMovementRepository,
   ) {}
 
   async execute(command: DeleteProductCommand): Promise<void> {
-    const id = this.validator.validate(command.id);
+    const id = command.id;
     const product = await this.productRepository.findById(id);
     if (!product) {
       throw new EntityNotFoundException('Product', id);

@@ -40,6 +40,12 @@ export class UserTypeOrmEntity {
   @Column({ name: 'PAS_HASH', length: 255 })
   passwordHash!: string;
 
+  @Column({ name: 'CURRENT_PAS_HASH', length: 255, nullable: true })
+  currentPasswordHash?: string;
+
+  @Column({ name: 'PAS_EXPIRED', ...dbBooleanColumn(false) })
+  passwordExpired!: boolean;
+
   @Column({
     name: 'STA_USR',
     type: 'varchar',

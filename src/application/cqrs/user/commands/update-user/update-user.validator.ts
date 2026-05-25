@@ -1,9 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { UpdateUserDto } from '../../../../dto/user/update-user.dto';
-
-@Injectable()
-export class UpdateUserValidator {
-  validate(userId: string, payload: UpdateUserDto): void {
+import { BadRequestException } from '@nestjs/common';
+import { UpdateUserDto } from '../../../../dto/user/update-user.dto';export class UpdateUserValidator {
+  static validate(userId: string, payload: UpdateUserDto): void {
     if (!userId || userId.trim().length === 0) {
       throw new BadRequestException('User ID is required');
     }
