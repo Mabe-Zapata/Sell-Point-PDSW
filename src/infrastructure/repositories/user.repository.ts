@@ -33,16 +33,21 @@ export class UserRepository implements IUserRepository {
   }
 
   private mapToEntity(user: User): Partial<UserTypeOrmEntity> {
-    return {
-      id: user.id,
-      employeeId: user.employeeId,
-      email: user.email,
-      passwordHash: user.passwordHash,
-      status: UserStatusMapper.toDb(user.status),
-      defaultBranchId: user.defaultBranchId,
-      failedLoginAttempts: user.failedLoginAttempts,
-    };
-  }
+  return {
+    id: user.id,
+    employeeId: user.employeeId,
+    username: user.username,
+    email: user.email,
+    passwordHash: user.passwordHash,
+    role: user.role,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    cedula: user.cedula,
+    status: UserStatusMapper.toDb(user.status),
+    defaultBranchId: user.defaultBranchId,
+    failedLoginAttempts: user.failedLoginAttempts,
+  };
+}
 
   async findById(id: string): Promise<User | null> {
     const entity = await this.repo.findOne({ where: { id } });
@@ -121,13 +126,13 @@ export class UserRepository implements IUserRepository {
   }
 
   async create(user: User): Promise<User> {
-    const entity = this.repo.create(this.mapToEntity(user) as UserTypeOrmEntity);
+    const entity = this.repo.create(this.mapToEntity(user));
     const saved = await this.repo.save(entity);
     return this.mapToDomain(saved);
   }
 
   async update(user: User): Promise<User> {
-    await this.repo.update(user.id, this.mapToEntity(user) as any);
+    await this.repo.update(user.id, this.mapToEntity(user));
     const updated = await this.repo.findOne({ where: { id: user.id } });
     if (!updated) throw new Error('User not found after update');
     return this.mapToDomain(updated);
@@ -138,6 +143,6 @@ export class UserRepository implements IUserRepository {
   }
 
   async updateFailedLoginAttempts(id: string, attempts: number): Promise<void> {
-    await this.repo.update(id, { failedLoginAttempts: attempts } as any);
+    await this.repo.update(id, { failedLoginAttempts: attempts });
   }
 }

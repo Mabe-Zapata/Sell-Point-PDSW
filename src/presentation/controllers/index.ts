@@ -4,3 +4,5 @@ export { InvoiceController } from './invoice.controller';
 export { DashboardController } from './dashboard.controller';
 export { AuthController } from './auth.controller';
 export { CategoryController } from './category.controller';
+export { UserController } from './user.controller';
+export { RoleController } from './role.controller';

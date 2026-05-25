@@ -1,0 +1,56 @@
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject, ConflictException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { CreateUserCommand } from './create-user.command';
+import { CreateUserValidator } from './create-user.validator';
+import { USER_REPOSITORY } from '../../../../tokens';
+import { AuthService } from '../../../../../infrastructure/services/auth.service';
+import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
+import { User } from '../../../../../domain/entities/user.entity';
+import { UserStatus } from '../../../../../domain/entities/enums';
+
+@CommandHandler(CreateUserCommand)
+export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
+  constructor(
+    private readonly validator: CreateUserValidator,
+    private readonly authService: AuthService,
+    @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
+  ) {}
+
+  async execute(command: CreateUserCommand): Promise<User> {
+    this.validator.validate(command.payload);
+
+    const existingByEmployeeId = await this.userRepository.findByEmployeeId(command.payload.employeeId);
+    if (existingByEmployeeId) {
+      throw new ConflictException('Employee ID already exists');
+    }
+
+    const existingByEmail = await this.userRepository.findByEmail(command.payload.email);
+    if (existingByEmail) {
+      throw new ConflictException('Email already exists');
+    }
+
+    const existingByUsername = await this.userRepository.findByUsername(command.payload.username);
+    if (existingByUsername) {
+      throw new ConflictException('Username already exists');
+    }
+
+    const passwordHash = await this.authService.hashPassword(command.payload.password);
+
+    const user = new User({
+      id: randomUUID(),
+      employeeId: command.payload.employeeId,
+      username: command.payload.username,
+      email: command.payload.email,
+      passwordHash,
+      role: command.payload.role,
+      firstName: command.payload.firstName,
+      lastName: command.payload.lastName,
+      cedula: command.payload.cedula,
+      status: UserStatus.ACTIVE,
+      failedLoginAttempts: 0,
+    });
+
+    return this.userRepository.create(user);
+  }
+}

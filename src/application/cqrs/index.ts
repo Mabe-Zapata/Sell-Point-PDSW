@@ -18,7 +18,29 @@ export { ListCustomersWithStockValidator } from './customer/queries/list-custome
 // User Commands
 export { UnlockUserHandler } from './user/commands/unlock-user/unlock-user.handler';
 export { UnlockUserValidator } from './user/commands/unlock-user/unlock-user.validator';
-
+export { CreateUserHandler } from './user/commands/create-user/create-user.handler';
+export { CreateUserValidator } from './user/commands/create-user/create-user.validator';
+export { UpdateUserHandler } from './user/commands/update-user/update-user.handler';
+export { UpdateUserValidator } from './user/commands/update-user/update-user.validator';
+export { ActivateUserHandler } from './user/commands/activate-user/activate-user.handler';
+export { ActivateUserValidator } from './user/commands/activate-user/activate-user.validator';
+export { DeactivateUserHandler } from './user/commands/deactivate-user/deactivate-user.handler';
+export { DeactivateUserValidator } from './user/commands/deactivate-user/deactivate-user.validator';
+// User Queries
+export { GetUserHandler } from './user/queries/get-user/get-user.handler';
+export { GetUserValidator } from './user/queries/get-user/get-user.validator';
+export { ListUsersHandler } from './user/queries/list-users/list-users.handler';
+export { ListUsersValidator } from './user/queries/list-users/list-users.validator';
+// Role Commands
+export { CreateRoleHandler } from './role/commands/create-role/create-role.handler';
+export { CreateRoleValidator } from './role/commands/create-role/create-role.validator';
+export { UpdateRoleHandler } from './role/commands/update-role/update-role.handler';
+export { UpdateRoleValidator } from './role/commands/update-role/update-role.validator';
+// Role Queries
+export { ListRolesHandler } from './role/queries/list-roles/list-roles.handler';
+export { ListRolesValidator } from './role/queries/list-roles/list-roles.validator';
+export { GetRoleHandler } from './role/queries/get-role/get-role.handler';
+export { GetRoleValidator } from './role/queries/get-role/get-role.validator';
 // Product Commands
 export { CreateProductHandler } from './product/commands/create-product/create-product.handler';
 export { CreateProductValidator } from './product/commands/create-product/create-product.validator';
