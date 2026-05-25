@@ -31,6 +31,7 @@ export class CustomerRepository implements ICustomerRepository {
 
   private mapToEntity(customer: Customer): Partial<CustomerTypeOrmEntity> {
     return {
+      id: customer.id,
       cedula: customer.cedula,
       firstName: customer.firstName,
       lastName: customer.lastName,

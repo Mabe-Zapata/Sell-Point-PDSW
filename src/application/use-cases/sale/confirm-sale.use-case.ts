@@ -58,7 +58,22 @@ export class ConfirmSaleUseCase {
       await this.uow.commit();
 
       // Dispatch event after successful commit
-      this.uow.dispatchEvent(new SaleConfirmedEvent(sale.id, new Date(), sale.total));
+      this.uow.dispatchEvent(
+        new SaleConfirmedEvent(
+          sale.id,
+          new Date(),
+          sale.total,
+          sale.customerEmail ?? 'unknown@customer.com',
+          sale.customerName ?? 'Customer',
+          sale.details.map((d) => ({
+            productId: d.productId,
+            productName: d.productName,
+            quantity: d.quantity,
+            unitPrice: d.unitPrice,
+            subtotal: d.unitPrice * d.quantity,
+          })),
+        ),
+      );
     } catch (error) {
       await this.uow.rollback();
       throw error;

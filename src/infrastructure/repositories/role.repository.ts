@@ -23,6 +23,7 @@ export class RoleRepository implements IRoleRepository {
 
   private mapToEntity(role: Role): Partial<RoleTypeOrmEntity> {
     return {
+      id: role.id,
       name: role.name,
       description: role.description,
     };

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { QueryRunner } from 'typeorm';
 import type { IStockMovementRepository } from '../../../../domain/repositories';
 import { StockMovement } from '../../../../domain/entities';

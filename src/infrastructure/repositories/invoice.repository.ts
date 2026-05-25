@@ -29,6 +29,7 @@ export class InvoiceRepository implements IInvoiceRepository {
 
   private mapToEntity(invoice: Invoice): Partial<InvoiceTypeOrmEntity> {
     return {
+      id: invoice.id,
       saleId: invoice.saleId,
       seriesId: invoice.seriesId,
       invoiceNumber: invoice.invoiceNumber,

@@ -26,6 +26,7 @@ export class InvoiceItemRepository implements IInvoiceItemRepository {
   async createMany(items: InvoiceItem[]): Promise<InvoiceItem[]> {
     const entities = this.invoiceItemRepository.create(
       items.map((item) => ({
+        id: item.id,
         invoiceId: item.invoiceId,
         productId: item.productId,
         quantity: item.quantity,

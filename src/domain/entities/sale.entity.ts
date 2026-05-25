@@ -29,6 +29,11 @@ export class Sale {
 
   updatedAt!: Date;
 
+  // denormalized for event emission (not persisted directly)
+  customerEmail?: string;
+
+  customerName?: string;
+
   details: SaleDetail[] = [];
 
   constructor(partial: Partial<Sale>) {
