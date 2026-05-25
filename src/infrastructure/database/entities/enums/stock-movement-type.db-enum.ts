@@ -3,6 +3,8 @@ export enum StockMovementTypeDb {
   OUT = 'OUT',
   SALE = 'SALE',
   ADJUSTMENT = 'ADJUSTMENT',
+  TRANSFER_IN = 'TRANSFER_IN',
+  TRANSFER_OUT = 'TRANSFER_OUT',
 }
 
 import { StockMovementType } from '../../../../domain/entities/enums/stock-movement-type.enum';

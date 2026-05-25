@@ -6,6 +6,7 @@ import {
   MaxLength,
   IsOptional,
   Max,
+  Min,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -43,4 +44,10 @@ export class CreateProductDto {
   @Max(99999999.99)
   @Type(() => Number)
   costPrice: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  initialStock?: number;
 }

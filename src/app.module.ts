@@ -51,6 +51,7 @@ import {
   CancelSaleHandler, CancelSaleValidator,
   GetSaleHandler, GetSaleValidator,
   ListSalesHandler, ListSalesValidator,
+  AdjustStockHandler, AdjustStockValidator,
   GetStockLevelsHandler, GetStockLevelsValidator,
   GetMovementsHistoryHandler, GetMovementsHistoryValidator,
   GetErrorLogHandler, GetErrorLogValidator,
@@ -109,6 +110,7 @@ const CommandHandlers = [
   UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
   ConfirmSaleHandler, ConfirmSaleValidator,
   CancelSaleHandler, CancelSaleValidator,
+  AdjustStockHandler, AdjustStockValidator,
 ];
 
 const QueryHandlers = [

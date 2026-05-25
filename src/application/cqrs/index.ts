@@ -75,6 +75,9 @@ export { GetSaleValidator } from './sale/queries/get-sale/get-sale.validator';
 export { ListSalesHandler } from './sale/queries/list-sales/list-sales.handler';
 export { ListSalesValidator } from './sale/queries/list-sales/list-sales.validator';
 
+// Inventory Commands
+export { AdjustStockHandler } from './inventory/commands/adjust-stock/adjust-stock.handler';
+export { AdjustStockValidator } from './inventory/commands/adjust-stock/adjust-stock.validator';
 // Inventory Queries
 export { GetStockLevelsHandler } from './inventory/queries/get-stock-levels/get-stock-levels.handler';
 export { GetStockLevelsValidator } from './inventory/queries/get-stock-levels/get-stock-levels.validator';

@@ -5,6 +5,8 @@ import { ProductTypeOrmEntity } from '../database/entities/product.typeorm.entit
 import { Product } from '../../domain/entities/product.entity';
 import { IProductRepository, ProductFilters } from '../../domain/repositories/product.repository.interface';
 import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
+import { InsufficientStockException } from '../../domain/exceptions/insufficient-stock.exception';
 
 @Injectable()
 export class ProductRepository implements IProductRepository {
@@ -23,7 +25,7 @@ export class ProductRepository implements IProductRepository {
       salePrice: Number(entity.salePrice),
       costPrice: Number(entity.costPrice),
       isActive: entity.isActive,
-      currentStock: entity.availableQuantity ?? 0,
+      currentStock: entity.currentStock ?? 0,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -37,7 +39,7 @@ export class ProductRepository implements IProductRepository {
       salePrice: product.salePrice,
       costPrice: product.costPrice,
       isActive: product.isActive,
-      availableQuantity: product.currentStock,
+      currentStock: product.currentStock,
     };
   }
 
@@ -101,7 +103,32 @@ export class ProductRepository implements IProductRepository {
     await this.repo.delete(id);
   }
 
-  async decrementStock(_id: number, _quantity: number): Promise<void> {
-    return;
+  async incrementStock(id: string, quantity: number): Promise<void> {
+    const result = await this.repo
+      .createQueryBuilder()
+      .update(ProductTypeOrmEntity)
+      .set({ currentStock: () => `"CUR_STO_PRO" + ${quantity}` })
+      .where('id = :id', { id })
+      .execute();
+
+    if (result.affected === 0) {
+      throw new EntityNotFoundException('Product', id);
+    }
+  }
+
+  async decrementStock(id: string, quantity: number): Promise<void> {
+    const result = await this.repo
+      .createQueryBuilder()
+      .update(ProductTypeOrmEntity)
+      .set({ currentStock: () => `"CUR_STO_PRO" - ${quantity}` })
+      .where('id = :id', { id })
+      .andWhere(`"CUR_STO_PRO" >= :qty`, { qty: quantity })
+      .execute();
+
+    if (result.affected === 0) {
+      const product = await this.repo.findOne({ where: { id } });
+      if (!product) throw new EntityNotFoundException('Product', id);
+      throw new InsufficientStockException(product.name, quantity, product.currentStock);
+    }
   }
 }
