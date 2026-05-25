@@ -39,6 +39,12 @@ export { CreateCategoryHandler } from './category/commands/create-category/creat
 export { CreateCategoryValidator } from './category/commands/create-category/create-category.validator';
 export { UpdateCategoryHandler } from './category/commands/update-category/update-category.handler';
 export { UpdateCategoryValidator } from './category/commands/update-category/update-category.validator';
+export { DeleteCategoryHandler } from './category/commands/delete-category/delete-category.handler';
+export { DeleteCategoryValidator } from './category/commands/delete-category/delete-category.validator';
+export { ActivateCategoryHandler } from './category/commands/activate-category/activate-category.handler';
+export { ActivateCategoryValidator } from './category/commands/activate-category/activate-category.validator';
+export { DeactivateCategoryHandler } from './category/commands/deactivate-category/deactivate-category.handler';
+export { DeactivateCategoryValidator } from './category/commands/deactivate-category/deactivate-category.validator';
 // Category Queries
 export { GetCategoryHandler } from './category/queries/get-category/get-category.handler';
 export { GetCategoryValidator } from './category/queries/get-category/get-category.validator';

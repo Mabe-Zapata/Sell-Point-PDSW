@@ -15,4 +15,5 @@ export interface ICategoryRepository {
   ): Promise<PaginatedResult<Category>>;
   create(category: Category): Promise<Category>;
   update(category: Category): Promise<Category>;
+  softDelete(id: string): Promise<void>;
 }

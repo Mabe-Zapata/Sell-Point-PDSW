@@ -54,7 +54,7 @@ export class CategoryRepository implements ICategoryRepository {
     const queryBuilder = this.repo.createQueryBuilder('category');
 
     if (q) {
-      queryBuilder.where('category.name ILIKE :q', { q: `%${q}%` });
+      queryBuilder.where('LOWER(category.name) LIKE LOWER(:q)', { q: `%${q}%` });
     }
     if (isActive !== undefined) {
       queryBuilder.andWhere('category.isActive = :isActive', { isActive });
@@ -85,5 +85,9 @@ export class CategoryRepository implements ICategoryRepository {
     const updated = await this.repo.findOne({ where: { id: category.id } });
     if (!updated) throw new Error('Category not found after update');
     return this.mapToDomain(updated);
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.repo.delete(id);
   }
 }
