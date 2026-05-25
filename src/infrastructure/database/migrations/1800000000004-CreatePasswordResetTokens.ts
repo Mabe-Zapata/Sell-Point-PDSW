@@ -15,7 +15,7 @@ import {
  * - Oracle: varchar2(36) for ID columns
  */
 export class CreatePasswordResetTokens1800000000004 implements MigrationInterface {
-  name = 'CreatePasswordResetTokens';
+  name = 'CreatePasswordResetTokens1800000000004';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     const dbType = queryRunner.connection.options.type;
