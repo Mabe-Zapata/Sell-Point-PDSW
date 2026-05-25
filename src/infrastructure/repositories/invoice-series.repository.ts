@@ -27,6 +27,7 @@ export class InvoiceSeriesRepository {
 
   private mapToEntity(series: InvoiceSeries): Partial<InvoiceSeriesTypeOrmEntity> {
     return {
+      id: series.id,
       branchId: series.branchId,
       establishmentCode: series.establishmentCode,
       emissionPointCode: series.emissionPointCode,

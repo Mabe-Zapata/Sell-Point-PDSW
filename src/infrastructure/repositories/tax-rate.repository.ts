@@ -25,6 +25,7 @@ export class TaxRateRepository {
 
   private mapToEntity(taxRate: TaxRate): Partial<TaxRateTypeOrmEntity> {
     return {
+      id: taxRate.id,
       name: taxRate.name,
       percentage: taxRate.percentage,
       isActive: taxRate.isActive,

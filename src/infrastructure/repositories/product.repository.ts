@@ -33,6 +33,7 @@ export class ProductRepository implements IProductRepository {
 
   private mapToEntity(product: Product): Partial<ProductTypeOrmEntity> {
     return {
+      id: product.id,
       categoryId: product.categoryId,
       code: product.code,
       name: product.name,

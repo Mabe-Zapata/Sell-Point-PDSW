@@ -27,6 +27,7 @@ export class CategoryRepository implements ICategoryRepository {
 
   private mapToEntity(category: Category): Partial<CategoryTypeOrmEntity> {
     return {
+      id: category.id,
       name: category.name,
       description: category.description,
       isActive: category.isActive,

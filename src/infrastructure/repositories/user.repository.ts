@@ -34,6 +34,7 @@ export class UserRepository implements IUserRepository {
 
   private mapToEntity(user: User): Partial<UserTypeOrmEntity> {
     return {
+      id: user.id,
       employeeId: user.employeeId,
       email: user.email,
       passwordHash: user.passwordHash,
