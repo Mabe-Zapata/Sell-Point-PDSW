@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject } from '@nestjs/common';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
-import { OrderConfirmationDTO, OrderItemDTO } from '../dtos/order/order-confirmation.dto';
+import { OrderConfirmationDTO, OrderItemDTO } from '../../application/dtos/order/order-confirmation.dto';
 
 export class OrderConfirmedListener {
   constructor(

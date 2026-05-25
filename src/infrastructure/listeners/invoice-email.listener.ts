@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject } from '@nestjs/common';
 import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
-import type { IPdfService } from '../services/pdf-service.interface';
-import { PDF_SERVICE } from '../services/pdf-service.interface';
+import type { IPdfService } from '../../application/services/pdf-service.interface';
+import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
 import { Invoice, InvoiceItem } from '../../domain/entities';
 
 @EventsHandler(SaleConfirmedEvent)
@@ -46,7 +45,6 @@ export class InvoiceEmailListener implements IEventHandler<SaleConfirmedEvent> {
       });
 
       await this.pdfService.generateInvoicePdf(invoice, items);
-
 
       const result = await this.emailService.sendInvoice(
         event.customerEmail,

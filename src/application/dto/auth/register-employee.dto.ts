@@ -1,11 +1,20 @@
-import { IsEmail, IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 
+/**
+ * Available roles for users in the system.
+ */
 export enum UserRole {
+  ADMIN = 'ADMIN',
+  VENDEDOR = 'VENDEDOR',
   EMPLOYEE = 'EMPLOYEE',
   CUSTOMER = 'CUSTOMER',
 }
 
+/**
+ * DTO for registering a new employee/user in the system.
+ * Maps to the USR_TABLA entity fields.
+ */
 export class RegisterEmployeeDto {
   @IsEmail()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
@@ -21,6 +30,20 @@ export class RegisterEmployeeDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   lastName: string;
 
-  @IsEnum(UserRole)
-  role: 'EMPLOYEE' | 'CUSTOMER';
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  cedula?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  role: UserRole | string;
+
+  @IsString()
+  @IsOptional()
+  username?: string;
+
+  @IsUUID()
+  @IsOptional()
+  defaultBranchId?: string;
 }

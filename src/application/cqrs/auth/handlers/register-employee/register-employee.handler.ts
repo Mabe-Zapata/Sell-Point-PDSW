@@ -27,6 +27,7 @@ export class RegisterEmployeeHandler {
     const passwordHash = await bcrypt.hash(rawPassword, 10);
 
     const employeeId = `EMP-${Date.now().toString(36).toUpperCase()}`;
+    const username = command.username || command.email;
 
     const user = User.createNewEmployee({
       id: randomUUID(),
@@ -36,6 +37,9 @@ export class RegisterEmployeeHandler {
       role: command.role,
       firstName: command.firstName,
       lastName: command.lastName,
+      cedula: command.cedula,
+      username,
+      defaultBranchId: command.defaultBranchId,
     });
 
     const created = await this.userRepository.create(user);

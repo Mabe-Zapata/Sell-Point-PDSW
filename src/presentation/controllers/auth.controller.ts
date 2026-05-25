@@ -170,7 +170,15 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Employee registered successfully' })
   async registerEmployee(@Body() dto: RegisterEmployeeDto) {
     RegisterEmployeeValidator.validate(dto);
-    const command = new RegisterEmployeeCommand(dto.email, dto.firstName, dto.lastName, dto.role);
+    const command = new RegisterEmployeeCommand(
+      dto.email,
+      dto.firstName,
+      dto.lastName,
+      dto.role,
+      dto.cedula,
+      dto.username,
+      dto.defaultBranchId,
+    );
     const result = await this.commandBus.execute(command);
     return result;
   }

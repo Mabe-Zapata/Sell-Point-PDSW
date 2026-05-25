@@ -3,8 +3,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PasswordChangedListener } from './password-changed.listener';
 import { PasswordChangedEvent } from '../../domain/events/password-changed.event';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 
 describe('PasswordChangedListener', () => {
   let listener: PasswordChangedListener;

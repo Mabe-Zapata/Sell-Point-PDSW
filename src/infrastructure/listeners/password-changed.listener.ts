@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import { PasswordChangedEvent } from '../../domain/events/password-changed.event';
 
 @EventsHandler(PasswordChangedEvent)

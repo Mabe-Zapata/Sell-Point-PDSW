@@ -1,5 +1,5 @@
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
-import { Sale, StockMovement, StockMovementType } from '../../../domain/entities';
+import { StockMovement, StockMovementType } from '../../../domain/entities';
 import { SaleCancelledEvent } from '../../../domain/events/sale-cancelled.event';
 import { BusinessRuleException } from '../../../domain/exceptions';
 

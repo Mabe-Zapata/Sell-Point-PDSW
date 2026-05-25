@@ -3,8 +3,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrderConfirmedListener } from './order-confirmed.listener';
 import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 
 describe('OrderConfirmedListener', () => {
   let listener: OrderConfirmedListener;

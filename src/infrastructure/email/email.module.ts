@@ -6,10 +6,12 @@ import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
 import { emailProviderFactory } from '../providers/email.provider';
 import { HandlebarsCompiler } from './compilers/handlebars-compiler';
 import { BrevoRestTransporter } from './transporters/brevo-rest.transporter';
-import { EmployeeCredentialsCreatedListener } from '../../application/listeners/employee-credentials-created.listener';
-import { PasswordChangedListener } from '../../application/listeners/password-changed.listener';
-import { PasswordResetRequestedListener } from '../../application/listeners/password-reset-requested.listener';
-import { InvoiceEmailListener } from '../../application/listeners/invoice-email.listener';
+import {
+  EmployeeCredentialsCreatedListener,
+  PasswordChangedListener,
+  PasswordResetRequestedListener,
+  InvoiceEmailListener,
+} from '../listeners';
 import { PdfService } from '../services/pdf.service';
 
 @Module({

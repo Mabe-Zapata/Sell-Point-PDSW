@@ -4,8 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { EmployeeCredentialsCreatedListener } from './employee-credentials-created.listener';
 import { EmployeeCredentialsCreatedEvent } from '../../domain/events/employee-credentials-created.event';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 
 describe('EmployeeCredentialsCreatedListener', () => {
   let listener: EmployeeCredentialsCreatedListener;

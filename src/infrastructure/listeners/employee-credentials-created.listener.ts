@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import { EmployeeCredentialsCreatedEvent } from '../../domain/events/employee-credentials-created.event';
 
 @EventsHandler(EmployeeCredentialsCreatedEvent)

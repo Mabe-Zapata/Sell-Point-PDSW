@@ -112,16 +112,21 @@ export class User {
     role: string;
     firstName: string;
     lastName: string;
+    cedula?: string;
+    username?: string;
+    defaultBranchId?: string;
   }): User {
     return new User({
       id: params.id,
       employeeId: params.employeeId,
-      username: params.email,
+      username: params.username || params.email,
       email: params.email,
       passwordHash: params.passwordHash,
       role: params.role,
       firstName: params.firstName,
       lastName: params.lastName,
+      cedula: params.cedula,
+      defaultBranchId: params.defaultBranchId,
       status: UserStatus.ACTIVE,
       failedLoginAttempts: 0,
       passwordExpired: true,

@@ -3,10 +3,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoiceEmailListener } from './invoice-email.listener';
 import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
-import type { IEmailService } from '../ports/IEmailService';
-import { EMAIL_SERVICE } from '../ports/email-service.token';
-import type { IPdfService } from '../services/pdf-service.interface';
-import { PDF_SERVICE } from '../services/pdf-service.interface';
+import type { IEmailService } from '../../application/ports/IEmailService';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
+import type { IPdfService } from '../../application/services/pdf-service.interface';
+import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
 
 describe('InvoiceEmailListener', () => {
   let listener: InvoiceEmailListener;

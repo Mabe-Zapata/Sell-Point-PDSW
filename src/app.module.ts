@@ -192,7 +192,14 @@ import {
 import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
-import { OrderConfirmedListener } from './application/listeners/order-confirmed.listener';
+// Infrastructure - Event Listeners
+import {
+  EmployeeCredentialsCreatedListener,
+  PasswordResetRequestedListener,
+  PasswordChangedListener,
+  InvoiceEmailListener,
+  OrderConfirmedListener,
+} from './infrastructure/listeners';
 
 // All TypeORM entities
 const entities = [
