@@ -35,13 +35,13 @@ describe('AuthController', () => {
       mockAuthService.login.mockResolvedValue(mockTokens);
 
       const result = await controller.login({
-        employeeCode: 'EMP-001',
+        email: 'admin@test.com',
         password: 'password123',
         rememberMe: false,
       });
 
       expect(result).toEqual(mockTokens);
-      expect(mockAuthService.login).toHaveBeenCalledWith('EMP-001', 'password123', false);
+      expect(mockAuthService.login).toHaveBeenCalledWith('admin@test.com', 'password123', false);
     });
 
     it('should throw UnauthorizedException when credentials are invalid', async () => {
@@ -49,7 +49,7 @@ describe('AuthController', () => {
 
       await expect(
         controller.login({
-          employeeCode: 'EMP-001',
+          email: 'admin@test.com',
           password: 'wrong-password',
           rememberMe: false,
         }),
@@ -57,7 +57,7 @@ describe('AuthController', () => {
 
       await expect(
         controller.login({
-          employeeCode: 'EMP-001',
+          email: 'admin@test.com',
           password: 'wrong-password',
           rememberMe: false,
         }),
@@ -74,7 +74,7 @@ describe('AuthController', () => {
 
       await expect(
         controller.login({
-          employeeCode: 'UNKNOWN-EMP',
+          email: 'unknown@test.com',
           password: 'any-password',
           rememberMe: false,
         }),

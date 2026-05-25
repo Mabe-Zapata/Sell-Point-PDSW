@@ -56,7 +56,7 @@ export class TaxRateRepository {
     const queryBuilder = this.repo.createQueryBuilder('taxRate');
 
     if (q) {
-      queryBuilder.where('taxRate.name ILIKE :q', { q: `%${q}%` });
+      queryBuilder.where('LOWER(taxRate.name) LIKE LOWER(:q)', { q: `%${q}%` });
     }
     if (isActive !== undefined) {
       queryBuilder.andWhere('taxRate.isActive = :isActive', { isActive });

@@ -32,7 +32,7 @@ export class CustomerQueryService implements ICustomerQueryService {
       .createQueryBuilder('customer')
       .where(
         q
-          ? '(LOWER(customer.firstName) LIKE LOWER(:search) OR LOWER(customer.cedula) LIKE LOWER(:search))'
+          ? '(LOWER(customer.firstName) LIKE LOWER(:search) OR LOWER(customer.lastName) LIKE LOWER(:search) OR LOWER(customer.cedula) LIKE LOWER(:search))'
           : '1=1',
         { search: searchPattern },
       )
@@ -48,7 +48,7 @@ export class CustomerQueryService implements ICustomerQueryService {
         id: row.id,
         cedula: row.cedula ?? '',
         firstName: row.firstName,
-        lastName: row.lastName ?? null,
+        lastName: row.lastName ?? '',
         email: row.email ?? null,
         phone: row.phone ?? null,
         address: row.address ?? null,

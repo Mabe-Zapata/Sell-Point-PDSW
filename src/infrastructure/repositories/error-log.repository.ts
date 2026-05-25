@@ -50,7 +50,7 @@ export class ErrorLogRepository implements IErrorLogRepository {
     const queryBuilder = this.repo.createQueryBuilder('errorLog');
 
     if (q) {
-      queryBuilder.where('errorLog.message ILIKE :q', { q: `%${q}%` });
+       queryBuilder.where('LOWER(errorLog.message) LIKE LOWER(:q)', { q: `%${q}%` });
     }
     if (exceptionType) {
       queryBuilder.andWhere('errorLog.exceptionType = :exceptionType', { exceptionType });

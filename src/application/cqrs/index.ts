@@ -15,6 +15,10 @@ export { ListCustomersValidator } from './customer/queries/list-customers/list-c
 export { ListCustomersWithStockHandler } from './customer/queries/list-customers-with-stock/list-customers-with-stock.handler';
 export { ListCustomersWithStockValidator } from './customer/queries/list-customers-with-stock/list-customers-with-stock.validator';
 
+// User Commands
+export { UnlockUserHandler } from './user/commands/unlock-user/unlock-user.handler';
+export { UnlockUserValidator } from './user/commands/unlock-user/unlock-user.validator';
+
 // Product Commands
 export { CreateProductHandler } from './product/commands/create-product/create-product.handler';
 export { CreateProductValidator } from './product/commands/create-product/create-product.validator';
@@ -35,6 +39,12 @@ export { CreateCategoryHandler } from './category/commands/create-category/creat
 export { CreateCategoryValidator } from './category/commands/create-category/create-category.validator';
 export { UpdateCategoryHandler } from './category/commands/update-category/update-category.handler';
 export { UpdateCategoryValidator } from './category/commands/update-category/update-category.validator';
+export { DeleteCategoryHandler } from './category/commands/delete-category/delete-category.handler';
+export { DeleteCategoryValidator } from './category/commands/delete-category/delete-category.validator';
+export { ActivateCategoryHandler } from './category/commands/activate-category/activate-category.handler';
+export { ActivateCategoryValidator } from './category/commands/activate-category/activate-category.validator';
+export { DeactivateCategoryHandler } from './category/commands/deactivate-category/deactivate-category.handler';
+export { DeactivateCategoryValidator } from './category/commands/deactivate-category/deactivate-category.validator';
 // Category Queries
 export { GetCategoryHandler } from './category/queries/get-category/get-category.handler';
 export { GetCategoryValidator } from './category/queries/get-category/get-category.validator';
@@ -71,6 +81,9 @@ export { GetSaleValidator } from './sale/queries/get-sale/get-sale.validator';
 export { ListSalesHandler } from './sale/queries/list-sales/list-sales.handler';
 export { ListSalesValidator } from './sale/queries/list-sales/list-sales.validator';
 
+// Inventory Commands
+export { AdjustStockHandler } from './inventory/commands/adjust-stock/adjust-stock.handler';
+export { AdjustStockValidator } from './inventory/commands/adjust-stock/adjust-stock.validator';
 // Inventory Queries
 export { GetStockLevelsHandler } from './inventory/queries/get-stock-levels/get-stock-levels.handler';
 export { GetStockLevelsValidator } from './inventory/queries/get-stock-levels/get-stock-levels.validator';

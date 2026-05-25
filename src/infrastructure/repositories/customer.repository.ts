@@ -61,7 +61,7 @@ export class CustomerRepository implements ICustomerRepository {
     const queryBuilder = this.repo.createQueryBuilder('customer');
 
     if (q) {
-      queryBuilder.where('customer.firstName ILIKE :q OR customer.cedula ILIKE :q', { q: `%${q}%` });
+      queryBuilder.where('LOWER(customer.firstName) LIKE LOWER(:q) OR LOWER(customer.lastName) LIKE LOWER(:q) OR LOWER(customer.cedula) LIKE LOWER(:q)', { q: `%${q}%` });
     }
 
     const total = await queryBuilder.getCount();

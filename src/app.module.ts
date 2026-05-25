@@ -41,6 +41,9 @@ import {
   ListProductsWithStockHandler, ListProductsWithStockValidator,
   CreateCategoryHandler, CreateCategoryValidator,
   UpdateCategoryHandler, UpdateCategoryValidator,
+  DeleteCategoryHandler, DeleteCategoryValidator,
+  ActivateCategoryHandler, ActivateCategoryValidator,
+  DeactivateCategoryHandler, DeactivateCategoryValidator,
   GetCategoryHandler, GetCategoryValidator,
   ListCategoriesHandler, ListCategoriesValidator,
   CreateTaxRateHandler, CreateTaxRateValidator,
@@ -55,11 +58,12 @@ import {
   CancelSaleHandler, CancelSaleValidator,
   GetSaleHandler, GetSaleValidator,
   ListSalesHandler, ListSalesValidator,
+  AdjustStockHandler, AdjustStockValidator,
   GetStockLevelsHandler, GetStockLevelsValidator,
   GetMovementsHistoryHandler, GetMovementsHistoryValidator,
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
-  GetDashboardStatsHandler,
+  GetDashboardStatsHandler, UnlockUserHandler, UnlockUserValidator,
 } from './application/cqrs';
 
 // Domain + Infrastructure (barrel imports)
@@ -89,12 +93,13 @@ import {
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController } from './presentation/controllers';
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
 // CQRS arrays
 const CommandHandlers = [
+  UnlockUserHandler, UnlockUserValidator,
   CreateCustomerHandler, CreateCustomerValidator,
   UpdateCustomerHandler, UpdateCustomerValidator,
   ActivateCustomerHandler, ActivateCustomerValidator,
@@ -104,6 +109,9 @@ const CommandHandlers = [
   DeleteProductHandler, DeleteProductValidator,
   CreateCategoryHandler, CreateCategoryValidator,
   UpdateCategoryHandler, UpdateCategoryValidator,
+  DeleteCategoryHandler, DeleteCategoryValidator,
+  ActivateCategoryHandler, ActivateCategoryValidator,
+  DeactivateCategoryHandler, DeactivateCategoryValidator,
   CreateTaxRateHandler, CreateTaxRateValidator,
   UpdateTaxRateHandler, UpdateTaxRateValidator,
   CreateSaleHandler, CreateSaleValidator,
@@ -112,6 +120,7 @@ const CommandHandlers = [
   UpdateSaleDetailQuantityHandler, UpdateSaleDetailQuantityValidator,
   ConfirmSaleHandler, ConfirmSaleValidator,
   CancelSaleHandler, CancelSaleValidator,
+  AdjustStockHandler, AdjustStockValidator,
 ];
 
 const QueryHandlers = [
@@ -167,7 +176,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController],
   providers: [
     AppService,
     // Domain Services
