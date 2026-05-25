@@ -9,8 +9,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ForbiddenException,
-  Req,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -37,9 +35,11 @@ import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { UserFilters } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
 import { PaginatedResult } from '../../domain/repositories/pagination.types';
+import { Roles } from '../decorators/roles.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
+@Roles('ADMIN')
 @Controller('users')
 export class UserController {
   constructor(
@@ -54,13 +54,7 @@ export class UserController {
   @ApiResponse({ status: 201, description: 'Usuario creado', type: UserResponseDto })
   @ApiResponse({ status: 400, description: 'Error de validación' })
   @ApiResponse({ status: 409, description: 'Usuario ya existe' })
-  async create(
-    @Req() req: { user?: { role?: string } },
-    @Body() dto: CreateUserDto,
-  ): Promise<UserResponseDto> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can create users');
-    }
+  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<CreateUserCommand, User>(new CreateUserCommand(dto));
     return UserResponseDto.fromEntity(user);
   }
@@ -74,17 +68,12 @@ export class UserController {
   @ApiQuery({ name: 'status', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Lista de usuarios', type: UserResponseDto, isArray: true })
   async findAll(
-    @Req() req: { user?: { role?: string } },
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') q?: string,
     @Query('role') role?: string,
     @Query('status') status?: string,
   ): Promise<{ data: UserResponseDto[]; total: number; page: number; limit: number }> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can list users');
-    }
-
     const pagination: PaginationParams = {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
@@ -109,13 +98,7 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario encontrado', type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  async findOne(
-    @Req() req: { user?: { role?: string } },
-    @Param('id') id: string,
-  ): Promise<UserResponseDto> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can view users');
-    }
+  async findOne(@Param('id') id: string): Promise<UserResponseDto> {
     const user = await this.queryBus.execute<GetUserQuery, User>(new GetUserQuery(id));
     return UserResponseDto.fromEntity(user);
   }
@@ -127,13 +110,9 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Usuario actualizado', type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async update(
-    @Req() req: { user?: { role?: string } },
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can update users');
-    }
     const user = await this.commandBus.execute<UpdateUserCommand, User>(new UpdateUserCommand(id, dto));
     return UserResponseDto.fromEntity(user);
   }
@@ -143,13 +122,7 @@ export class UserController {
   @ApiOperation({ summary: 'Activar usuario (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario activado', type: UserResponseDto })
-  async activate(
-    @Req() req: { user?: { role?: string } },
-    @Param('id') id: string,
-  ): Promise<UserResponseDto> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can activate users');
-    }
+  async activate(@Param('id') id: string): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<ActivateUserCommand, User>(new ActivateUserCommand(id));
     return UserResponseDto.fromEntity(user);
   }
@@ -159,13 +132,7 @@ export class UserController {
   @ApiOperation({ summary: 'Desactivar usuario (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario desactivado', type: UserResponseDto })
-  async deactivate(
-    @Req() req: { user?: { role?: string } },
-    @Param('id') id: string,
-  ): Promise<UserResponseDto> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can deactivate users');
-    }
+  async deactivate(@Param('id') id: string): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<DeactivateUserCommand, User>(new DeactivateUserCommand(id));
     return UserResponseDto.fromEntity(user);
   }

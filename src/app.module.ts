@@ -16,6 +16,7 @@ import { TypeOrmUnitOfWork } from './infrastructure/persistence/typeorm/unit-of-
 import { UNIT_OF_WORK } from './application/tokens';
 import { ConfirmSaleUseCase } from './application/use-cases/sale/confirm-sale.use-case';
 import { CancelSaleUseCase } from './application/use-cases/sale/cancel-sale.use-case';
+import { RolesGuard } from './presentation/guards/roles.guard';
 
 // Application - DI Tokens + CQRS Handlers (reducers)
 import { TAX_CALCULATOR } from './application/tokens';
@@ -70,7 +71,9 @@ ActivateUserHandler, ActivateUserValidator,
 DeactivateUserHandler, DeactivateUserValidator,
 GetUserHandler, GetUserValidator,
 ListUsersHandler, ListUsersValidator,
-ListRolesHandler, ListRolesValidator,
+ListRolesHandler, ListRolesValidator, GetRoleHandler, GetRoleValidator,
+CreateRoleHandler, CreateRoleValidator,
+UpdateRoleHandler, UpdateRoleValidator,
 } from './application/cqrs';
 
 // Domain + Infrastructure (barrel imports)
@@ -132,6 +135,8 @@ const CommandHandlers = [
 UpdateUserHandler, UpdateUserValidator,
 ActivateUserHandler, ActivateUserValidator,
 DeactivateUserHandler, DeactivateUserValidator,
+CreateRoleHandler, CreateRoleValidator,
+UpdateRoleHandler, UpdateRoleValidator,
 ];
 
 const QueryHandlers = [
@@ -155,6 +160,7 @@ const QueryHandlers = [
   GetUserHandler, GetUserValidator,
 ListUsersHandler, ListUsersValidator,
 ListRolesHandler, ListRolesValidator,
+GetRoleHandler, GetRoleValidator,
 ];
 
 // All TypeORM entities
@@ -230,6 +236,7 @@ const entities = [
 
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
     ...CommandHandlers,
     ...QueryHandlers,

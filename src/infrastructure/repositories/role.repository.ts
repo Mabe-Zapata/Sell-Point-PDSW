@@ -48,4 +48,11 @@ export class RoleRepository implements IRoleRepository {
     const saved = await this.repo.save(entity);
     return this.mapToDomain(saved);
   }
+
+  async update(role: Role): Promise<Role> {
+  await this.repo.update(role.id, this.mapToEntity(role));
+  const updated = await this.repo.findOne({ where: { id: role.id } });
+  if (!updated) throw new Error('Role not found after update');
+  return this.mapToDomain(updated);
+}
 }
