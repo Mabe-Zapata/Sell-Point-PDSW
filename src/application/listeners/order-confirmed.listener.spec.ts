@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrderConfirmedListener } from './order-confirmed.listener';
 import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
-import type { IEmailService } from '../services/interfaces/email-service.interface';
-import { EmailTemplate } from '../services/interfaces/email-service.interface';
-import { EMAIL_SERVICE } from '../services/email-service.token';
+import type { IEmailService } from '../ports/IEmailService';
+import { EMAIL_SERVICE } from '../ports/email-service.token';
 
 describe('OrderConfirmedListener', () => {
   let listener: OrderConfirmedListener;
@@ -11,8 +12,11 @@ describe('OrderConfirmedListener', () => {
 
   beforeEach(async () => {
     mockEmailService = {
-      send: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-123' }),
-    } as any;
+      sendInvoice: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-123' }),
+      sendPasswordReset: jest.fn(),
+      sendEmployeeCredentials: jest.fn(),
+      sendPasswordChangeNotification: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -29,7 +33,7 @@ describe('OrderConfirmedListener', () => {
   });
 
   describe('handle', () => {
-    it('should call emailService.send with ORDER_CONFIRMATION template on SaleConfirmedEvent', async () => {
+    it('should call emailService.sendInvoice on SaleConfirmedEvent', async () => {
       const event = new SaleConfirmedEvent(
         'sale-123',
         new Date(),
@@ -56,15 +60,14 @@ describe('OrderConfirmedListener', () => {
 
       await listener.handle(event);
 
-      expect(mockEmailService.send).toHaveBeenCalledWith(
+      expect(mockEmailService.sendInvoice).toHaveBeenCalledWith(
         'customer@example.com',
-        EmailTemplate.ORDER_CONFIRMATION,
+        'sale-123',
         expect.objectContaining({
-          orderId: 'sale-123',
-          customerEmail: 'customer@example.com',
+          invoiceNumber: 'sale-123',
           customerName: 'John Doe',
           items: expect.arrayContaining([
-            expect.objectContaining({ productId: 'prod-1', productName: 'Product 1' }),
+            expect.objectContaining({ description: 'Product 1' }),
           ]),
           total: 150.00,
         }),
@@ -89,8 +92,8 @@ describe('OrderConfirmedListener', () => {
       );
     });
 
-    it('should NOT throw when emailService.send fails (non-fatal)', async () => {
-      mockEmailService.send.mockRejectedValueOnce(new Error('SMTP connection failed'));
+    it('should NOT throw when emailService.sendInvoice fails (non-fatal)', async () => {
+      mockEmailService.sendInvoice.mockRejectedValueOnce(new Error('SMTP connection failed'));
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const event = new SaleConfirmedEvent(
@@ -122,11 +125,11 @@ describe('OrderConfirmedListener', () => {
 
       await listener.handle(event);
 
-      expect(mockEmailService.send).toHaveBeenCalledWith(
+      expect(mockEmailService.sendInvoice).toHaveBeenCalledWith(
         'test@example.com',
-        EmailTemplate.ORDER_CONFIRMATION,
+        'sale-789',
         expect.objectContaining({
-          orderId: 'sale-789',
+          invoiceNumber: 'sale-789',
           items: [],
         }),
       );

@@ -82,7 +82,7 @@ import {
 } from './infrastructure/queries';
 import { PdfService, AuthService } from './infrastructure/services';
 import { RedisModule } from './infrastructure/redis/redis.module';
-import { EmailModule } from './infrastructure/services/email/email.module';
+import { EmailModule } from './infrastructure/email/email.module';
 import {
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
   ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,

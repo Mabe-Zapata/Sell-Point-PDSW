@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject } from '@nestjs/common';
-import type { IEmailService } from '../services/interfaces/email-service.interface';
-import { EmailTemplate } from '../services/interfaces/email-service.interface';
-import { EMAIL_SERVICE } from '../services/email-service.token';
+import type { IEmailService } from '../ports/IEmailService';
+import { EMAIL_SERVICE } from '../ports/email-service.token';
 import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
 import { OrderConfirmationDTO, OrderItemDTO } from '../dtos/order/order-confirmation.dto';
 
@@ -28,10 +30,21 @@ export class OrderConfirmedListener {
         total: event.total,
       });
 
-      const result = await this.emailService.send(
+      const result = await this.emailService.sendInvoice(
         dto.customerEmail,
-        EmailTemplate.ORDER_CONFIRMATION,
-        dto as unknown as Record<string, unknown>,
+        event.saleId,
+        {
+          invoiceNumber: event.saleId,
+          date: new Date().toLocaleDateString('es-EC'),
+          customerName: dto.customerName,
+          items: items.map((item) => ({
+            description: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.subtotal,
+          })),
+          total: dto.total,
+        },
       );
 
       if (!result.success) {
