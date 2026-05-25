@@ -59,14 +59,7 @@ export { ListTaxRatesValidator } from './tax-rate/queries/list-tax-rates/list-ta
 // Sale Commands
 export { CreateSaleHandler } from './sale/commands/create-sale/create-sale.handler';
 export { CreateSaleValidator } from './sale/commands/create-sale/create-sale.validator';
-export { AddSaleDetailHandler } from './sale/commands/add-sale-detail/add-sale-detail.handler';
-export { AddSaleDetailValidator } from './sale/commands/add-sale-detail/add-sale-detail.validator';
-export { RemoveSaleDetailHandler } from './sale/commands/remove-sale-detail/remove-sale-detail.handler';
-export { RemoveSaleDetailValidator } from './sale/commands/remove-sale-detail/remove-sale-detail.validator';
-export { UpdateSaleDetailQuantityHandler } from './sale/commands/update-sale-detail-quantity/update-sale-detail-quantity.handler';
-export { UpdateSaleDetailQuantityValidator } from './sale/commands/update-sale-detail-quantity/update-sale-detail-quantity.validator';
-export { ConfirmSaleHandler } from './sale/commands/confirm-sale/confirm-sale.handler';
-export { ConfirmSaleValidator } from './sale/commands/confirm-sale/confirm-sale.validator';
+
 export { CancelSaleHandler } from './sale/commands/cancel-sale/cancel-sale.handler';
 export { CancelSaleValidator } from './sale/commands/cancel-sale/cancel-sale.validator';
 export { QuickConfirmSaleHandler } from './sale/commands/quick-confirm-sale/quick-confirm-sale.handler';

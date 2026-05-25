@@ -1,10 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { QuickConfirmSaleCommand } from './quick-confirm-sale.command';
 import { QuickConfirmSaleValidator } from './quick-confirm-sale.validator';
-import { SALE_REPOSITORY, SALE_DETAIL_REPOSITORY } from '../../../../tokens';
-import type { ISaleRepository, ISaleDetailRepository } from '../../../../../domain/repositories';
+
 import { SaleTypeOrmEntity } from '../../../../../infrastructure/database/entities/sale.typeorm.entity';
 import { SaleDetailTypeOrmEntity } from '../../../../../infrastructure/database/entities/sale-detail.typeorm.entity';
 import { ProductTypeOrmEntity } from '../../../../../infrastructure/database/entities/product.typeorm.entity';
@@ -21,8 +19,6 @@ import { v4 as uuidv4 } from 'uuid';
 export class QuickConfirmSaleHandler implements ICommandHandler<QuickConfirmSaleCommand> {
   constructor(
     private readonly validator: QuickConfirmSaleValidator,
-    @Inject(SALE_REPOSITORY) private readonly saleRepository: ISaleRepository,
-    @Inject(SALE_DETAIL_REPOSITORY) private readonly saleDetailRepository: ISaleDetailRepository,
     private readonly dataSource: DataSource,
     private readonly idempotencyService: IdempotencyService,
   ) {}
@@ -78,13 +74,11 @@ export class QuickConfirmSaleHandler implements ICommandHandler<QuickConfirmSale
 
       const saleId = uuidv4();
       const saleNumber = `SAL-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
-      const customerId = payload.customerId || 'guest';
+      const customerId = payload.customerId || null;
 
       let subtotal = 0;
-      let detailIndex = 0;
 
       for (const detail of payload.details) {
-        detailIndex++;
         const product = await queryRunner.manager
           .createQueryBuilder(ProductTypeOrmEntity, 'p')
           .where('p.id = :id', { id: detail.productId })
@@ -110,9 +104,7 @@ export class QuickConfirmSaleHandler implements ICommandHandler<QuickConfirmSale
         product.currentStock = newStock;
         await queryRunner.manager.save(product);
 
-        const now = Date.now();
         await queryRunner.manager.save(queryRunner.manager.create(SaleDetailTypeOrmEntity, {
-          id: now + detailIndex,
           saleId,
           productId: detail.productId,
           productNameSnapshot: product.name,
@@ -122,7 +114,6 @@ export class QuickConfirmSaleHandler implements ICommandHandler<QuickConfirmSale
         }));
 
         await queryRunner.manager.save(queryRunner.manager.create(StockMovementTypeOrmEntity, {
-          id: now + detailIndex + 1000,
           productId: detail.productId,
           type: StockMovementType.SALE,
           quantity: detail.quantity,

@@ -9,6 +9,7 @@ import { SaleTypeOrmEntity } from '../../../../../infrastructure/database/entiti
 import { SaleDetailTypeOrmEntity } from '../../../../../infrastructure/database/entities/sale-detail.typeorm.entity';
 import { ProductTypeOrmEntity } from '../../../../../infrastructure/database/entities/product.typeorm.entity';
 import { StockMovementTypeOrmEntity } from '../../../../../infrastructure/database/entities/stock-movement.typeorm.entity';
+import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 import { SaleStatus, StockMovementType } from '../../../../../domain/entities';
 
 @CommandHandler(CancelSaleCommand)
@@ -35,7 +36,11 @@ export class CancelSaleHandler implements ICommandHandler<CancelSaleCommand> {
         .getOne();
 
       if (!sale) {
-        throw new Error(`Sale with ID '${command.saleId}' not found`);
+        throw new BusinessRuleException(`Sale with ID '${command.saleId}' not found`);
+      }
+
+      if (sale.status === SaleStatus.CANCELLED) {
+        throw new BusinessRuleException(`Sale '${sale.saleNumber}' is already cancelled`);
       }
 
       // Read sale details
