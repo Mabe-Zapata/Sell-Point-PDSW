@@ -16,6 +16,7 @@ import { TypeOrmUnitOfWork } from './infrastructure/persistence/typeorm/unit-of-
 import { UNIT_OF_WORK } from './application/tokens';
 import { ConfirmSaleUseCase } from './application/use-cases/sale/confirm-sale.use-case';
 import { CancelSaleUseCase } from './application/use-cases/sale/cancel-sale.use-case';
+import { RolesGuard } from './presentation/guards/roles.guard';
 
 // Application - DI Tokens + CQRS Handlers (reducers)
 import { TAX_CALCULATOR } from './application/tokens';
@@ -64,6 +65,15 @@ import {
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
   GetDashboardStatsHandler, UnlockUserHandler, UnlockUserValidator,
+  CreateUserHandler, CreateUserValidator,
+UpdateUserHandler, UpdateUserValidator,
+ActivateUserHandler, ActivateUserValidator,
+DeactivateUserHandler, DeactivateUserValidator,
+GetUserHandler, GetUserValidator,
+ListUsersHandler, ListUsersValidator,
+ListRolesHandler, ListRolesValidator, GetRoleHandler, GetRoleValidator,
+CreateRoleHandler, CreateRoleValidator,
+UpdateRoleHandler, UpdateRoleValidator,
 } from './application/cqrs';
 
 // Domain + Infrastructure (barrel imports)
@@ -73,7 +83,7 @@ import {
   DashboardRepository, UserRepository, CategoryRepository,
   ErrorLogRepository, TaxRateRepository,
   StockMovementRepository, SaleRepository, SaleDetailRepository,
-  InvoiceSeriesRepository,
+  InvoiceSeriesRepository,RoleRepository,
 } from './infrastructure/repositories';
 import {
   DashboardQueryService, InvoiceQueryService, CustomerQueryService,
@@ -94,7 +104,7 @@ import {
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController } from './presentation/controllers';
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { OrderConfirmedListener } from './application/listeners/order-confirmed.listener';
@@ -123,6 +133,12 @@ const CommandHandlers = [
   ConfirmSaleHandler, ConfirmSaleValidator,
   CancelSaleHandler, CancelSaleValidator,
   AdjustStockHandler, AdjustStockValidator,
+  CreateUserHandler, CreateUserValidator,
+UpdateUserHandler, UpdateUserValidator,
+ActivateUserHandler, ActivateUserValidator,
+DeactivateUserHandler, DeactivateUserValidator,
+CreateRoleHandler, CreateRoleValidator,
+UpdateRoleHandler, UpdateRoleValidator,
 ];
 
 const QueryHandlers = [
@@ -143,6 +159,10 @@ const QueryHandlers = [
   GetErrorLogHandler, GetErrorLogValidator,
   ListErrorLogsHandler, ListErrorLogsValidator,
   GetDashboardStatsHandler,
+  GetUserHandler, GetUserValidator,
+ListUsersHandler, ListUsersValidator,
+ListRolesHandler, ListRolesValidator,
+GetRoleHandler, GetRoleValidator,
 ];
 
 // All TypeORM entities
@@ -179,7 +199,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController],
   providers: [
     AppService,
     // Domain Services
@@ -191,6 +211,7 @@ const entities = [
     { provide: 'PRODUCT_REPOSITORY', useClass: ProductRepository },
     { provide: 'DASHBOARD_REPOSITORY', useClass: DashboardRepository },
     { provide: 'USER_REPOSITORY', useClass: UserRepository },
+    { provide: 'ROLE_REPOSITORY', useClass: RoleRepository },
     UserRepository, // AuthService needs direct injection
     { provide: 'CATEGORY_REPOSITORY', useClass: CategoryRepository },
     { provide: 'ERROR_LOG_REPOSITORY', useClass: ErrorLogRepository },
@@ -220,6 +241,7 @@ const entities = [
 
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
     ...CommandHandlers,
     ...QueryHandlers,
