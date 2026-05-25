@@ -52,6 +52,7 @@ export class SaleRepository implements ISaleRepository {
 
   private mapToEntity(sale: Sale): Partial<SaleTypeOrmEntity> {
     return {
+      id: sale.id,
       branchId: sale.branchId,
       customerId: sale.customerId,
       cashierUserId: sale.cashierUserId,
