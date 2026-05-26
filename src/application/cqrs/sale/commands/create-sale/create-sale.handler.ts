@@ -9,7 +9,6 @@ export class CreateSaleHandler {
   ) {}
 
   async execute(command: CreateSaleCommand): Promise<Sale> {
-    // TODO: inject IUuidGenerator once ports are wired.
     const saleNumber = `SAL-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
     const sale = new Sale({
@@ -17,6 +16,7 @@ export class CreateSaleHandler {
       customerId: command.payload.customerId,
       cashierUserId: command.payload.cashierUserId,
       taxRateId: command.payload.taxRateId,
+      paymentMethod: command.payload.paymentMethod,
       saleNumber,
       status: SaleStatus.DRAFT,
       subtotal: 0,

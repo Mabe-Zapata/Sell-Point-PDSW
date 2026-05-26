@@ -1,4 +1,4 @@
-import { SaleStatus } from './enums';
+import { SaleStatus, PaymentMethod } from './enums';
 import { SaleDetail } from './sale-detail.entity';
 import { BusinessRuleException } from '../exceptions';
 
@@ -14,6 +14,8 @@ export class Sale {
   taxRateId!: string;
 
   saleNumber!: string;
+
+  paymentMethod!: PaymentMethod;
 
   status!: SaleStatus;
 
@@ -52,6 +54,11 @@ export class Sale {
     if (!this.isConfirmable) {
       throw new BusinessRuleException(
         'Sale cannot be confirmed. Only DRAFT sales can be confirmed.',
+      );
+    }
+    if (this.paymentMethod !== PaymentMethod.CASH) {
+      throw new BusinessRuleException(
+        'Sale cannot be confirmed. Only CASH payment method is accepted.',
       );
     }
     this.status = SaleStatus.CONFIRMED;
