@@ -24,6 +24,7 @@ export type InvoiceData = {
 export type EmployeeCredentialsData = {
   firstName: string;
   username: string;
+  email: string;
   temporaryPassword: string;
   loginUrl: string;
 };

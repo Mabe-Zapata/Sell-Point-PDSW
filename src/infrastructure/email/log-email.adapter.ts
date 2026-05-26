@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IEmailService, SendResult } from '../../application/ports/IEmailService';
+import { IEmailService, SendResult, EmployeeCredentialsData } from '../../application/ports/IEmailService';
 
 @Injectable()
 export class LogEmailAdapter implements IEmailService {
@@ -25,7 +25,7 @@ export class LogEmailAdapter implements IEmailService {
     });
   }
 
-  async sendEmployeeCredentials(to: string, data: { firstName: string; username: string; temporaryPassword: string; loginUrl: string }): Promise<SendResult> {
+  async sendEmployeeCredentials(to: string, data: EmployeeCredentialsData): Promise<SendResult> {
     this.logger.log(`[EMAIL] Employee Credentials | To: ${to} | Data: ${JSON.stringify(data)}`);
     return await new Promise((resolve) => {
       resolve({
