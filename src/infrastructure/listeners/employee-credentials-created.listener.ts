@@ -22,6 +22,7 @@ export class EmployeeCredentialsCreatedListener implements IEventHandler<Employe
       const result = await this.emailService.sendEmployeeCredentials(event.email, {
         firstName: event.firstName,
         username: event.username,
+        email: event.email,
         temporaryPassword: event.temporaryPassword,
         loginUrl,
       });
