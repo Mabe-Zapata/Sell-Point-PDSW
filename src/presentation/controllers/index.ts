@@ -6,3 +6,4 @@ export { AuthController } from './auth.controller';
 export { CategoryController } from './category.controller';
 export { UserController } from './user.controller';
 export { RoleController } from './role.controller';
+export { ErrorLogController } from './error-log.controller';

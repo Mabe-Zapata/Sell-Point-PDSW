@@ -8,7 +8,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { SaleStatusDb } from './enums/sale-status.db-enum';
+//import { SaleStatusDb } from './enums/sale-status.db-enum';
+import { PaymentMethodDb } from './enums/payment-method.db-enum';
 import { CustomerTypeOrmEntity } from './customer.typeorm.entity';
 import { UserTypeOrmEntity } from './user.typeorm.entity';
 import { TaxRateTypeOrmEntity } from './tax-rate.typeorm.entity';
@@ -44,6 +45,14 @@ export class SaleTypeOrmEntity {
 
   @Column({ name: 'SAL_NUM', length: 50, unique: true })
   saleNumber!: string;
+
+  @Column({
+    name: 'PAY_MET_SAL',
+    type: 'varchar',
+    length: 20,
+    default: PaymentMethodDb.CASH,
+  })
+  paymentMethod!: string;
 
   @Index('IDX_SAL_STA')
   @Column({

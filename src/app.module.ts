@@ -189,7 +189,7 @@ import {
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController } from './presentation/controllers';
+import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController, ErrorLogController } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 // Infrastructure - Event Listeners
@@ -235,7 +235,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController],
+  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController, ErrorLogController],
   providers: [
     AppService,
     // Domain Services

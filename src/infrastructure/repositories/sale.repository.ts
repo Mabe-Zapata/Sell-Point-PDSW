@@ -5,6 +5,7 @@ import { SaleTypeOrmEntity } from '../database/entities/sale.typeorm.entity';
 import { SaleDetailTypeOrmEntity } from '../database/entities/sale-detail.typeorm.entity';
 import { Sale, SaleDetail } from '../../domain/entities';
 import { SaleStatusMapper } from '../database/entities/enums/sale-status.db-enum';
+import { PaymentMethodMapper, PaymentMethodDb } from '../database/entities/enums/payment-method.db-enum';
 import type { ISaleRepository, SaleFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class SaleRepository implements ISaleRepository {
       cashierUserId: entity.cashierUserId,
       taxRateId: entity.taxRateId,
       saleNumber: entity.saleNumber,
+      paymentMethod: PaymentMethodMapper.toDomain(entity.paymentMethod as PaymentMethodDb),
       status: SaleStatusMapper.toDomain(entity.status),
       subtotal: Number(entity.subtotal),
       taxAmount: Number(entity.taxAmount),
@@ -58,6 +60,7 @@ export class SaleRepository implements ISaleRepository {
       cashierUserId: sale.cashierUserId,
       taxRateId: sale.taxRateId,
       saleNumber: sale.saleNumber,
+      paymentMethod: PaymentMethodMapper.toDb(sale.paymentMethod),
       status: SaleStatusMapper.toDb(sale.status),
       subtotal: sale.subtotal,
       taxAmount: sale.taxAmount,
@@ -127,7 +130,6 @@ export class SaleRepository implements ISaleRepository {
 
   async findByIdWithDetails(id: string): Promise<Sale | null> {
     if (!this.dataSource) {
-      // Fallback when DataSource is not available
       const entity = await this.repo.findOne({ where: { id } });
       return entity ? this.mapToDomain(entity) : null;
     }
@@ -137,7 +139,6 @@ export class SaleRepository implements ISaleRepository {
     await queryRunner.startTransaction();
 
     try {
-      // Use pessimistic write lock on sale
       const saleEntity = await queryRunner.manager
         .createQueryBuilder(SaleTypeOrmEntity, 'sale')
         .where('sale.id = :id', { id })
@@ -148,7 +149,6 @@ export class SaleRepository implements ISaleRepository {
         return null;
       }
 
-      // Load sale details
       const detailEntities = await queryRunner.manager
         .createQueryBuilder(SaleDetailTypeOrmEntity, 'sd')
         .where('sd.saleId = :saleId', { saleId: id })
