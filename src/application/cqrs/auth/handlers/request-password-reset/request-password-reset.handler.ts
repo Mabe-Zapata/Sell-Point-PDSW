@@ -8,6 +8,13 @@ import { PasswordResetToken } from '../../../../../domain/entities/password-rese
 import { PasswordResetRequestedEvent } from '../../../../../domain/events/password-reset-requested.event';
 import type { IUnitOfWork } from '../../../../unit-of-work/unit-of-work.interface';
 
+export class PasswordResetRateLimitException extends Error {
+  constructor(minutesLeft: number) {
+    super(`Ya solicitaste un correo de recuperación. Espera ${minutesLeft} minutos antes de solicitar otro.`);
+    this.name = 'PasswordResetRateLimitException';
+  }
+}
+
 export class RequestPasswordResetHandler {
   private static readonly TOKEN_EXPIRY_MINUTES = 15;
 
@@ -22,11 +29,19 @@ export class RequestPasswordResetHandler {
     const user = await this.userRepository.findByEmail(command.email);
 
     if (!user) {
+      // Don't reveal if email exists or not for security
       console.info(`[RequestPasswordResetHandler] Password reset requested for unknown email: ${command.email}`);
       return { success: true };
     }
 
-    // TODO: inject IPasswordHasher/IUuidGenerator once ports are wired.
+    // Check for existing active token (rate limiting)
+    const existingToken = await this.tokenRepository.findActiveByUserId(user.id);
+    if (existingToken) {
+      const minutesLeft = Math.ceil((existingToken.expiresAt.getTime() - Date.now()) / 60000);
+      throw new PasswordResetRateLimitException(minutesLeft);
+    }
+
+    // Create new token
     const rawToken = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '');
     const tokenHash = await bcrypt.hash(rawToken, 12);
 

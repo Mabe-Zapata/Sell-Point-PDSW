@@ -6,4 +6,8 @@ export interface IPasswordResetTokenRepository {
   findByHash(hash: string): Promise<PasswordResetToken | null>;
   findAll(pagination: PaginationParams, filters?: { userId?: string }): Promise<PaginatedResult<PasswordResetToken>>;
   markAsUsed(id: string): Promise<void>;
+  /**
+   * Find active (non-expired, non-used) tokens for a specific user.
+   */
+  findActiveByUserId(userId: string): Promise<PasswordResetToken | null>;
 }

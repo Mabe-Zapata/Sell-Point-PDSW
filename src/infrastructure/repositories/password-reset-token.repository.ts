@@ -74,4 +74,16 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
   async markAsUsed(id: string): Promise<void> {
     await this.repo.update(id, { usedAt: new Date() });
   }
+
+  async findActiveByUserId(userId: string): Promise<PasswordResetToken | null> {
+    const entity = await this.repo.findOne({
+      where: {
+        userId,
+        usedAt: IsNull(),
+        expiresAt: MoreThan(new Date()),
+      },
+      order: { createdAt: 'DESC' },
+    });
+    return entity ? this.mapToDomain(entity) : null;
+  }
 }

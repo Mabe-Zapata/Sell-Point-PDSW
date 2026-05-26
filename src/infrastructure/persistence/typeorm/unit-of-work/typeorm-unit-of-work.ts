@@ -55,7 +55,9 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   }
 
   dispatchEvent(event: any): void {
-    this.pendingEvents.push(event);
+    // Publish event immediately via EventBus
+    // (pendingEvents queue is kept for potential transaction-based scenarios)
+    this.eventBus.publish(event);
   }
 
   get sales(): ISaleRepository {

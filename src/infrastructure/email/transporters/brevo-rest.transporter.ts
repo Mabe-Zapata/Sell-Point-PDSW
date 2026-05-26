@@ -70,13 +70,16 @@ export class BrevoRestTransporter implements IEmailTransporter {
         }));
       }
 
+      console.log(`[BrevoTransporter] Sending email to ${to} with subject "${subject}"`);
       const response = await this.client.post('/v3/smtp/email', emailPayload);
+      console.log(`[BrevoTransporter] Email sent successfully. MessageId: ${response.data?.messageId}`);
 
       return {
         success: true,
         messageId: response.data?.messageId ?? '',
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error(`[BrevoTransporter] Failed to send email to ${to}:`, error?.response?.data ?? error.message);
       throw new EmailServiceUnavailableError(to);
     }
   }
