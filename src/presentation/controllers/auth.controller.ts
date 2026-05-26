@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CommandBus } from '@nestjs/cqrs';
@@ -22,6 +22,8 @@ import { ResetPasswordCommand } from '../../application/cqrs/auth/commands/reset
 import { RegisterEmployeeValidator } from '../../application/cqrs/auth/handlers/register-employee/register-employee.validator';
 import { RequestPasswordResetValidator } from '../../application/cqrs/auth/handlers/request-password-reset/request-password-reset.validator';
 import { ResetPasswordValidator } from '../../application/cqrs/auth/handlers/reset-password/reset-password.validator';
+import { resolvePublicIpv4 } from '../../infrastructure/http/request-ip.util';
+import type { Request } from 'express';
 
 export class RefreshTokenDto {
   @ApiProperty({
@@ -188,9 +190,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request a password reset email' })
   @ApiResponse({ status: 200, description: 'Password reset email sent if account exists' })
-  async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto, @Req() req: Request, @Headers('user-agent') userAgent: string) {
     RequestPasswordResetValidator.validate(dto);
-    const command = new RequestPasswordResetCommand(dto.email);
+    const command = new RequestPasswordResetCommand(dto.email, await resolvePublicIpv4(req), userAgent);
     const result = await this.commandBus.execute(command);
     return result;
   }
@@ -200,9 +202,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password with a valid token' })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
+  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request, @Headers('user-agent') userAgent: string) {
     ResetPasswordValidator.validate(dto);
-    const command = new ResetPasswordCommand(dto.token, dto.newPassword, dto.confirmPassword);
+    const command = new ResetPasswordCommand(dto.token, dto.newPassword, dto.confirmPassword, await resolvePublicIpv4(req), userAgent);
     const result = await this.commandBus.execute(command);
     return result;
   }

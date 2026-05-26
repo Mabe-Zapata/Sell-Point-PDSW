@@ -1,8 +1,9 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { CreateUserCommand } from './create-user.command';
 import { AuthService } from '../../../../../infrastructure/services/auth.service';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
+import type { IRoleRepository } from '../../../../../domain/repositories/role.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
 import { UserStatus } from '../../../../../domain/entities/enums';
 
@@ -10,9 +11,20 @@ export class CreateUserHandler {
   constructor(
     protected readonly authService: AuthService,
     protected readonly userRepository: IUserRepository,
+    protected readonly roleRepository: IRoleRepository,
   ) {}
 
   async execute(command: CreateUserCommand): Promise<User> {
+    const roleName = command.payload.role?.trim();
+    if (!roleName) {
+      throw new BadRequestException('Role is required');
+    }
+
+    const role = await this.roleRepository.findByName(roleName);
+    if (!role) {
+      throw new BadRequestException(`Role ${roleName} does not exist`);
+    }
+
     const existingByEmployeeId = await this.userRepository.findByEmployeeId(command.payload.employeeId);
     if (existingByEmployeeId) {
       throw new ConflictException('Employee ID already exists');
@@ -37,7 +49,7 @@ export class CreateUserHandler {
       username: command.payload.username,
       email: command.payload.email,
       passwordHash,
-      role: command.payload.role,
+      role: role.name,
       firstName: command.payload.firstName,
       lastName: command.payload.lastName,
       cedula: command.payload.cedula,

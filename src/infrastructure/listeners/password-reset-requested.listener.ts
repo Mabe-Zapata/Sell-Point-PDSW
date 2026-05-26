@@ -15,12 +15,12 @@ export class PasswordResetRequestedListener implements IEventHandler<PasswordRes
 
   async handle(event: PasswordResetRequestedEvent): Promise<void> {
     try {
-      const expiresInHours = Math.round((event.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60));
+      const expiresInMinutes = Math.max(0, Math.ceil((event.expiresAt.getTime() - Date.now()) / (1000 * 60)));
 
       const result = await this.emailService.sendPasswordReset(event.email, {
         firstName: event.firstName,
         resetUrl: event.resetUrl,
-        expiresInHours: expiresInHours > 0 ? expiresInHours : 0,
+        expiresInMinutes,
       });
 
       if (!result.success) {

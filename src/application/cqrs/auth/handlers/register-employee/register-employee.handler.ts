@@ -3,8 +3,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { BadRequestException } from '@nestjs/common';
 import { RegisterEmployeeCommand } from '../../commands/register-employee/register-employee.command';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
+import type { IRoleRepository } from '../../../../../domain/repositories/role.repository.interface';
 import type { IUnitOfWork } from '../../../../unit-of-work/unit-of-work.interface';
 import { User } from '../../../../../domain/entities/user.entity';
 import { EmployeeCredentialsCreatedEvent } from '../../../../../domain/events/employee-credentials-created.event';
@@ -13,10 +15,21 @@ import { EmailAlreadyExistsException } from '../../../../exceptions/email-alread
 export class RegisterEmployeeHandler {
   constructor(
     protected readonly userRepository: IUserRepository,
+    protected readonly roleRepository: IRoleRepository,
     protected readonly uow: IUnitOfWork,
   ) {}
 
   async execute(command: RegisterEmployeeCommand): Promise<User> {
+    const roleName = command.role?.trim();
+    if (!roleName) {
+      throw new BadRequestException('Role is required');
+    }
+
+    const role = await this.roleRepository.findByName(roleName);
+    if (!role) {
+      throw new BadRequestException(`Role ${roleName} does not exist`);
+    }
+
     const existingByEmail = await this.userRepository.findByEmail(command.email);
     if (existingByEmail) {
       throw new EmailAlreadyExistsException(command.email);
@@ -34,7 +47,7 @@ export class RegisterEmployeeHandler {
       employeeId,
       email: command.email,
       passwordHash,
-      role: command.role,
+      role: role.name,
       firstName: command.firstName,
       lastName: command.lastName,
       cedula: command.cedula,

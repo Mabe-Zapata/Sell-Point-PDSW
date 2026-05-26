@@ -5,7 +5,7 @@ import { IEmailService, SendResult } from '../../application/ports/IEmailService
 export class LogEmailAdapter implements IEmailService {
   private readonly logger = new Logger(LogEmailAdapter.name);
 
-  async sendPasswordReset(to: string, data: { firstName: string; resetUrl: string; expiresInHours: number }): Promise<SendResult> {
+  async sendPasswordReset(to: string, data: { firstName: string; resetUrl: string; expiresInMinutes: number }): Promise<SendResult> {
     this.logger.log(`[EMAIL] Password Reset | To: ${to} | Data: ${JSON.stringify(data)}`);
     return await new Promise((resolve) => {
       resolve({

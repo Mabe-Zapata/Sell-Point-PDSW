@@ -51,7 +51,7 @@ describe('PasswordResetRequestedListener', () => {
         {
           firstName: 'John',
           resetUrl: 'https://app.example.com/reset-password?token=abc123',
-          expiresInHours: 2,
+          expiresInMinutes: 120,
         },
       );
     });
@@ -71,7 +71,7 @@ describe('PasswordResetRequestedListener', () => {
 
       expect(mockEmailService.sendPasswordReset).toHaveBeenCalledWith(
         'jane.doe@example.com',
-        expect.objectContaining({ expiresInHours: 0 }),
+        expect.objectContaining({ expiresInMinutes: 0 }),
       );
     });
 

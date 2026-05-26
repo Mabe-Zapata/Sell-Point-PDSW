@@ -18,6 +18,10 @@ export class PasswordChangedListener implements IEventHandler<PasswordChangedEve
       const result = await this.emailService.sendPasswordChangeNotification(event.email, {
         firstName: event.firstName,
         changedAt: event.changedAt.toISOString(),
+        ip: event.ip,
+        userAgent: event.userAgent,
+        requestedIp: event.resetRequestedIp,
+        requestedUserAgent: event.resetRequestedUserAgent,
       });
 
       if (!result.success) {

@@ -22,6 +22,8 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
       expiresAt: entity.expiresAt,
       usedAt: entity.usedAt,
       createdAt: entity.createdAt,
+      requestIp: entity.requestIp,
+      requestUserAgent: entity.requestUserAgent,
     });
   }
 
@@ -32,6 +34,8 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
       tokenHash: token.tokenHash,
       expiresAt: token.expiresAt,
       usedAt: token.usedAt,
+      requestIp: token.requestIp,
+      requestUserAgent: token.requestUserAgent,
     };
   }
 

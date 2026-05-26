@@ -4,9 +4,11 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { UserStatusDb } from './enums/user-status.db-enum';
 import { dbBooleanColumn } from './db-column.helper';
+import { UserRoleTypeOrmEntity } from './user-role.typeorm.entity';
 
 @Entity('USERS')
 export class UserTypeOrmEntity {
@@ -25,8 +27,10 @@ export class UserTypeOrmEntity {
   @Column({ name: 'ACT_USR', ...dbBooleanColumn() })
   isActive!: boolean;
 
-  @Column({ name: 'ROL_USR', length: 50, nullable: true })
-  role?: string;
+  @OneToOne(() => UserRoleTypeOrmEntity, (userRole) => userRole.user, {
+    eager: true,
+  })
+  userRole?: UserRoleTypeOrmEntity;
 
   @Column({ name: 'EMP_ID', length: 50, unique: true })
   employeeId!: string;

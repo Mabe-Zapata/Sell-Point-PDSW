@@ -25,4 +25,10 @@ export class PasswordResetTokenTypeOrmEntity {
 
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;
+
+  @Column({ name: 'REQUEST_IP', length: 45, nullable: true })
+  requestIp?: string;
+
+  @Column({ name: 'REQUEST_USER_AGENT', length: 512, nullable: true })
+  requestUserAgent?: string;
 }

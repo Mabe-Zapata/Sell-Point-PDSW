@@ -53,6 +53,8 @@ export class RequestPasswordResetHandler {
       userId: user.id,
       tokenHash,
       expiresAt,
+      requestIp: command.ip,
+      requestUserAgent: command.userAgent,
     });
 
     await this.tokenRepository.create(passwordResetToken);

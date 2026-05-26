@@ -6,6 +6,7 @@ import { typeormConfig } from './config/typeorm.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // WARN: synchronize enabled check

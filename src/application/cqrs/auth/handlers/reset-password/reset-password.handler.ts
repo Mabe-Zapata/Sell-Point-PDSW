@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { BadRequestException } from '@nestjs/common';
 import { ResetPasswordCommand } from '../../commands/reset-password/reset-password.command';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
 import type { IPasswordResetTokenRepository } from '../../../../../domain/repositories/password-reset-token.repository.interface';
@@ -32,18 +33,18 @@ export class ResetPasswordHandler {
     }
 
     if (!resetToken) {
-      throw new Error('Invalid or expired token');
+      throw new BadRequestException('Token inválido o expirado');
     }
 
     // Check if token is valid (not expired, not used)
     if (!resetToken.isValid()) {
-      throw new Error('Token has expired or already been used');
+      throw new BadRequestException('El token ha expirado o ya fue utilizado');
     }
 
     // Find the user
     const user = await this.userRepository.findById(resetToken.userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new BadRequestException('Usuario no encontrado');
     }
 
     // Hash the new password
@@ -53,16 +54,16 @@ export class ResetPasswordHandler {
     if (user.currentPasswordHash) {
       const matchesCurrent = await bcrypt.compare(command.newPassword, user.passwordHash);
       if (matchesCurrent) {
-        throw new Error('La nueva contraseña no puede ser igual a la contraseña actual');
+        throw new BadRequestException('La nueva contraseña no puede ser igual a la contraseña actual');
       }
       const matchesPrevious = await bcrypt.compare(command.newPassword, user.currentPasswordHash);
       if (matchesPrevious) {
-        throw new Error('La nueva contraseña no puede ser igual a la contraseña anterior');
+        throw new BadRequestException('La nueva contraseña no puede ser igual a la contraseña anterior');
       }
     } else {
       const matchesCurrent = await bcrypt.compare(command.newPassword, user.passwordHash);
       if (matchesCurrent) {
-        throw new Error('La nueva contraseña no puede ser igual a la contraseña actual');
+        throw new BadRequestException('La nueva contraseña no puede ser igual a la contraseña actual');
       }
     }
 
@@ -95,6 +96,10 @@ export class ResetPasswordHandler {
         user.email,
         user.firstName ?? 'User',
         new Date(),
+        command.ip,
+        command.userAgent,
+        resetToken.requestIp,
+        resetToken.requestUserAgent,
       ),
     );
 

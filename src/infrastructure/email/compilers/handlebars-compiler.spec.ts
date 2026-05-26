@@ -16,12 +16,12 @@ describe('HandlebarsCompiler', () => {
       const result = await compiler.compile('password-reset', {
         firstName: 'John',
         resetUrl: 'https://example.com/reset?token=abc123',
-        expiresInHours: 24,
+        expiresInMinutes: 1440,
       });
 
       expect(result).toContain('John');
       expect(result).toContain('https://example.com/reset?token');
-      expect(result).toContain('24');
+      expect(result).toContain('1440');
     });
 
     it('should throw TemplateNotFoundError when template file does not exist', async () => {

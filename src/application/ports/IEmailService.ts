@@ -1,7 +1,7 @@
 export type PasswordResetData = {
   firstName: string;
   resetUrl: string;
-  expiresInHours: number;
+  expiresInMinutes: number;
 };
 
 export type InvoiceItemData = {
@@ -31,6 +31,12 @@ export type EmployeeCredentialsData = {
 export type PasswordChangeData = {
   firstName: string;
   changedAt: string;
+  ip?: string;
+  userAgent?: string;
+  location?: string;
+  requestedIp?: string;
+  requestedUserAgent?: string;
+  requestedLocation?: string;
 };
 
 export type SendResult = {

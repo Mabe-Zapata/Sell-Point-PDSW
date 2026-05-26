@@ -5,6 +5,8 @@ export class PasswordResetToken {
   readonly expiresAt!: Date;
   readonly usedAt!: Date | null;
   readonly createdAt!: Date;
+  readonly requestIp?: string;
+  readonly requestUserAgent?: string;
 
   constructor(properties: {
     id: string;
@@ -13,6 +15,8 @@ export class PasswordResetToken {
     expiresAt: Date;
     usedAt?: Date | null;
     createdAt?: Date;
+    requestIp?: string;
+    requestUserAgent?: string;
   }) {
     this.id = properties.id;
     this.userId = properties.userId;
@@ -20,6 +24,8 @@ export class PasswordResetToken {
     this.expiresAt = properties.expiresAt;
     this.usedAt = properties.usedAt ?? null;
     this.createdAt = properties.createdAt || new Date();
+    this.requestIp = properties.requestIp;
+    this.requestUserAgent = properties.requestUserAgent;
   }
 
   isValid(): boolean {
