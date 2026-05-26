@@ -1,8 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-
-@Injectable()
+import { BadRequestException } from '@nestjs/common';
 export class GetProductValidator {
-  validate(id: string): string {
+  static validate(id: string): string {
     if (!id || id.trim().length === 0) {
       throw new BadRequestException('Product id is required');
     }

@@ -1,9 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PaginationParams } from '../../../../../domain/repositories/pagination.types';
-
-@Injectable()
-export class ListUsersValidator {
-  validate(pagination: PaginationParams): void {
+import { BadRequestException } from '@nestjs/common';
+import { PaginationParams } from '../../../../../domain/repositories/pagination.types';export class ListUsersValidator {
+  static validate(pagination: PaginationParams): void {
     if (pagination.page < 1) {
       throw new BadRequestException('Page must be greater than 0');
     }

@@ -1,13 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { UNIT_OF_WORK } from '../../tokens';
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
-import { Sale, StockMovement, StockMovementType } from '../../../domain/entities';
+import { StockMovement, StockMovementType } from '../../../domain/entities';
 import { SaleCancelledEvent } from '../../../domain/events/sale-cancelled.event';
 import { BusinessRuleException } from '../../../domain/exceptions';
 
-@Injectable()
 export class CancelSaleUseCase {
-  constructor(@Inject(UNIT_OF_WORK) private readonly uow: IUnitOfWork) {}
+  constructor(private readonly uow: IUnitOfWork) {}
 
   async execute(saleId: string): Promise<void> {
     await this.uow.start();

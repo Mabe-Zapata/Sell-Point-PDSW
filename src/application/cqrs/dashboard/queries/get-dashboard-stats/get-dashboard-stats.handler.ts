@@ -1,13 +1,8 @@
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { GetDashboardStatsQuery } from './get-dashboard-stats.query';
 import { DASHBOARD_QUERY_SERVICE } from '../../../../query-tokens';
-import type { IDashboardQueryService } from '../../../../../domain/query-services/dashboard.query-service.interface';
-
-@QueryHandler(GetDashboardStatsQuery)
-export class GetDashboardStatsHandler implements IQueryHandler<GetDashboardStatsQuery> {
+import type { IDashboardQueryService } from '../../../../../domain/query-services/dashboard.query-service.interface';export class GetDashboardStatsHandler {
   constructor(
-    @Inject(DASHBOARD_QUERY_SERVICE) private readonly dashboardQueryService: IDashboardQueryService,
+    protected readonly dashboardQueryService: IDashboardQueryService,
   ) {}
 
   async execute(query: GetDashboardStatsQuery) {

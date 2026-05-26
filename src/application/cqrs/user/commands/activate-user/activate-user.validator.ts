@@ -1,8 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-
-@Injectable()
+import { BadRequestException } from '@nestjs/common';
 export class ActivateUserValidator {
-  validate(userId: string): void {
+  static validate(userId: string): void {
     if (!userId || userId.trim().length === 0) {
       throw new BadRequestException('User ID is required');
     }

@@ -1,21 +1,13 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { UpdateCategoryCommand } from './update-category.command';
-import { UpdateCategoryValidator } from './update-category.validator';
-import { CATEGORY_REPOSITORY } from '../../../../tokens';
 import type { ICategoryRepository } from '../../../../../domain/repositories';
 import { Category } from '../../../../../domain/entities';
 
-@CommandHandler(UpdateCategoryCommand)
-export class UpdateCategoryHandler implements ICommandHandler<UpdateCategoryCommand> {
+export class UpdateCategoryHandler {
   constructor(
-    private readonly validator: UpdateCategoryValidator,
-    @Inject(CATEGORY_REPOSITORY) private readonly categoryRepository: ICategoryRepository,
+    protected readonly categoryRepository: ICategoryRepository,
   ) {}
 
   async execute(command: UpdateCategoryCommand): Promise<Category> {
-    this.validator.validate(command.id, command.payload);
-
     const existing = await this.categoryRepository.findById(command.id);
     if (!existing) {
       throw new Error(`Category with ID '${command.id}' not found`);

@@ -1,19 +1,3 @@
-// Repository Injection Tokens
-export const CUSTOMER_REPOSITORY = 'CUSTOMER_REPOSITORY';
-export const PRODUCT_REPOSITORY = 'PRODUCT_REPOSITORY';
-export const INVOICE_REPOSITORY = 'INVOICE_REPOSITORY';
-export const INVOICE_ITEM_REPOSITORY = 'INVOICE_ITEM_REPOSITORY';
-export const USER_REPOSITORY = 'USER_REPOSITORY';
-export const DASHBOARD_REPOSITORY = 'DASHBOARD_REPOSITORY';
-export const ROLE_REPOSITORY = 'ROLE_REPOSITORY';
-export const CATEGORY_REPOSITORY = 'CATEGORY_REPOSITORY';
-export const TAX_RATE_REPOSITORY = 'TAX_RATE_REPOSITORY';
-export const STOCK_MOVEMENT_REPOSITORY = 'STOCK_MOVEMENT_REPOSITORY';
-export const SALE_REPOSITORY = 'SALE_REPOSITORY';
-export const SALE_DETAIL_REPOSITORY = 'SALE_DETAIL_REPOSITORY';
-export const INVOICE_SERIES_REPOSITORY = 'INVOICE_SERIES_REPOSITORY';
-export const ERROR_LOG_REPOSITORY = 'ERROR_LOG_REPOSITORY';
-
-// Service Injection Tokens
-export const TAX_CALCULATOR = 'TAX_CALCULATOR';
-export const UNIT_OF_WORK = 'UNIT_OF_WORK';
+// DEPRECATED: Re-export from new location for backward compatibility
+// Move imports to: @infrastructure/common/injection-tokens
+export * from '../infrastructure/common/injection-tokens';

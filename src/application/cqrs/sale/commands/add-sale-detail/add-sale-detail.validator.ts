@@ -1,9 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { AddSaleDetailPayload } from './add-sale-detail.command';
-
-@Injectable()
-export class AddSaleDetailValidator {
-  validate(payload: AddSaleDetailPayload): void {
+import { AddSaleDetailPayload } from './add-sale-detail.command';export class AddSaleDetailValidator {
+  static validate(payload: AddSaleDetailPayload): void {
     if (!payload.saleId) {
       throw new Error('Sale ID is required');
     }

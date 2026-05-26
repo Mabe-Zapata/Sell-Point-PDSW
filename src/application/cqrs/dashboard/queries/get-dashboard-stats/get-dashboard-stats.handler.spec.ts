@@ -1,6 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { GetDashboardStatsHandler } from './get-dashboard-stats.handler';
-import { DASHBOARD_QUERY_SERVICE } from '../../../../query-tokens';
 import type { IDashboardQueryService } from '../../../../../domain/query-services/dashboard.query-service.interface';
 import { GetDashboardStatsQuery } from './get-dashboard-stats.query';
 
@@ -8,19 +6,12 @@ describe('GetDashboardStatsHandler', () => {
   let handler: GetDashboardStatsHandler;
   let mockQueryService: jest.Mocked<IDashboardQueryService>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockQueryService = {
       getStats: jest.fn(),
     } as any;
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        GetDashboardStatsHandler,
-        { provide: DASHBOARD_QUERY_SERVICE, useValue: mockQueryService },
-      ],
-    }).compile();
-
-    handler = module.get<GetDashboardStatsHandler>(GetDashboardStatsHandler);
+    handler = new GetDashboardStatsHandler(mockQueryService);
   });
 
   it('should call queryService.getStats without branchId', async () => {

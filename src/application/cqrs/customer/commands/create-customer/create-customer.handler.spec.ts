@@ -1,7 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCustomerHandler } from './create-customer.handler';
-import { CreateCustomerValidator } from './create-customer.validator';
-import { CUSTOMER_REPOSITORY } from '../../../../tokens';
 import type { ICustomerRepository } from '../../../../../domain/repositories';
 import { Customer } from '../../../../../domain/entities';
 import { CreateCustomerCommand } from './create-customer.command';
@@ -11,9 +8,8 @@ import { CreateCustomerDto } from '../../../../dto/customer/create-customer.dto'
 describe('CreateCustomerHandler', () => {
   let handler: CreateCustomerHandler;
   let mockRepository: jest.Mocked<ICustomerRepository>;
-  let mockValidator: CreateCustomerValidator;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockRepository = {
       findById: jest.fn(),
       findByIdentificationNumber: jest.fn(),
@@ -23,19 +19,7 @@ describe('CreateCustomerHandler', () => {
       softDelete: jest.fn(),
     } as any;
 
-    mockValidator = {
-      validate: jest.fn(),
-    } as any;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CreateCustomerHandler,
-        { provide: CreateCustomerValidator, useValue: mockValidator },
-        { provide: CUSTOMER_REPOSITORY, useValue: mockRepository },
-      ],
-    }).compile();
-
-    handler = module.get<CreateCustomerHandler>(CreateCustomerHandler);
+    handler = new CreateCustomerHandler(mockRepository);
   });
 
   it('should check for duplicate and create customer', async () => {

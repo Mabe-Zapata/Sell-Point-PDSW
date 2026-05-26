@@ -1,25 +1,25 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { CreateProductCommand } from './create-product.command';
-import { CreateProductValidator } from './create-product.validator';
-import { PRODUCT_REPOSITORY, STOCK_MOVEMENT_REPOSITORY } from '../../../../tokens';
+import type { ICategoryRepository } from '../../../../../domain/repositories';
 import type { IProductRepository } from '../../../../../domain/repositories';
 import type { IStockMovementRepository } from '../../../../../domain/repositories';
 import { Product } from '../../../../../domain/entities/product.entity';
 import { StockMovement } from '../../../../../domain/entities/stock-movement.entity';
 import { StockMovementType } from '../../../../../domain/entities/enums/stock-movement-type.enum';
+import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 
-@CommandHandler(CreateProductCommand)
-export class CreateProductHandler implements ICommandHandler<CreateProductCommand> {
+export class CreateProductHandler {
   constructor(
-    private readonly validator: CreateProductValidator,
-    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
-    @Inject(STOCK_MOVEMENT_REPOSITORY) private readonly stockMovementRepository: IStockMovementRepository,
+    protected readonly categoryRepository: ICategoryRepository,
+    protected readonly productRepository: IProductRepository,
+    protected readonly stockMovementRepository: IStockMovementRepository,
   ) {}
 
   async execute(command: CreateProductCommand): Promise<Product> {
-    await this.validator.validate(command.payload);
+    const category = await this.categoryRepository.findById(command.payload.categoryId);
+    if (!category) {
+      throw new EntityNotFoundException('Category', command.payload.categoryId);
+    }
 
     const product = new Product({
       id: randomUUID(),

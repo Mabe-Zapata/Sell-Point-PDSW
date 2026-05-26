@@ -1,9 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CreateTaxRatePayload } from './create-tax-rate.command';
-
-@Injectable()
-export class CreateTaxRateValidator {
-  validate(payload: CreateTaxRatePayload): void {
+import { CreateTaxRatePayload } from './create-tax-rate.command';export class CreateTaxRateValidator {
+  static validate(payload: CreateTaxRatePayload): void {
     if (!payload.name || payload.name.trim().length === 0) {
       throw new Error('Tax rate name is required');
     }

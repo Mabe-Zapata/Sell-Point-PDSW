@@ -30,7 +30,7 @@ import type { PaginationParams, IInvoiceRepository, IInvoiceItemRepository } fro
 
 import { INVOICE_QUERY_SERVICE } from '../../application/query-tokens';
 import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
-import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY } from '../../application/tokens';
+import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 import type { IInvoiceQueryService } from '../../domain/query-services/invoice.query-service.interface';
 import type { IPdfService } from '../../application/services/pdf-service.interface';
 import { Invoice, InvoiceItem } from '../../domain/entities';

@@ -1,10 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { AdjustStockDto } from '../../../../dto/stock/adjust-stock.dto';
-import { StockMovementType } from '../../../../../domain/entities/enums/stock-movement-type.enum';
-
-@Injectable()
-export class AdjustStockValidator {
-  validate(dto: AdjustStockDto): void {
+import { StockMovementType } from '../../../../../domain/entities/enums/stock-movement-type.enum';export class AdjustStockValidator {
+  static validate(dto: AdjustStockDto): void {
     if (dto.quantity === 0) {
       throw new BadRequestException('Quantity must not be zero');
     }

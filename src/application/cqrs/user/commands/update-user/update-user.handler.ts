@@ -1,21 +1,16 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { UpdateUserCommand } from './update-user.command';
-import { UpdateUserValidator } from './update-user.validator';
-import { USER_REPOSITORY } from '../../../../tokens';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
+import type { IRoleRepository } from '../../../../../domain/repositories/role.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
 
-@CommandHandler(UpdateUserCommand)
-export class UpdateUserHandler implements ICommandHandler<UpdateUserCommand> {
+export class UpdateUserHandler {
   constructor(
-    private readonly validator: UpdateUserValidator,
-    @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
+    protected readonly userRepository: IUserRepository,
+    protected readonly roleRepository: IRoleRepository,
   ) {}
 
   async execute(command: UpdateUserCommand): Promise<User> {
-    this.validator.validate(command.userId, command.payload);
-
     const user = await this.userRepository.findById(command.userId);
     if (!user) {
       throw new NotFoundException(`User ${command.userId} not found`);
@@ -28,13 +23,28 @@ export class UpdateUserHandler implements ICommandHandler<UpdateUserCommand> {
       }
     }
 
+    let role = user.role;
+    if (command.payload.role !== undefined) {
+      const nextRoleName = command.payload.role.trim();
+      if (!nextRoleName) {
+        throw new BadRequestException('Role cannot be empty');
+      }
+
+      const resolvedRole = await this.roleRepository.findByName(nextRoleName);
+      if (!resolvedRole) {
+        throw new BadRequestException(`Role ${nextRoleName} does not exist`);
+      }
+
+      role = resolvedRole.name;
+    }
+
     const updated = new User({
       id: user.id,
       employeeId: user.employeeId,
       username: user.username,
       email: command.payload.email ?? user.email,
       passwordHash: user.passwordHash,
-      role: command.payload.role ?? user.role,
+      role,
       firstName: command.payload.firstName ?? user.firstName,
       lastName: command.payload.lastName ?? user.lastName,
       cedula: command.payload.cedula ?? user.cedula,

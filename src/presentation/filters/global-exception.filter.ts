@@ -14,6 +14,8 @@ import {
   InsufficientStockException,
   BusinessRuleException,
 } from '../../domain/exceptions';
+import { EmailAlreadyExistsException } from '../../application/exceptions/email-already-exists.exception';
+import { PasswordResetRateLimitException } from '../../application/cqrs/auth/handlers/request-password-reset/request-password-reset.handler';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -37,6 +39,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else if (exception instanceof DuplicateCedulaException) {
         status = HttpStatus.CONFLICT;
         message = exception.message;
+      } else if (exception instanceof EmailAlreadyExistsException) {
+        status = HttpStatus.CONFLICT;
+        message = exception.message;
       } else if (exception instanceof InsufficientStockException) {
         status = HttpStatus.UNPROCESSABLE_ENTITY;
         message = exception.message;
@@ -47,6 +52,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         status = HttpStatus.UNPROCESSABLE_ENTITY;
         message = exception.message;
       }
+    } else if (exception instanceof PasswordResetRateLimitException) {
+      // Rate limit exceeded for password reset
+      status = HttpStatus.TOO_MANY_REQUESTS;
+      message = exception.message;
     } else if (exception instanceof HttpException) {
       // Handle NestJS HTTP exceptions
       status = exception.getStatus();

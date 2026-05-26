@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../../infrastructure/services/auth.service';
 
@@ -14,10 +15,17 @@ describe('AuthController', () => {
     generateAccessToken: jest.fn(),
   };
 
+  const mockCommandBus = {
+    execute: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: CommandBus, useValue: mockCommandBus },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);

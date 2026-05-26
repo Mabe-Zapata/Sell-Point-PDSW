@@ -5,8 +5,10 @@ import {
   IsNotEmpty,
   MaxLength,
   IsOptional,
+  IsEnum,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { UserRole } from '../auth/register-employee.dto';
 
 export class CreateUserDto {
   @ApiProperty({ description: 'Employee ID', example: 'EMP-002' })
@@ -34,11 +36,12 @@ export class CreateUserDto {
   @MaxLength(100)
   password!: string;
 
-  @ApiProperty({ description: 'Role', example: 'VENDEDOR', required: false })
+  @ApiProperty({ description: 'Role', enum: UserRole, enumName: 'UserRole', example: 'VENDEDOR', required: false })
   @IsString()
   @IsOptional()
+  @IsEnum(UserRole)
   @MaxLength(50)
-  role?: string;
+  role?: UserRole | string;
 
   @ApiProperty({ description: 'First name', example: 'John', required: false })
   @IsString()
