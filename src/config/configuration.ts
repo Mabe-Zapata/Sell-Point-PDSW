@@ -100,5 +100,15 @@ export const configuration = () => {
     jwt: {
       secret: process.env.JWT_SECRET || 'change-me-min-32-chars',
     },
+    brevo: {
+      apiKey: process.env.BREVO_API_KEY || '',
+      senderEmail: process.env.BREVO_SENDER_EMAIL || 'noreply@sellpoint.com',
+      senderName: process.env.BREVO_SENDER_NAME || 'Sell Point',
+      templates: {
+        orderConfirmation: intFrom(process.env.BREVO_TEMPLATE_ORDER_CONFIRMATION_ID, '1'),
+        saleCancelled: intFrom(process.env.BREVO_TEMPLATE_SALE_CANCELLED_ID, '2'),
+        invoice: intFrom(process.env.BREVO_TEMPLATE_INVOICE_ID, '3'),
+      },
+    },
   };
 };

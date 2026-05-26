@@ -2,12 +2,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, ForbiddenException, Param } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { AuthService } from '../../infrastructure/services/auth.service';
 import { LoginDto } from '../dto/login.dto';
 import { Public } from '../decorators/public.decorator';
+import { Roles } from '../decorators/roles.decorator';
 import { AuthMeResponseDto } from '../../application/dto/auth/auth-me-response.dto';
 import { UserListResponseDto } from '../../application/dto/user/user-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
@@ -85,29 +86,23 @@ export class AuthController {
         message: 'auth.errors.invalid_credentials',
       });
     }
-
     return AuthMeResponseDto.fromEntity(user);
   }
 
   @Post('unlock/:id')
+  @Roles('ADMIN')
   @ApiBearerAuth('access-token')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Unlock a blocked user (admin only)' })
   @ApiParam({ name: 'id', description: 'User ID to unlock' })
   @ApiResponse({ status: 200, description: 'User unlocked successfully' })
-  async unlockUser(
-    @Req() req: { user?: { role?: string } },
-    @Param('id') id: string,
-  ): Promise<{ message: string }> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can unlock users');
-    }
-
+  async unlockUser(@Param('id') id: string): Promise<{ message: string }> {
     await this.authService.unlockUser(id);
     return { message: 'User unlocked successfully' };
   }
 
   @Get('users')
+  @Roles('ADMIN')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List users (admin only)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -121,7 +116,6 @@ export class AuthController {
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully', type: UserListResponseDto, isArray: true })
   async listUsers(
-    @Req() req: { user?: { role?: string } },
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') q?: string,
@@ -132,10 +126,6 @@ export class AuthController {
     @Query('status') status?: string,
     @Query('isActive') isActive?: string,
   ): Promise<{ data: UserListResponseDto[]; total: number; page: number; limit: number }> {
-    if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only ADMIN can list users');
-    }
-
     const pagination: PaginationParams = {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,

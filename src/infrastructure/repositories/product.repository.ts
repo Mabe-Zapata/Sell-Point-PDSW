@@ -37,6 +37,7 @@ export class ProductRepository implements IProductRepository {
       categoryId: product.categoryId,
       code: product.code,
       name: product.name,
+      description: product.description,
       salePrice: product.salePrice,
       costPrice: product.costPrice,
       isActive: product.isActive,
