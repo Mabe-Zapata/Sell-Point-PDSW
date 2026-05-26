@@ -4,7 +4,8 @@ import { ResetPasswordCommand } from '../../../../../application/cqrs/auth/comma
 import { ResetPasswordHandler as ApplicationResetPasswordHandler } from '../../../../../application/cqrs/auth/handlers/reset-password/reset-password.handler';
 import { UserRepository } from '../../../../repositories/user.repository';
 import { PasswordResetTokenRepository } from '../../../../repositories/password-reset-token.repository';
-import { USER_REPOSITORY, PASSWORD_RESET_TOKEN_REPOSITORY } from '../../../../common/injection-tokens';
+import { USER_REPOSITORY, PASSWORD_RESET_TOKEN_REPOSITORY, UNIT_OF_WORK } from '../../../../common/injection-tokens';
+import type { IUnitOfWork } from '../../../../../application/unit-of-work/unit-of-work.interface';
 
 @CommandHandler(ResetPasswordCommand)
 export class ResetPasswordHandler implements ICommandHandler<ResetPasswordCommand> {
@@ -13,8 +14,9 @@ export class ResetPasswordHandler implements ICommandHandler<ResetPasswordComman
   constructor(
     @Inject(USER_REPOSITORY) userRepository: UserRepository,
     @Inject(PASSWORD_RESET_TOKEN_REPOSITORY) tokenRepository: PasswordResetTokenRepository,
+    @Inject(UNIT_OF_WORK) uow: IUnitOfWork,
   ) {
-    this.appHandler = new ApplicationResetPasswordHandler(userRepository, tokenRepository);
+    this.appHandler = new ApplicationResetPasswordHandler(userRepository, tokenRepository, uow);
   }
 
   async execute(command: ResetPasswordCommand) {

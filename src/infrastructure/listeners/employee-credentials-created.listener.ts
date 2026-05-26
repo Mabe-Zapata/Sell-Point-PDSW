@@ -14,9 +14,10 @@ export class EmployeeCredentialsCreatedListener implements IEventHandler<Employe
 
   async handle(event: EmployeeCredentialsCreatedEvent): Promise<void> {
     try {
-      const loginUrl = this.configService.get<string>('app.url') ??
-        this.configService.get<string>('app.frontendUrl') ??
-        'http://localhost:3000';
+      const frontendBaseUrl = this.configService.get<string>('app.frontendBaseUrl') ??
+        this.configService.get<string>('app.url') ??
+        'http://localhost:5173';
+      const loginUrl = `${frontendBaseUrl}/login`;
 
       const result = await this.emailService.sendEmployeeCredentials(event.email, {
         firstName: event.firstName,

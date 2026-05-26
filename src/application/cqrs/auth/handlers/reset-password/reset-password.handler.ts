@@ -4,6 +4,8 @@ import type { IUserRepository } from '../../../../../domain/repositories/user.re
 import type { IPasswordResetTokenRepository } from '../../../../../domain/repositories/password-reset-token.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
 import { PasswordResetToken } from '../../../../../domain/entities/password-reset-token.entity';
+import { PasswordChangedEvent } from '../../../../../domain/events/password-changed.event';
+import type { IUnitOfWork } from '../../../../unit-of-work/unit-of-work.interface';
 
 export class ResetPasswordHandler {
   private static readonly SALT_ROUNDS = 10;
@@ -11,6 +13,7 @@ export class ResetPasswordHandler {
   constructor(
     protected readonly userRepository: IUserRepository,
     protected readonly tokenRepository: IPasswordResetTokenRepository,
+    protected readonly uow: IUnitOfWork,
   ) {}
 
   async execute(command: ResetPasswordCommand): Promise<{ success: boolean }> {
@@ -46,6 +49,23 @@ export class ResetPasswordHandler {
     // Hash the new password
     const newPasswordHash = await bcrypt.hash(command.newPassword, ResetPasswordHandler.SALT_ROUNDS);
 
+    // Validate: new password must not match current or previous password
+    if (user.currentPasswordHash) {
+      const matchesCurrent = await bcrypt.compare(command.newPassword, user.passwordHash);
+      if (matchesCurrent) {
+        throw new Error('La nueva contraseña no puede ser igual a la contraseña actual');
+      }
+      const matchesPrevious = await bcrypt.compare(command.newPassword, user.currentPasswordHash);
+      if (matchesPrevious) {
+        throw new Error('La nueva contraseña no puede ser igual a la contraseña anterior');
+      }
+    } else {
+      const matchesCurrent = await bcrypt.compare(command.newPassword, user.passwordHash);
+      if (matchesCurrent) {
+        throw new Error('La nueva contraseña no puede ser igual a la contraseña actual');
+      }
+    }
+
     // Update user's password by creating a new User instance with updated hash
     const updatedUser = new User({
       id: user.id,
@@ -53,12 +73,13 @@ export class ResetPasswordHandler {
       email: user.email,
       username: user.username,
       passwordHash: newPasswordHash,
+      currentPasswordHash: user.passwordHash, // Guardar hash anterior
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
       status: user.status,
-      failedLoginAttempts: user.failedLoginAttempts,
-      passwordExpired: user.passwordExpired,
+      failedLoginAttempts: 0,
+      passwordExpired: false, // Reset password expiry
       createdAt: user.createdAt,
       updatedAt: new Date(),
     });
@@ -66,6 +87,16 @@ export class ResetPasswordHandler {
 
     // Mark token as used
     await this.tokenRepository.markAsUsed(resetToken.id);
+
+    // Dispatch password changed event to notify user via email
+    this.uow.dispatchEvent(
+      new PasswordChangedEvent(
+        user.id,
+        user.email,
+        user.firstName ?? 'User',
+        new Date(),
+      ),
+    );
 
     return { success: true };
   }
