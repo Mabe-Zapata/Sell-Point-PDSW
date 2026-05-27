@@ -14,9 +14,8 @@ import { typeormConfig } from './config/typeorm.config';
 import { createSwaggerConfig } from './config/swagger.config';
 import { TypeOrmUnitOfWork } from './infrastructure/persistence/typeorm/unit-of-work/typeorm-unit-of-work';
 import { UNIT_OF_WORK } from './infrastructure/common/injection-tokens';
-import { ConfirmSaleUseCase } from './application/use-cases/sale/confirm-sale.use-case';
-import { CancelSaleUseCase } from './application/use-cases/sale/cancel-sale.use-case';
 import { RolesGuard } from './presentation/guards/roles.guard';
+import { CorrelationInterceptor } from './presentation/interceptors/correlation.interceptor';
 
 // Application - Validators only (from application/cqrs)
 import {
@@ -51,6 +50,7 @@ import {
   UpdateSaleDetailQuantityValidator,
   ConfirmSaleValidator,
   CancelSaleValidator,
+  QuickConfirmSaleValidator,
   GetSaleValidator,
   ListSalesValidator,
   AdjustStockValidator,
@@ -90,8 +90,6 @@ import {
   CreateProductHandler,
   UpdateProductHandler,
   DeleteProductHandler,
-  ActivateProductHandler,
-  DeactivateProductHandler,
   // Product Queries
   GetProductHandler,
   ListProductsHandler,
@@ -133,6 +131,7 @@ import {
   UpdateSaleDetailQuantityHandler,
   ConfirmSaleHandler,
   CancelSaleHandler,
+  QuickConfirmSaleHandler,
   // Sale Queries
   GetSaleHandler,
   ListSalesHandler,
@@ -168,7 +167,7 @@ import {
   DashboardRepository, UserRepository, CategoryRepository,
   ErrorLogRepository, TaxRateRepository,
   StockMovementRepository, SaleRepository, SaleDetailRepository,
-  InvoiceSeriesRepository,RoleRepository, PasswordResetTokenRepository,
+  InvoiceSeriesRepository, RoleRepository, PasswordResetTokenRepository,
 } from './infrastructure/repositories';
 import {
   DashboardQueryService, InvoiceQueryService, CustomerQueryService,
@@ -176,6 +175,7 @@ import {
   ErrorLogQueryService,
 } from './infrastructure/queries';
 import { PdfService, AuthService } from './infrastructure/services';
+import { IdempotencyService } from './infrastructure/services/idempotency.service';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { EmailModule } from './infrastructure/email/email.module';
 import {
@@ -186,10 +186,15 @@ import {
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
   UserRoleTypeOrmEntity, PasswordResetTokenTypeOrmEntity,
+  IdempotencyEntryTypeOrmEntity,
 } from './infrastructure/database/entities';
 
 // Presentation
-import { CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController, ErrorLogController } from './presentation/controllers';
+import {
+  CustomerController, ProductController, InvoiceController, DashboardController,
+  AuthController, CategoryController, UserController, RoleController,
+  ErrorLogController, SaleController,
+} from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 // Infrastructure - Event Listeners
@@ -204,8 +209,9 @@ import {
 // All TypeORM entities
 const entities = [
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
-  ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
-  InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
+  ErrorLogTypeOrmEntity, IdempotencyEntryTypeOrmEntity,
+  InvoiceTypeOrmEntity, InvoiceSeriesTypeOrmEntity,
+  InvoiceItemTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
@@ -235,7 +241,11 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  controllers: [AppController, CustomerController, ProductController, InvoiceController, DashboardController, AuthController, CategoryController, UserController, RoleController, ErrorLogController],
+  controllers: [
+    AppController, CustomerController, ProductController, InvoiceController,
+    DashboardController, AuthController, CategoryController, UserController,
+    RoleController, ErrorLogController, SaleController,
+  ],
   providers: [
     AppService,
     // Domain Services
@@ -270,13 +280,20 @@ const entities = [
     // Unit of Work
     { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
     TypeOrmUnitOfWork,
+    // Idempotency Service
+    IdempotencyService,
     // Application - Listeners
+    EmployeeCredentialsCreatedListener,
+    PasswordResetRequestedListener,
+    PasswordChangedListener,
+    InvoiceEmailListener,
     OrderConfirmedListener,
 
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: CorrelationInterceptor },
 
     // CQRS Handlers (from infrastructure/cqrs - NestJS wrappers)
     CreateCustomerHandler,
@@ -290,8 +307,6 @@ const entities = [
     CreateProductHandler,
     UpdateProductHandler,
     DeleteProductHandler,
-    ActivateProductHandler,
-    DeactivateProductHandler,
     GetProductHandler,
     ListProductsHandler,
     ListProductsWithStockHandler,
@@ -312,6 +327,7 @@ const entities = [
     UpdateSaleDetailQuantityHandler,
     ConfirmSaleHandler,
     CancelSaleHandler,
+    QuickConfirmSaleHandler,
     GetSaleHandler,
     ListSalesHandler,
     AdjustStockHandler,
@@ -367,6 +383,7 @@ const entities = [
     UpdateSaleDetailQuantityValidator,
     ConfirmSaleValidator,
     CancelSaleValidator,
+    QuickConfirmSaleValidator,
     GetSaleValidator,
     ListSalesValidator,
     AdjustStockValidator,

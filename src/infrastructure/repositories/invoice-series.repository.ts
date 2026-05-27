@@ -94,7 +94,7 @@ export class InvoiceSeriesRepository {
   }
 
   async update(series: InvoiceSeries): Promise<InvoiceSeries> {
-    await this.repo.update(series.id, this.mapToEntity(series) as any);
+    await this.repo.update(series.id, this.mapToEntity(series));
     const updated = await this.repo.findOne({ where: { id: series.id } });
     if (!updated) throw new Error('InvoiceSeries not found after update');
     return this.mapToDomain(updated);

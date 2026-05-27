@@ -14,5 +14,6 @@ export { UserTypeOrmEntity } from './user.typeorm.entity';
 export { UserBranchTypeOrmEntity } from './user-branch.typeorm.entity';
 export { UserRoleTypeOrmEntity } from './user-role.typeorm.entity';
 export { PasswordResetTokenTypeOrmEntity } from './password-reset-token.typeorm.entity';
+export { IdempotencyEntryTypeOrmEntity } from './idempotency-entry.typeorm.entity';
 
 export * from './enums';

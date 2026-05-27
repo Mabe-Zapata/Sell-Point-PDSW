@@ -16,14 +16,14 @@ import { TaxRateTypeOrmEntity } from './tax-rate.typeorm.entity';
 
 @Entity('SALES')
 export class SaleTypeOrmEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', { name: 'ID' })
   id!: string;
 
   @Column({ name: 'BRA_ID', type: 'uuid' })
   branchId!: string;
 
-  @Column({ name: 'CUS_ID', type: 'uuid' })
-  customerId!: string;
+  @Column({ name: 'CUS_ID', type: 'uuid', nullable: true })
+  customerId?: string | null;
 
   @ManyToOne(() => CustomerTypeOrmEntity)
   @JoinColumn({ name: 'CUS_ID' })

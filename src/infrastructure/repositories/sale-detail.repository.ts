@@ -53,7 +53,7 @@ export class SaleDetailRepository {
   }
 
   async update(detail: SaleDetail): Promise<SaleDetail> {
-    await this.repo.update(detail.id, this.mapToEntity(detail) as any);
+    await this.repo.update(detail.id, this.mapToEntity(detail));
     const updated = await this.repo.findOne({ where: { id: detail.id } });
     if (!updated) throw new Error('SaleDetail not found after update');
     return this.mapToDomain(updated);

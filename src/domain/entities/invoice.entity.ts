@@ -12,7 +12,7 @@ export class Invoice {
   createdAt!: Date;
 
   // Computed for PDF only (fetched via JOIN at query time, not stored)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   [key: string]: any;
 
   constructor(partial: Partial<Invoice>) {

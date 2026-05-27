@@ -13,7 +13,7 @@ export class SaleRepository implements ISaleRepository {
   constructor(
     @InjectRepository(SaleTypeOrmEntity)
     private readonly repo: Repository<SaleTypeOrmEntity>,
-    private readonly dataSource?: DataSource,
+    private readonly dataSource: DataSource,
   ) {}
 
   private mapToDomain(entity: SaleTypeOrmEntity): Sale {
@@ -56,7 +56,7 @@ export class SaleRepository implements ISaleRepository {
     return {
       id: sale.id,
       branchId: sale.branchId,
-      customerId: sale.customerId,
+      customerId: sale.customerId ?? undefined,
       cashierUserId: sale.cashierUserId,
       taxRateId: sale.taxRateId,
       saleNumber: sale.saleNumber,
@@ -129,11 +129,6 @@ export class SaleRepository implements ISaleRepository {
   }
 
   async findByIdWithDetails(id: string): Promise<Sale | null> {
-    if (!this.dataSource) {
-      const entity = await this.repo.findOne({ where: { id } });
-      return entity ? this.mapToDomain(entity) : null;
-    }
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
