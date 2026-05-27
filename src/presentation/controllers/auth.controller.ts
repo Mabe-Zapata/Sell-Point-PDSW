@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CommandBus } from '@nestjs/cqrs';
@@ -81,6 +81,25 @@ export class AuthController {
     }
 
     await this.authService.linkGoogle(dto.idToken, user);
+  }
+
+  @Delete('link-google')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Unlink the Google account from the authenticated user' })
+  async unlinkGoogle(
+    @Req() req: { user?: { employeeId?: string } },
+  ): Promise<void> {
+    const user = await this.authService.getAuthenticatedUser(req.user?.employeeId ?? '');
+    if (!user) {
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'auth.errors.invalid_credentials',
+      });
+    }
+
+    await this.authService.unlinkGoogle(user);
   }
 
   @Post('login-google')

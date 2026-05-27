@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -176,13 +176,6 @@ export class AuthService {
       });
     }
 
-    if (token.email.toLowerCase() !== user.email.toLowerCase()) {
-      throw new ForbiddenException({
-        code: 'GOOGLE_EMAIL_MISMATCH',
-        message: 'Google email does not match user email',
-      });
-    }
-
     if (user.googleId && user.googleId === token.sub) {
       return;
     }
@@ -196,6 +189,13 @@ export class AuthService {
     }
 
     user.setGoogleId(token.sub, token.email);
+    await this.userRepository.update(user);
+  }
+
+  async unlinkGoogle(user: User): Promise<void> {
+    if (!user.googleId) return;
+
+    user.clearGoogleLink();
     await this.userRepository.update(user);
   }
 

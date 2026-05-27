@@ -115,6 +115,12 @@ export class User {
     this._updatedAt = new Date();
   }
 
+  clearGoogleLink(): void {
+    (this as { googleId?: string }).googleId = undefined;
+    (this as { googleEmail?: string }).googleEmail = undefined;
+    this._updatedAt = new Date();
+  }
+
   // Factory method — encapsulates business rules for new employee creation
   static createNewEmployee(params: {
     id: string;
