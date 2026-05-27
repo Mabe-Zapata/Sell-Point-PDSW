@@ -199,6 +199,7 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
     await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CODE', columnNames: ['COD_PRO'], isUnique: true }));
     await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_ACT', columnNames: ['ACT_PRO'] }));
     await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CAT', columnNames: ['CAT_ID'] }));
+    await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CREATED_AT', columnNames: ['CRE_AT'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 9. SALES
