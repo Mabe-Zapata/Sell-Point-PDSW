@@ -29,6 +29,9 @@ export class AuthMeResponseDto {
   @ApiProperty({ example: '2026-05-24T01:31:18.045Z' })
   updatedAt: Date;
 
+  @ApiProperty({ example: 'user@gmail.com', required: false, nullable: true })
+  googleEmail?: string;
+
   constructor(user: User) {
     this.id = user.id;
     this.employeeId = user.employeeId;
@@ -39,6 +42,7 @@ export class AuthMeResponseDto {
     this.isActive = user.isActive;
     this.createdAt = user.createdAt;
     this.updatedAt = user.updatedAt;
+    this.googleEmail = user.googleEmail;
   }
 
   static fromEntity(user: User): AuthMeResponseDto {

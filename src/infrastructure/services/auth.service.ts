@@ -195,7 +195,7 @@ export class AuthService {
       });
     }
 
-    user.setGoogleId(token.sub);
+    user.setGoogleId(token.sub, token.email);
     await this.userRepository.update(user);
   }
 
@@ -210,9 +210,11 @@ export class AuthService {
     }
 
     let user = await this.userRepository.findByGoogleId(token.sub);
+    let linkedByEmail = false;
 
     if (!user) {
       user = await this.userRepository.findByEmail(token.email);
+      linkedByEmail = true;
     }
 
     if (!user) {
@@ -220,6 +222,12 @@ export class AuthService {
         code: 'GOOGLE_NO_ACCOUNT',
         message: 'No account found for Google user',
       });
+    }
+
+    // If found by email (not googleId yet), set googleId and googleEmail
+    if (linkedByEmail) {
+      user.setGoogleId(token.sub, token.email);
+      await this.userRepository.update(user);
     }
 
     const payload: TokenPayload = {

@@ -36,6 +36,7 @@ export class UserRepository implements IUserRepository {
       defaultBranchId: entity.defaultBranchId,
       failedLoginAttempts: entity.failedLoginAttempts,
       googleId: entity.googleId,
+      googleEmail: entity.googleEmail,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -57,6 +58,7 @@ export class UserRepository implements IUserRepository {
       defaultBranchId: user.defaultBranchId,
       failedLoginAttempts: user.failedLoginAttempts,
       googleId: user.googleId,
+      googleEmail: user.googleEmail,
     };
   }
 

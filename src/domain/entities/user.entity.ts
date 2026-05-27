@@ -14,6 +14,7 @@ export class User {
   readonly currentPasswordHash?: string;
   readonly defaultBranchId?: string;
   readonly googleId?: string;
+  readonly googleEmail?: string;
   readonly passwordExpired!: boolean;
   readonly failedLoginAttempts!: number;
   readonly createdAt!: Date;
@@ -35,6 +36,7 @@ export class User {
     currentPasswordHash?: string;
     defaultBranchId?: string;
     googleId?: string;
+    googleEmail?: string;
     failedLoginAttempts?: number;
     passwordExpired?: boolean;
     status: UserStatus;
@@ -54,6 +56,7 @@ export class User {
     this.currentPasswordHash = properties.currentPasswordHash;
     this.defaultBranchId = properties.defaultBranchId;
     this.googleId = properties.googleId;
+    this.googleEmail = properties.googleEmail;
     this.passwordExpired = properties.passwordExpired ?? true;
     this.failedLoginAttempts = properties.failedLoginAttempts ?? 0;
     this._status = properties.status;
@@ -106,8 +109,9 @@ export class User {
     this._updatedAt = new Date();
   }
 
-  setGoogleId(googleId: string): void {
+  setGoogleId(googleId: string, googleEmail?: string): void {
     (this as { googleId?: string }).googleId = googleId;
+    (this as { googleEmail?: string }).googleEmail = googleEmail;
     this._updatedAt = new Date();
   }
 
