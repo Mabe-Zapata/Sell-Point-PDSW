@@ -13,6 +13,7 @@ export class User {
   readonly passwordHash!: string;
   readonly currentPasswordHash?: string;
   readonly defaultBranchId?: string;
+  readonly googleId?: string;
   readonly passwordExpired!: boolean;
   readonly failedLoginAttempts!: number;
   readonly createdAt!: Date;
@@ -33,6 +34,7 @@ export class User {
     passwordHash: string;
     currentPasswordHash?: string;
     defaultBranchId?: string;
+    googleId?: string;
     failedLoginAttempts?: number;
     passwordExpired?: boolean;
     status: UserStatus;
@@ -51,6 +53,7 @@ export class User {
     this.passwordHash = properties.passwordHash;
     this.currentPasswordHash = properties.currentPasswordHash;
     this.defaultBranchId = properties.defaultBranchId;
+    this.googleId = properties.googleId;
     this.passwordExpired = properties.passwordExpired ?? true;
     this.failedLoginAttempts = properties.failedLoginAttempts ?? 0;
     this._status = properties.status;

@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
-import { UserStatusDb } from './enums/user-status.db-enum';
 import { dbBooleanColumn } from './db-column.helper';
 import { UserRoleTypeOrmEntity } from './user-role.typeorm.entity';
 
@@ -60,6 +59,9 @@ export class UserTypeOrmEntity {
 
   @Column({ name: 'DEF_BRA_ID', type: 'uuid', nullable: true })
   defaultBranchId?: string;
+
+  @Column({ name: 'GOOGLE_ID', type: 'varchar', length: 255, nullable: true, unique: true })
+  googleId?: string;
 
   @Column({ name: 'failed_attempts', type: 'int', default: 0 })
   failedLoginAttempts!: number;

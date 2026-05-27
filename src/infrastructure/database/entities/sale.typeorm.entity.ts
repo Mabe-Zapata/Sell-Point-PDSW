@@ -43,7 +43,8 @@ export class SaleTypeOrmEntity {
   @JoinColumn({ name: 'TAX_RAT_ID' })
   taxRate!: TaxRateTypeOrmEntity;
 
-  @Column({ name: 'SAL_NUM', length: 50, unique: true })
+  @Index('IDX_SAL_NUM')
+  @Column({ name: 'SAL_NUM', length: 50 })
   saleNumber!: string;
 
   @Column({
