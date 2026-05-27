@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +7,9 @@ import type { PaginationParams, PaginatedResult, UserFilters } from '../../domai
 import { UserStatus } from '../../domain/entities/enums/user-status.enum';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService, RefreshTokenPayload } from '../redis/redis.service';
+import type { IFirebaseAuth } from '../../application/ports/firebase-auth.interface';
+
+export const FIREBASE_AUTH_TOKEN = 'IFirebaseAuth';
 
 export interface TokenPayload {
   employeeId: string;
@@ -39,6 +42,7 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+    @Inject(FIREBASE_AUTH_TOKEN) private readonly firebaseAuth: IFirebaseAuth,
   ) {}
 
   async hashPassword(plain: string): Promise<string> {
@@ -161,5 +165,77 @@ export class AuthService {
     filters: UserFilters,
   ): Promise<PaginatedResult<User>> {
     return this.userRepository.findAll(pagination, filters);
+  }
+
+  async linkGoogle(idToken: string, user: User): Promise<void> {
+    const token = await this.firebaseAuth.verifyIdToken(idToken);
+
+    if (!token.email_verified) {
+      throw new UnauthorizedException({
+        code: 'GOOGLE_TOKEN_INVALID',
+        message: 'Google token email is not verified',
+      });
+    }
+
+    if (token.email.toLowerCase() !== user.email.toLowerCase()) {
+      throw new ForbiddenException({
+        code: 'GOOGLE_EMAIL_MISMATCH',
+        message: 'Google email does not match user email',
+      });
+    }
+
+    if (user.googleId && user.googleId === token.sub) {
+      return;
+    }
+
+    const existingGoogleUser = await this.userRepository.findByGoogleId(token.sub);
+    if (existingGoogleUser && existingGoogleUser.id !== user.id) {
+      throw new ConflictException({
+        code: 'GOOGLE_DUPLICATE_LINK',
+        message: 'Google account already linked to another user',
+      });
+    }
+
+    user.setGoogleId(token.sub);
+    await this.userRepository.update(user);
+  }
+
+  async loginGoogle(idToken: string): Promise<AuthTokens | null> {
+    const token = await this.firebaseAuth.verifyIdToken(idToken);
+
+    if (!token.email_verified) {
+      throw new UnauthorizedException({
+        code: 'GOOGLE_TOKEN_INVALID',
+        message: 'Google token email is not verified',
+      });
+    }
+
+    let user = await this.userRepository.findByGoogleId(token.sub);
+
+    if (!user) {
+      user = await this.userRepository.findByEmail(token.email);
+    }
+
+    if (!user) {
+      throw new NotFoundException({
+        code: 'GOOGLE_NO_ACCOUNT',
+        message: 'No account found for Google user',
+      });
+    }
+
+    const payload: TokenPayload = {
+      employeeId: user.id,
+      employeeCode: user.employeeId,
+      role: user.role ?? '',
+    };
+
+    const accessToken = this.generateAccessToken(payload);
+    const refreshToken = await this.generateRefreshToken(payload, false);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: 900,
+    };
   }
 }

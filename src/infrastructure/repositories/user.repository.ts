@@ -35,6 +35,7 @@ export class UserRepository implements IUserRepository {
       status: UserStatusMapper.toDomain(entity.status),
       defaultBranchId: entity.defaultBranchId,
       failedLoginAttempts: entity.failedLoginAttempts,
+      googleId: entity.googleId,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -55,6 +56,7 @@ export class UserRepository implements IUserRepository {
       status: UserStatusMapper.toDb(user.status),
       defaultBranchId: user.defaultBranchId,
       failedLoginAttempts: user.failedLoginAttempts,
+      googleId: user.googleId,
     };
   }
 
@@ -107,6 +109,14 @@ export class UserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     return this.findOneBy('email', email);
+  }
+
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    const entity = await this.createBaseQueryBuilder()
+      .where('user.googleId = :googleId', { googleId })
+      .getOne();
+
+    return entity ? this.mapToDomain(entity) : null;
   }
 
   async findAll(

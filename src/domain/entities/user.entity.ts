@@ -106,6 +106,11 @@ export class User {
     this._updatedAt = new Date();
   }
 
+  setGoogleId(googleId: string): void {
+    (this as { googleId?: string }).googleId = googleId;
+    this._updatedAt = new Date();
+  }
+
   // Factory method — encapsulates business rules for new employee creation
   static createNewEmployee(params: {
     id: string;

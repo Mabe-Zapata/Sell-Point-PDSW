@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { AuthService, TokenPayload } from './auth.service';
+import { UnauthorizedException, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
+import { AuthService, TokenPayload, FIREBASE_AUTH_TOKEN } from './auth.service';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService } from '../redis/redis.service';
+import { IFirebaseAuth } from '../../application/ports/firebase-auth.interface';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -17,7 +19,9 @@ describe('AuthService', () => {
   const mockUserRepository = {
     findByEmployeeId: jest.fn(),
     findByEmail: jest.fn(),
+    findByGoogleId: jest.fn(),
     updateFailedLoginAttempts: jest.fn(),
+    update: jest.fn(),
   };
 
   const mockJwtService = {
@@ -30,6 +34,10 @@ describe('AuthService', () => {
     deleteRefreshToken: jest.fn(),
   };
 
+  const mockFirebaseAuth = {
+    verifyIdToken: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -37,6 +45,7 @@ describe('AuthService', () => {
         { provide: UserRepository, useValue: mockUserRepository },
         { provide: JwtService, useValue: mockJwtService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: FIREBASE_AUTH_TOKEN, useValue: mockFirebaseAuth },
       ],
     }).compile();
 
@@ -248,6 +257,167 @@ describe('AuthService', () => {
         throw new Error('Expected login result to be defined');
       }
       expect(result.expiresIn).toBe(900);
+    });
+  });
+
+  describe('linkGoogle', () => {
+    const mockUser = {
+      id: 'user-uuid-123',
+      employeeId: 'EMP-001',
+      role: 'ADMIN',
+      email: 'admin@test.com',
+      googleId: undefined,
+      setGoogleId: function(googleId: string) { this.googleId = googleId; },
+    };
+
+    it('should throw UnauthorizedException (401) when email_verified is false', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: false,
+      });
+
+      await expect(authService.linkGoogle('invalid-token', mockUser as any)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw ForbiddenException (403) when Google email does not match user email', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'wrong@test.com',
+        email_verified: true,
+      });
+
+      await expect(authService.linkGoogle('token', mockUser as any)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should throw ConflictException (409) when Google account is already linked to another user', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: true,
+      });
+      mockUserRepository.findByGoogleId.mockResolvedValue({
+        id: 'another-user-uuid',
+        email: 'admin@test.com',
+      });
+
+      await expect(authService.linkGoogle('token', mockUser as any)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should succeed and update user with googleId when re-linking same account (idempotent)', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: true,
+      });
+      const userWithGoogleId = { ...mockUser, googleId: 'google-uid-123' };
+      mockUserRepository.findByGoogleId.mockResolvedValue(userWithGoogleId);
+
+      await authService.linkGoogle('token', userWithGoogleId as any);
+
+      expect(mockUserRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should succeed and update user with googleId on successful link', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: true,
+      });
+      mockUserRepository.findByGoogleId.mockResolvedValue(null);
+      mockUserRepository.update.mockResolvedValue({ ...mockUser, googleId: 'google-uid-123' });
+
+      await authService.linkGoogle('token', mockUser as any);
+
+      expect(mockUserRepository.update).toHaveBeenCalledWith(
+        expect.objectContaining({ googleId: 'google-uid-123' }),
+      );
+    });
+  });
+
+  describe('loginGoogle', () => {
+    const mockUser = {
+      id: 'user-uuid-123',
+      employeeId: 'EMP-001',
+      role: 'ADMIN',
+      email: 'admin@test.com',
+      googleId: 'google-uid-123',
+    };
+
+    it('should throw UnauthorizedException (401) when token is invalid', async () => {
+      mockFirebaseAuth.verifyIdToken.mockRejectedValue(new Error('invalid token'));
+
+      await expect(authService.loginGoogle('invalid-token')).rejects.toThrow();
+    });
+
+    it('should throw UnauthorizedException (401) when email_verified is false', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: false,
+      });
+
+      await expect(authService.loginGoogle('unverified-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw NotFoundException (404) when no account found for Google user', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: true,
+      });
+      mockUserRepository.findByGoogleId.mockResolvedValue(null);
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+
+      await expect(authService.loginGoogle('token')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return AuthTokens when valid token and account exists', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: true,
+      });
+      mockUserRepository.findByGoogleId.mockResolvedValue(mockUser);
+      mockJwtService.sign.mockReturnValue('signed-jwt-token');
+      mockRedisService.setRefreshToken.mockResolvedValue(undefined);
+
+      const result = await authService.loginGoogle('token');
+
+      expect(result).toEqual({
+        accessToken: 'signed-jwt-token',
+        refreshToken: expect.any(String),
+        expiresIn: 900,
+      });
+    });
+
+    it('should fallback to findByEmail when findByGoogleId returns null', async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValue({
+        sub: 'google-uid-123',
+        email: 'admin@test.com',
+        email_verified: true,
+      });
+      mockUserRepository.findByGoogleId.mockResolvedValue(null);
+      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockJwtService.sign.mockReturnValue('signed-jwt-token');
+      mockRedisService.setRefreshToken.mockResolvedValue(undefined);
+
+      const result = await authService.loginGoogle('token');
+
+      expect(result).toEqual({
+        accessToken: 'signed-jwt-token',
+        refreshToken: expect.any(String),
+        expiresIn: 900,
+      });
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('admin@test.com');
     });
   });
 });
