@@ -4,7 +4,7 @@ import { CategoryTypeOrmEntity } from './entities/category.typeorm.entity';
 import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
 import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.entity';
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
 
 async function main() {
   await dataSource.initialize();
