@@ -2,12 +2,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthService } from '../../infrastructure/services/auth.service';
 import { LoginDto } from '../dto/login.dto';
+import { LinkGoogleDto } from '../dto/auth/google-link.dto';
+import { LoginGoogleDto } from '../dto/auth/google-login.dto';
 import { Public } from '../decorators/public.decorator';
 import { Roles } from '../decorators/roles.decorator';
 import { AuthMeResponseDto } from '../../application/dto/auth/auth-me-response.dto';
@@ -23,6 +25,7 @@ import { RegisterEmployeeValidator } from '../../application/cqrs/auth/handlers/
 import { RequestPasswordResetValidator } from '../../application/cqrs/auth/handlers/request-password-reset/request-password-reset.validator';
 import { ResetPasswordValidator } from '../../application/cqrs/auth/handlers/reset-password/reset-password.validator';
 import { resolvePublicIpv4 } from '../../infrastructure/http/request-ip.util';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import type { Request } from 'express';
 
 export class RefreshTokenDto {
@@ -56,6 +59,44 @@ export class AuthController {
         message: 'auth.errors.invalid_credentials',
       });
     }
+    return tokens;
+  }
+
+  @Post('link-google')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: LinkGoogleDto })
+  @ApiOperation({ summary: 'Link a Google account to the authenticated user' })
+  async linkGoogle(
+    @Body() dto: LinkGoogleDto,
+    @Req() req: { user?: { employeeId?: string } },
+  ): Promise<void> {
+    const user = await this.authService.getAuthenticatedUser(req.user?.employeeId ?? '');
+    if (!user) {
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'auth.errors.invalid_credentials',
+      });
+    }
+
+    await this.authService.linkGoogle(dto.idToken, user);
+  }
+
+  @Post('login-google')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: LoginGoogleDto })
+  @ApiOperation({ summary: 'Authenticate with a Google ID token' })
+  async loginGoogle(@Body() dto: LoginGoogleDto) {
+    const tokens = await this.authService.loginGoogle(dto.idToken);
+    if (!tokens) {
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'auth.errors.invalid_credentials',
+      });
+    }
+
     return tokens;
   }
 

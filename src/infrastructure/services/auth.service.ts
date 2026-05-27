@@ -8,8 +8,7 @@ import { UserStatus } from '../../domain/entities/enums/user-status.enum';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService, RefreshTokenPayload } from '../redis/redis.service';
 import type { IFirebaseAuth } from '../../application/ports/firebase-auth.interface';
-
-export const FIREBASE_AUTH_TOKEN = 'IFirebaseAuth';
+import { FIREBASE_AUTH_TOKEN } from '../common/injection-tokens';
 
 export interface TokenPayload {
   employeeId: string;

@@ -2,10 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UnauthorizedException, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
-import { AuthService, TokenPayload, FIREBASE_AUTH_TOKEN } from './auth.service';
+import { AuthService, TokenPayload } from './auth.service';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService } from '../redis/redis.service';
 import { IFirebaseAuth } from '../../application/ports/firebase-auth.interface';
+import { FIREBASE_AUTH_TOKEN } from '../common/injection-tokens';
 
 describe('AuthService', () => {
   let authService: AuthService;

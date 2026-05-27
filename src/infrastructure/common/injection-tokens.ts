@@ -18,3 +18,4 @@ export const PASSWORD_RESET_TOKEN_REPOSITORY = 'PASSWORD_RESET_TOKEN_REPOSITORY'
 // Service Injection Tokens
 export const TAX_CALCULATOR = 'TAX_CALCULATOR';
 export const UNIT_OF_WORK = 'UNIT_OF_WORK';
+export const FIREBASE_AUTH_TOKEN = 'IFirebaseAuth';
