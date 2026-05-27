@@ -35,8 +35,8 @@ export class UserRepository implements IUserRepository {
       status: UserStatusMapper.toDomain(entity.status),
       defaultBranchId: entity.defaultBranchId,
       failedLoginAttempts: entity.failedLoginAttempts,
-      googleId: entity.googleId,
-      googleEmail: entity.googleEmail,
+      googleId: entity.googleId ?? undefined,
+      googleEmail: entity.googleEmail ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -57,8 +57,8 @@ export class UserRepository implements IUserRepository {
       status: UserStatusMapper.toDb(user.status),
       defaultBranchId: user.defaultBranchId,
       failedLoginAttempts: user.failedLoginAttempts,
-      googleId: user.googleId,
-      googleEmail: user.googleEmail,
+      googleId: user.googleId ?? null,
+      googleEmail: user.googleEmail ?? null,
     };
   }
 

@@ -1,6 +1,7 @@
 import { Inject, Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../domain/entities';
 import type { PaginationParams, PaginatedResult, UserFilters } from '../../domain/repositories';
@@ -176,8 +177,15 @@ export class AuthService {
       });
     }
 
-    if (user.googleId && user.googleId === token.sub) {
+if (user.googleId && user.googleId === token.sub) {
       return;
+    }
+
+    if (user.googleEmail && user.googleEmail !== token.email) {
+      throw new ConflictException({
+        code: 'GOOGLE_EMAIL_MISMATCH',
+        message: 'Google account email does not match linked email',
+      });
     }
 
     const existingGoogleUser = await this.userRepository.findByGoogleId(token.sub);
@@ -188,15 +196,34 @@ export class AuthService {
       });
     }
 
+    if (admin.apps.length > 0) {
+      try {
+        const firebaseUser = await admin.auth().getUser(token.sub);
+        if (firebaseUser.disabled) {
+          await admin.auth().updateUser(token.sub, { disabled: false });
+        }
+      } catch (err) {
+        // Firebase user doesn't exist yet — normal for first-time link, ignore error
+      }
+    }
+
     user.setGoogleId(token.sub, token.email);
     await this.userRepository.update(user);
   }
 
-  async unlinkGoogle(user: User): Promise<void> {
+async unlinkGoogle(user: User): Promise<void> {
     if (!user.googleId) return;
+
+    const googleId = user.googleId;
 
     user.clearGoogleLink();
     await this.userRepository.update(user);
+
+    await this.redisService.revokeAllUserRefreshTokens(user.employeeId);
+
+    if (admin.apps.length > 0) {
+      await admin.auth().revokeRefreshTokens(googleId);
+    }
   }
 
   async loginGoogle(idToken: string): Promise<AuthTokens | null> {
@@ -221,6 +248,21 @@ export class AuthService {
       throw new NotFoundException({
         code: 'GOOGLE_NO_ACCOUNT',
         message: 'No account found for Google user',
+      });
+    }
+
+    if (user.status === UserStatus.BLOCKED) {
+      await this.redisService.revokeAllUserRefreshTokens(user.employeeId);
+      throw new UnauthorizedException({
+        code: 'USER_BLOCKED',
+        message: 'auth.errors.user_blocked',
+      });
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+      throw new UnauthorizedException({
+        code: 'USER_INACTIVE',
+        message: 'auth.errors.user_inactive',
       });
     }
 

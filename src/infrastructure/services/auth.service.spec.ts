@@ -283,15 +283,23 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw ForbiddenException (403) when Google email does not match user email', async () => {
+    it('should throw ConflictException (403) when Google email does not match already linked googleEmail', async () => {
       mockFirebaseAuth.verifyIdToken.mockResolvedValue({
         sub: 'google-uid-123',
         email: 'wrong@test.com',
         email_verified: true,
       });
+      const userWithGoogleEmail = {
+        ...mockUser,
+        googleEmail: 'admin@test.com',
+        setGoogleId: function(googleId: string, googleEmail?: string) {
+          this.googleId = googleId;
+          this.googleEmail = googleEmail;
+        },
+      };
 
-      await expect(authService.linkGoogle('token', mockUser as any)).rejects.toThrow(
-        ForbiddenException,
+      await expect(authService.linkGoogle('token', userWithGoogleEmail as any)).rejects.toThrow(
+        ConflictException,
       );
     });
 
@@ -349,6 +357,10 @@ describe('AuthService', () => {
       role: 'ADMIN',
       email: 'admin@test.com',
       googleId: 'google-uid-123',
+      setGoogleId: function(googleId: string, googleEmail?: string) {
+        this.googleId = googleId;
+        this.googleEmail = googleEmail;
+      },
     };
 
     it('should throw UnauthorizedException (401) when token is invalid', async () => {

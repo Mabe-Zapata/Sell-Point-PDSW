@@ -61,10 +61,10 @@ export class UserTypeOrmEntity {
   defaultBranchId?: string;
 
   @Column({ name: 'GOOGLE_ID', type: 'varchar', length: 255, nullable: true, unique: true })
-  googleId?: string;
+  googleId?: string | null;
 
   @Column({ name: 'GOOGLE_EMAIL', type: 'varchar', length: 255, nullable: true })
-  googleEmail?: string;
+  googleEmail?: string | null;
 
   @Column({ name: 'failed_attempts', type: 'int', default: 0 })
   failedLoginAttempts!: number;
