@@ -178,6 +178,7 @@ import { PdfService, AuthService } from './infrastructure/services';
 import { IdempotencyService } from './infrastructure/services/idempotency.service';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { EmailModule } from './infrastructure/email/email.module';
+import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 import {
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
   ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
@@ -232,6 +233,7 @@ const entities = [
     RedisModule,
     CqrsModule,
     EmailModule,
+    FirebaseModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (): TypeOrmModuleOptions => ({
