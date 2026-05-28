@@ -115,9 +115,9 @@ export class User {
     this._updatedAt = new Date();
   }
 
-  clearGoogleLink(): void {
+clearGoogleLink(): void {
     (this as { googleId?: string }).googleId = undefined;
-    (this as { googleEmail?: string }).googleEmail = undefined;
+    // googleEmail se conserva como auditoría para registrar emails históricamente vinculados
     this._updatedAt = new Date();
   }
 
