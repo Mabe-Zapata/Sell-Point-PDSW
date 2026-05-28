@@ -57,6 +57,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       '(COALESCE(totals.subtotal, 0) + COALESCE(totals.iva, 0)) AS "total"',
       'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
       'cus.cedula AS "customerCedula"',
+      'cus.email AS "customerEmail"',
     ];
   }
 
@@ -68,6 +69,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       total: Number(row.total),
       customerName: row.customerName ?? '',
       customerCedula: row.customerCedula ?? '',
+      customerEmail: row.customerEmail ?? undefined,
     };
   }
 

@@ -11,6 +11,8 @@ export class InvoiceListResponseDto {
   saleNumber: string;
   customerName: string;
   customerCedula: string;
+  subtotal: number;
+  iva: number;
   // branchName removed — branch entity deleted (simplify-schema-uta SDD)
   total: number;
   establishmentCode: string;
@@ -29,6 +31,8 @@ export class InvoiceListResponseDto {
     saleNumber: string;
     customerName: string;
     customerCedula: string;
+    subtotal: number;
+    iva: number;
     total: number;
     establishmentCode: string;
     emissionPointCode: string;
@@ -45,6 +49,8 @@ export class InvoiceListResponseDto {
     this.saleNumber = data.saleNumber;
     this.customerName = data.customerName;
     this.customerCedula = data.customerCedula;
+    this.subtotal = data.subtotal;
+    this.iva = data.iva;
     this.total = data.total;
     this.establishmentCode = data.establishmentCode;
     this.emissionPointCode = data.emissionPointCode;
@@ -63,6 +69,8 @@ export class InvoiceListResponseDto {
     saleNumber: string;
     customerName: string;
     customerCedula: string;
+    subtotal: number;
+    iva: number;
     total: number;
     establishmentCode: string;
     emissionPointCode: string;
@@ -83,6 +91,8 @@ export class InvoiceListResponseDto {
     saleNumber: string;
     customerName: string;
     customerCedula: string;
+    subtotal: number;
+    iva: number;
     total: number;
     establishmentCode: string;
     emissionPointCode: string;

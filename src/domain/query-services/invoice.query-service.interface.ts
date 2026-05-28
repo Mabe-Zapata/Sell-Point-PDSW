@@ -13,6 +13,7 @@ export interface InvoiceListItem {
   saleNumber: string;
   customerName: string;
   customerCedula: string;
+  customerEmail?: string;
   subtotal: number;
   iva: number;
   // branchName removed — branch entity deleted (simplify-schema-uta SDD)

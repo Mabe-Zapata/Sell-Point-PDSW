@@ -31,13 +31,18 @@ import { Invoice, InvoiceStatus } from '../../domain/entities';
 
 import { INVOICE_QUERY_SERVICE } from '../../application/query-tokens';
 import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
+import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import type { IInvoiceQueryService } from '../../domain/query-services/invoice.query-service.interface';
 import type { IPdfService } from '../../application/services/pdf-service.interface';
+import type { IEmailService } from '../../application/ports/IEmailService';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 import type { IInvoiceItemRepository } from '../../domain/repositories';
+import { BusinessRuleException } from '../../domain/exceptions';
+import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
 
 import { CreateInvoiceCommand } from '../../application/cqrs/invoice/commands/create-invoice/create-invoice.command';
+import { CancelInvoiceCommand } from '../../application/cqrs/invoice/commands/cancel-invoice/cancel-invoice.command';
 import { GetInvoiceQuery } from '../../application/cqrs/invoice/queries/get-invoice/get-invoice.query';
 import { ListInvoicesQuery } from '../../application/cqrs/invoice/queries/list-invoices/list-invoices.query';
 
@@ -51,6 +56,7 @@ export class InvoiceController {
     @Inject(INVOICE_QUERY_SERVICE) private readonly invoiceQueryService: IInvoiceQueryService,
     @Inject(PDF_SERVICE) private readonly pdfService: IPdfService,
     @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
+    @Inject(EMAIL_SERVICE) private readonly emailService: IEmailService,
   ) {}
 
   @Post()
@@ -102,6 +108,51 @@ export class InvoiceController {
       }),
       InvoiceItemResponseDto.fromEntities(items),
     );
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  async cancel(@Param('id') id: string): Promise<{ success: boolean; invoiceId: string }> {
+    await this.commandBus.execute(new CancelInvoiceCommand(id));
+    return { success: true, invoiceId: id };
+  }
+
+  @Post(':id/resend-email')
+  @HttpCode(HttpStatus.OK)
+  async resendEmail(
+    @Param('id') id: string,
+    @Body() body?: { email?: string },
+  ): Promise<{ success: boolean; invoiceId: string; email: string }> {
+    const invoiceData = await this.invoiceQueryService.getInvoiceById(id);
+    if (!invoiceData) {
+      throw new EntityNotFoundException('Invoice', id);
+    }
+
+    const email = body?.email ?? invoiceData.customerEmail;
+    if (!email) {
+      throw new BusinessRuleException('Invoice customer has no email. Provide an email to resend.');
+    }
+
+    const items = await this.invoiceItemRepository.findByInvoiceId(id);
+    const result = await this.emailService.sendInvoice(email, id, {
+      invoiceNumber: invoiceData.invoiceNumber,
+      date: invoiceData.issueDate.toLocaleDateString('es-EC'),
+      customerName: invoiceData.customerName || 'Consumidor Final',
+      customerCedula: invoiceData.customerCedula || undefined,
+      items: items.map((item) => ({
+        description: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: item.subtotal,
+      })),
+      total: invoiceData.total,
+    });
+
+    if (!result.success) {
+      throw new BusinessRuleException(result.error ?? 'Invoice email could not be sent');
+    }
+
+    return { success: true, invoiceId: id, email };
   }
 
   @Get(':id')
