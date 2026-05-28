@@ -134,5 +134,20 @@ describe('OrderConfirmedListener', () => {
         }),
       );
     });
+
+    it('should not send email when sale confirmation has no customer email', async () => {
+      const event = new SaleConfirmedEvent(
+        'sale-no-email',
+        new Date(),
+        50.00,
+        undefined,
+        'Consumidor Final',
+        [],
+      );
+
+      await listener.handle(event);
+
+      expect(mockEmailService.sendInvoice).not.toHaveBeenCalled();
+    });
   });
 });

@@ -5,11 +5,17 @@ import type { IEmailService } from '../../application/ports/IEmailService';
 import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import type { IPdfService } from '../../application/services/pdf-service.interface';
 import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
+import { INVOICE_QUERY_SERVICE } from '../../application/query-tokens';
+import { INVOICE_ITEM_REPOSITORY } from '../common/injection-tokens';
+import type { IInvoiceQueryService } from '../../domain/query-services/invoice.query-service.interface';
+import type { IInvoiceItemRepository } from '../../domain/repositories';
 
 describe('InvoiceEmailListener', () => {
   let listener: InvoiceEmailListener;
   let mockEmailService: jest.Mocked<IEmailService>;
   let mockPdfService: jest.Mocked<IPdfService>;
+  let mockInvoiceQueryService: jest.Mocked<IInvoiceQueryService>;
+  let mockInvoiceItemRepository: jest.Mocked<IInvoiceItemRepository>;
 
   beforeEach(async () => {
     mockEmailService = {
@@ -23,11 +29,57 @@ describe('InvoiceEmailListener', () => {
       generateInvoicePdf: jest.fn().mockResolvedValue(Buffer.from('fake-pdf-content')),
     };
 
+    mockInvoiceQueryService = {
+      listInvoices: jest.fn(),
+      getInvoiceBySaleId: jest.fn(),
+      getInvoiceById: jest.fn().mockResolvedValue({
+        id: 'inv-456',
+        saleId: 'sale-123',
+        seriesId: 'series-1',
+        invoiceNumber: '001-002-000000015',
+        authorizationNumber: null,
+        issueDate: new Date('2026-05-25'),
+        status: 'ISSUED',
+        cancelledAt: null,
+        createdAt: new Date('2026-05-25'),
+        saleNumber: 'SAL-1',
+        customerName: 'John Doe',
+        customerCedula: '1234567890',
+        customerEmail: 'customer@example.com',
+        subtotal: 130.43,
+        iva: 19.57,
+        total: 150,
+        establishmentCode: '001',
+        emissionPointCode: '002',
+      }),
+    };
+
+    mockInvoiceItemRepository = {
+      createMany: jest.fn(),
+      findByInvoiceId: jest.fn().mockResolvedValue([
+        {
+          id: 'item-1',
+          invoiceId: 'inv-456',
+          productId: 'prod-1',
+          productName: 'Product 1',
+          quantity: 2,
+          unitPrice: 50,
+          subtotal: 100,
+          taxRateId: 'tax-15',
+          taxPercentage: 15,
+          taxAmount: 15,
+          total: 115,
+        },
+      ]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvoiceEmailListener,
         { provide: EMAIL_SERVICE, useValue: mockEmailService },
         { provide: PDF_SERVICE, useValue: mockPdfService },
+        { provide: INVOICE_QUERY_SERVICE, useValue: mockInvoiceQueryService },
+        { provide: INVOICE_ITEM_REPOSITORY, useValue: mockInvoiceItemRepository },
       ],
     }).compile();
 
@@ -58,6 +110,8 @@ describe('InvoiceEmailListener', () => {
 
       await listener.handle(event);
 
+      expect(mockInvoiceQueryService.getInvoiceById).toHaveBeenCalledWith('inv-456');
+      expect(mockInvoiceItemRepository.findByInvoiceId).toHaveBeenCalledWith('inv-456');
       expect(mockPdfService.generateInvoicePdf).toHaveBeenCalled();
       expect(mockEmailService.sendInvoice).toHaveBeenCalledWith(
         'customer@example.com',
@@ -65,6 +119,7 @@ describe('InvoiceEmailListener', () => {
         expect.objectContaining({
           invoiceNumber: '001-002-000000015',
           customerName: 'John Doe',
+          customerCedula: '1234567890',
           items: expect.arrayContaining([
             expect.objectContaining({ description: 'Product 1', quantity: 2 }),
           ]),
@@ -87,6 +142,26 @@ describe('InvoiceEmailListener', () => {
         26.09,
         [],
       );
+      mockInvoiceQueryService.getInvoiceById.mockResolvedValueOnce({
+        id: 'inv-789',
+        saleId: 'sale-789',
+        seriesId: 'series-1',
+        invoiceNumber: '001-001-000000001',
+        authorizationNumber: null,
+        issueDate: new Date(),
+        status: 'ISSUED',
+        cancelledAt: null,
+        createdAt: new Date(),
+        saleNumber: 'SAL-789',
+        customerName: 'Test User',
+        customerCedula: '',
+        customerEmail: 'test@example.com',
+        subtotal: 173.91,
+        iva: 26.09,
+        total: 200,
+        establishmentCode: '001',
+        emissionPointCode: '001',
+      });
 
       await listener.handle(event);
 
@@ -135,6 +210,26 @@ describe('InvoiceEmailListener', () => {
         9.78,
         [],
       );
+      mockInvoiceQueryService.getInvoiceById.mockResolvedValueOnce({
+        id: 'inv-999',
+        saleId: 'sale-999',
+        seriesId: 'series-1',
+        invoiceNumber: '001-001-000000003',
+        authorizationNumber: null,
+        issueDate: new Date(),
+        status: 'ISSUED',
+        cancelledAt: null,
+        createdAt: new Date(),
+        saleNumber: 'SAL-999',
+        customerName: 'PDF Fail',
+        customerCedula: '',
+        customerEmail: 'pdf-fail@example.com',
+        subtotal: 65.22,
+        iva: 9.78,
+        total: 75,
+        establishmentCode: '001',
+        emissionPointCode: '001',
+      });
 
       await expect(listener.handle(event)).resolves.toBeUndefined();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -162,11 +257,56 @@ describe('InvoiceEmailListener', () => {
         39.13,
         [],
       );
+      mockInvoiceQueryService.getInvoiceById.mockResolvedValueOnce({
+        id: 'inv-555',
+        saleId: 'sale-555',
+        seriesId: 'series-1',
+        invoiceNumber: '001-001-000000004',
+        authorizationNumber: null,
+        issueDate: new Date(),
+        status: 'ISSUED',
+        cancelledAt: null,
+        createdAt: new Date(),
+        saleNumber: 'SAL-555',
+        customerName: 'Invalid Customer',
+        customerCedula: '',
+        customerEmail: 'invalid@example.com',
+        subtotal: 260.87,
+        iva: 39.13,
+        total: 300,
+        establishmentCode: '001',
+        emissionPointCode: '001',
+      });
 
       await listener.handle(event);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         '[InvoiceEmailListener] Email send failed: Invalid email address',
+      );
+    });
+
+    it('should skip email when persisted invoice cannot be found', async () => {
+      mockInvoiceQueryService.getInvoiceById.mockResolvedValueOnce(null);
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const event = new InvoiceIssuedEvent(
+        'missing-inv',
+        'sale-missing',
+        '001-001-000000005',
+        'missing@example.com',
+        'Missing Customer',
+        new Date(),
+        10,
+        8.7,
+        1.3,
+        [],
+      );
+
+      await listener.handle(event);
+
+      expect(mockPdfService.generateInvoicePdf).not.toHaveBeenCalled();
+      expect(mockEmailService.sendInvoice).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        '[InvoiceEmailListener] Invoice missing-inv not found for email',
       );
     });
   });
