@@ -1,10 +1,14 @@
 import 'reflect-metadata';
+import { v5 as uuidv5 } from 'uuid';
 import { dataSource } from '../../config/typeorm.config';
 import { CategoryTypeOrmEntity } from './entities/category.typeorm.entity';
 import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
+import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
 import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.entity';
 //import { v4 as uuidv4 } from 'uuid';
+
+const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 
 async function main() {
   await dataSource.initialize();
@@ -13,9 +17,15 @@ async function main() {
   const categoryRepo = dataSource.getRepository(CategoryTypeOrmEntity);
   const productRepo = dataSource.getRepository(ProductTypeOrmEntity);
   const customerRepo = dataSource.getRepository(CustomerTypeOrmEntity);
+  const taxRateRepo = dataSource.getRepository(TaxRateTypeOrmEntity);
+
+  // Look up tax rates (created by seed.ts with deterministic UUIDv5)
+  const iva15Id = uuidv5('IVA 15%', UUID_NAMESPACE);
+  const iva0Id = uuidv5('IVA 0%', UUID_NAMESPACE);
+  const defaultTaxRateId = iva15Id;
 
   // 1. Seed Categories
-  const categoriesData = [
+  const categoriesData: Array<{ name: string; description: string; taxRateId?: string }> = [
     { name: 'Bebidas', description: 'Gaseosas, jugos y aguas' },
     { name: 'Snacks', description: 'Papas, galletas y chucherías' },
     { name: 'Lácteos', description: 'Leche, yogurt y quesos' },
@@ -25,17 +35,30 @@ async function main() {
     { name: 'Panadería', description: 'Pan, pasteles y empanadas' },
   ];
 
+  // Assign IVA 15% by default; Granos Básicos with IVA 0% (basic basket)
+  const categoriesWithTax = categoriesData.map((c) => ({
+    ...c,
+    taxRateId: c.name === 'Granos Básicos' ? iva0Id : defaultTaxRateId,
+  }));
+
   const savedCategories: CategoryTypeOrmEntity[] = [];
 
-  for (const catData of categoriesData) {
+  for (const catData of categoriesWithTax) {
     let category = await categoryRepo.findOne({ where: { name: catData.name } });
     if (category) {
-      console.log(`Category "${catData.name}" already exists, skipping.`);
+      const needsUpdate = category.taxRateId !== catData.taxRateId;
+      if (needsUpdate) {
+        await categoryRepo.update(category.id, { taxRateId: catData.taxRateId });
+        category.taxRateId = catData.taxRateId;
+        console.log(`Category "${catData.name}" tax rate updated.`);
+      } else {
+        console.log(`Category "${catData.name}" already exists, skipping.`);
+      }
     } else {
       category = await categoryRepo.save(
         categoryRepo.create({ ...catData, isActive: true }),
       );
-      console.log(`Category "${catData.name}" created.`);
+      console.log(`Category "${catData.name}" created with tax rate.`);
     }
     savedCategories.push(category);
   }
@@ -114,7 +137,7 @@ async function main() {
     }
   }
 
-  // 4. Seed Invoice Series (for sequential sale numbers)
+  // 4. Seed Invoice Series (for fiscal invoice numbers)
   const adminBranchId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
   const existingSeries = await dataSource.getRepository(InvoiceSeriesTypeOrmEntity).findOne({
     where: { branchId: adminBranchId, isActive: true },
@@ -126,7 +149,6 @@ async function main() {
         branchId: adminBranchId,
         establishmentCode: '001',
         emissionPointCode: '001',
-        sequenceNumber: 0,
         currentSequence: 0,
         isActive: true,
       }),

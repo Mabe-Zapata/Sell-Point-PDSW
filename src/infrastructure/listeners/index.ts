@@ -7,3 +7,5 @@ export { PasswordResetRequestedListener } from './password-reset-requested.liste
 export { PasswordChangedListener } from './password-changed.listener';
 export { InvoiceEmailListener } from './invoice-email.listener';
 export { OrderConfirmedListener } from './order-confirmed.listener';
+export { SaleConfirmedInvoiceListener } from './sale-confirmed-invoice.listener';
+export { SaleCancelledInvoiceListener } from './sale-cancelled-invoice.listener';

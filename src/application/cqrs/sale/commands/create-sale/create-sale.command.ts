@@ -4,7 +4,6 @@ export interface CreateSalePayload {
   branchId: string;
   customerId: string;
   cashierUserId: string;
-  taxRateId: string;
   paymentMethod: PaymentMethod;
 }
 

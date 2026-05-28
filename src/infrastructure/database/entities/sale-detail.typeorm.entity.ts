@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { SaleTypeOrmEntity } from './sale.typeorm.entity';
 import { ProductTypeOrmEntity } from './product.typeorm.entity';
+import { TaxRateTypeOrmEntity } from './tax-rate.typeorm.entity';
 
 @Entity('SALE_DETAILS')
 export class SaleDetailTypeOrmEntity {
@@ -40,6 +41,19 @@ export class SaleDetailTypeOrmEntity {
 
   @Column({ name: 'UNT_PRI_SAL', type: 'decimal', precision: 12, scale: 2 })
   unitPrice!: number;
+
+  @Column({ name: 'TAX_RAT_ID', type: 'uuid' })
+  taxRateId!: string;
+
+  @ManyToOne(() => TaxRateTypeOrmEntity)
+  @JoinColumn({ name: 'TAX_RAT_ID' })
+  taxRate!: TaxRateTypeOrmEntity;
+
+  @Column({ name: 'TAX_PCT_SAL', type: 'decimal', precision: 5, scale: 2 })
+  taxPercentage!: number;
+
+  @Column({ name: 'TAX_AMO_SAL', type: 'decimal', precision: 12, scale: 2 })
+  taxAmount!: number;
 
   @Index('IDX_SAL_DET_SAL_ID')
   @CreateDateColumn({ name: 'CRE_AT' })

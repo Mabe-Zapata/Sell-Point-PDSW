@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { InvoiceSeriesTypeOrmEntity } from '../database/entities/invoice-series.typeorm.entity';
 import { InvoiceSeries } from '../../domain/entities';
 import type { IInvoiceSeriesRepository, InvoiceSeriesFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
@@ -10,6 +10,7 @@ export class InvoiceSeriesRepository {
   constructor(
     @InjectRepository(InvoiceSeriesTypeOrmEntity)
     private readonly repo: Repository<InvoiceSeriesTypeOrmEntity>,
+    private readonly dataSource: DataSource,
   ) {}
 
   private mapToDomain(entity: InvoiceSeriesTypeOrmEntity): InvoiceSeries {
@@ -101,13 +102,26 @@ export class InvoiceSeriesRepository {
   }
 
   async incrementSequence(id: string): Promise<number> {
-    const current = await this.repo.findOne({ where: { id } });
-    if (!current) {
-      throw new Error('InvoiceSeries not found');
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entity = await queryRunner.manager.findOne(InvoiceSeriesTypeOrmEntity, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!entity) {
+        throw new Error('InvoiceSeries not found');
+      }
+      entity.currentSequence += 1;
+      const saved = await queryRunner.manager.save(entity);
+      await queryRunner.commitTransaction();
+      return saved.currentSequence;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-
-    current.currentSequence += 1;
-    await this.repo.save(current);
-    return current.currentSequence;
   }
 }

@@ -1,6 +1,7 @@
 export interface UpdateCategoryPayload {
   name?: string;
   description?: string;
+  taxRateId?: string;
   isActive?: boolean;
 }
 

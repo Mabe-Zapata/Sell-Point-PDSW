@@ -88,6 +88,14 @@ export { GetMovementsHistoryHandler } from './inventory/queries/get-movements-hi
 export { GetErrorLogHandler } from './error-log/queries/get-error-log/GetErrorLogHandler';
 export { ListErrorLogsHandler } from './error-log/queries/list-error-logs/ListErrorLogsHandler';
 
+// Invoice Commands
+export { CreateInvoiceHandler } from './invoice/commands/create-invoice/CreateInvoiceHandler';
+export { CancelInvoiceHandler } from './invoice/commands/cancel-invoice/CancelInvoiceHandler';
+
+// Invoice Queries
+export { GetInvoiceHandler } from './invoice/queries/get-invoice/GetInvoiceHandler';
+export { ListInvoicesHandler } from './invoice/queries/list-invoices/ListInvoicesHandler';
+
 // Dashboard Queries
 export { GetDashboardStatsHandler } from './dashboard/queries/get-dashboard-stats/GetDashboardStatsHandler';
 

@@ -3,7 +3,6 @@ import { ICommand } from '@nestjs/cqrs';
 export interface QuickConfirmSaleDetail {
   productId: string;
   quantity: number;
-  unitPrice: number;
 }
 
 export interface QuickConfirmSalePayload {

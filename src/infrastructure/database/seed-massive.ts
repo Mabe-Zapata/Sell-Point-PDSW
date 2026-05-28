@@ -49,6 +49,7 @@ function generateCedula(): string {
 // ─────────────────────────────────────────────
 async function seedCategories(
   categoryRepo: Repository<CategoryTypeOrmEntity>,
+  taxRateRepo: Repository<TaxRateTypeOrmEntity>,
 ): Promise<CategoryTypeOrmEntity[]> {
   const existing = await categoryRepo.find();
   if (existing.length > 0) {
@@ -56,7 +57,8 @@ async function seedCategories(
     return existing;
   }
 
-  const categories = CATEGORIES.map((name) =>
+
+    const categories = CATEGORIES.map((name) =>
     categoryRepo.create({
       name,
       description: `Categoría de ${name}`,
@@ -277,7 +279,7 @@ async function main(): Promise<void> {
   const branchId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
   process.stdout.write('Preparando categorías...\n');
-  const categories = await seedCategories(categoryRepo);
+  const categories = await seedCategories(categoryRepo, taxRateRepo);
 
   const customerIds = await seedCustomers(customerRepo);
   const productIds = await seedProducts(productRepo, categories);

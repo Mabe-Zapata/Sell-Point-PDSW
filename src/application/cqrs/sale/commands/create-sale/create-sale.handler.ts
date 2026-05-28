@@ -15,7 +15,6 @@ export class CreateSaleHandler {
       branchId: command.payload.branchId,
       customerId: command.payload.customerId,
       cashierUserId: command.payload.cashierUserId,
-      taxRateId: command.payload.taxRateId,
       paymentMethod: command.payload.paymentMethod,
       saleNumber,
       status: SaleStatus.DRAFT,

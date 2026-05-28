@@ -19,6 +19,7 @@ export class CategoryRepository implements ICategoryRepository {
       id: String(entity.id),
       name: entity.name,
       description: entity.description,
+      taxRateId: entity.taxRateId,
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -30,6 +31,7 @@ export class CategoryRepository implements ICategoryRepository {
       id: category.id,
       name: category.name,
       description: category.description,
+      taxRateId: category.taxRateId,
       isActive: category.isActive,
     };
   }

@@ -13,6 +13,12 @@ export class SaleDetail {
 
   unitPrice!: number;
 
+  taxRateId!: string;
+
+  taxPercentage!: number;
+
+  taxAmount!: number;
+
   createdAt!: Date;
 
   constructor(partial: Partial<SaleDetail>) {

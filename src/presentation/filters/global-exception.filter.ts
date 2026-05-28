@@ -11,6 +11,7 @@ import {
   DomainException,
   EntityNotFoundException,
   DuplicateCedulaException,
+  DuplicateInvoiceForSaleException,
   InsufficientStockException,
   BusinessRuleException,
 } from '../../domain/exceptions';
@@ -37,6 +38,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         status = HttpStatus.NOT_FOUND;
         message = exception.message;
       } else if (exception instanceof DuplicateCedulaException) {
+        status = HttpStatus.CONFLICT;
+        message = exception.message;
+      } else if (exception instanceof DuplicateInvoiceForSaleException) {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof EmailAlreadyExistsException) {

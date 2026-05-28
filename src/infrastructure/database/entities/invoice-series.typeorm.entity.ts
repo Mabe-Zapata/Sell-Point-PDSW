@@ -21,9 +21,6 @@ export class InvoiceSeriesTypeOrmEntity {
   @Column({ name: 'EMI_PNT', length: 10 })
   emissionPointCode!: string;
 
-  @Column({ name: 'SEQ_NUM', type: 'int' })
-  sequenceNumber!: number;
-
   @Column({ name: 'CUR_SEQ', type: 'int', default: 0 })
   currentSequence!: number;
 

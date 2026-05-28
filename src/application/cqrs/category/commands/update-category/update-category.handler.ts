@@ -24,6 +24,7 @@ export class UpdateCategoryHandler {
       id: existing.id,
       name: command.payload.name ?? existing.name,
       description: command.payload.description ?? existing.description,
+      taxRateId: command.payload.taxRateId !== undefined ? command.payload.taxRateId : existing.taxRateId,
       isActive: command.payload.isActive ?? existing.isActive,
       createdAt: existing.createdAt,
     });

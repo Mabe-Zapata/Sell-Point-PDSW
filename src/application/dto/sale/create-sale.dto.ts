@@ -7,10 +7,6 @@ export class CreateSaleDto {
   @IsUUID()
   customerId!: string;
 
-  @ApiProperty({ description: 'ID de la tasa de impuesto a aplicar' })
-  @IsUUID()
-  taxRateId!: string;
-
   @ApiPropertyOptional({
     description: 'Método de pago. Solo se acepta CASH (efectivo)',
     enum: PaymentMethod,

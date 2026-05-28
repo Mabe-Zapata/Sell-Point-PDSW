@@ -19,6 +19,7 @@ export class CreateCategoryHandler {
       id: randomUUID(),
       name: command.payload.name,
       description: command.payload.description,
+      taxRateId: command.payload.taxRateId,
       isActive: true,
     });
 

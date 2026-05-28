@@ -145,6 +145,12 @@ import {
   ListErrorLogsHandler,
   // Dashboard Queries
   GetDashboardStatsHandler,
+  // Invoice Commands
+  CreateInvoiceHandler,
+  CancelInvoiceHandler,
+  // Invoice Queries
+  GetInvoiceHandler,
+  ListInvoicesHandler,
   // Auth Handlers
   RegisterEmployeeHandler,
   RequestPasswordResetHandler,
@@ -194,7 +200,7 @@ import {
 import {
   CustomerController, ProductController, InvoiceController, DashboardController,
   AuthController, CategoryController, UserController, RoleController,
-  ErrorLogController, SaleController,
+  ErrorLogController, SaleController, TaxRateController,
 } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
@@ -205,6 +211,8 @@ import {
   PasswordChangedListener,
   InvoiceEmailListener,
   OrderConfirmedListener,
+  SaleConfirmedInvoiceListener,
+  SaleCancelledInvoiceListener,
 } from './infrastructure/listeners';
 
 // All TypeORM entities
@@ -246,7 +254,7 @@ const entities = [
   controllers: [
     AppController, CustomerController, ProductController, InvoiceController,
     DashboardController, AuthController, CategoryController, UserController,
-    RoleController, ErrorLogController, SaleController,
+    RoleController,   ErrorLogController, SaleController, TaxRateController,
   ],
   providers: [
     AppService,
@@ -290,6 +298,8 @@ const entities = [
     PasswordChangedListener,
     InvoiceEmailListener,
     OrderConfirmedListener,
+    SaleConfirmedInvoiceListener,
+    SaleCancelledInvoiceListener,
 
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
@@ -338,6 +348,12 @@ const entities = [
     GetErrorLogHandler,
     ListErrorLogsHandler,
     GetDashboardStatsHandler,
+    // Invoice Commands
+    CreateInvoiceHandler,
+    CancelInvoiceHandler,
+    // Invoice Queries
+    GetInvoiceHandler,
+    ListInvoicesHandler,
     CreateUserHandler,
     UpdateUserHandler,
     ActivateUserHandler,

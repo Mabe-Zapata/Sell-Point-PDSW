@@ -86,7 +86,6 @@ export class SaleRepositoryImpl implements ISaleRepository {
       branchId: entity.branchId,
       customerId: entity.customerId,
       cashierUserId: entity.cashierUserId,
-      taxRateId: entity.taxRateId,
       saleNumber: entity.saleNumber,
       status: SaleStatusMapper.toDomain(entity.status),
       subtotal: Number(entity.subtotal),
@@ -103,7 +102,6 @@ export class SaleRepositoryImpl implements ISaleRepository {
       branchId: sale.branchId,
       customerId: sale.customerId,
       cashierUserId: sale.cashierUserId,
-      taxRateId: sale.taxRateId,
       saleNumber: sale.saleNumber,
       status: SaleStatusMapper.toDb(sale.status),
       subtotal: sale.subtotal,
@@ -122,6 +120,9 @@ export class SaleRepositoryImpl implements ISaleRepository {
       productCode: entity.productCodeSnapshot,
       quantity: Number(entity.quantity),
       unitPrice: Number(entity.unitPrice),
+      taxRateId: entity.taxRateId,
+      taxPercentage: Number(entity.taxPercentage),
+      taxAmount: Number(entity.taxAmount),
       createdAt: entity.createdAt,
     });
   }

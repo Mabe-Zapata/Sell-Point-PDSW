@@ -11,8 +11,6 @@ export class Sale {
 
   cashierUserId!: string;
 
-  taxRateId!: string;
-
   saleNumber!: string;
 
   paymentMethod!: PaymentMethod;

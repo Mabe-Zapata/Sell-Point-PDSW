@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { InvoiceItemTypeOrmEntity } from '../database/entities/invoice-item.typeorm.entity';
 import { InvoiceItem } from '../../domain/entities';
 import { IInvoiceItemRepository } from '../../domain/repositories/invoice-item.repository.interface';
@@ -17,20 +18,27 @@ export class InvoiceItemRepository implements IInvoiceItemRepository {
       id: String(entity.id),
       invoiceId: entity.invoiceId,
       productId: entity.productId,
-      productName: entity.product?.name,
-      quantity: entity.quantity,
+      productName: entity.productNameSnapshot ?? entity.product?.name,
+      quantity: Number(entity.quantity),
       unitPrice: Number(entity.unitPrice),
+      taxRateId: entity.taxRateId ?? undefined,
+      taxPercentage: Number(entity.taxPercentage ?? 0),
+      taxAmount: Number(entity.taxAmount ?? 0),
     });
   }
 
   async createMany(items: InvoiceItem[]): Promise<InvoiceItem[]> {
     const entities = this.invoiceItemRepository.create(
       items.map((item) => ({
-        id: item.id,
+        id: item.id ?? randomUUID(),
         invoiceId: item.invoiceId,
         productId: item.productId,
+        productNameSnapshot: item.productName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        taxRateId: item.taxRateId,
+        taxPercentage: item.taxPercentage,
+        taxAmount: item.taxAmount,
       })),
     );
 
@@ -42,6 +50,7 @@ export class InvoiceItemRepository implements IInvoiceItemRepository {
     const entities = await this.invoiceItemRepository.find({
       where: { invoiceId },
       relations: ['product'],
+      order: { id: 'ASC' },
     });
 
     return entities.map((entity) => this.mapToDomain(entity));

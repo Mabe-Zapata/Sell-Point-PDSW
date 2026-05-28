@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MaxLength, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength, IsOptional, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -15,4 +15,9 @@ export class CreateCategoryDto {
   @IsOptional()
   @MaxLength(255)
   description?: string;
+
+  @ApiProperty({ description: 'Tax rate ID to associate' })
+  @IsUUID()
+  @IsNotEmpty()
+  taxRateId: string;
 }
