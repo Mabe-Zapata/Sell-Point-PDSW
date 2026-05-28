@@ -15,7 +15,7 @@ import { UserTypeOrmEntity } from './user.typeorm.entity';
 
 @Entity('SALES')
 export class SaleTypeOrmEntity {
-  @PrimaryGeneratedColumn('uuid', { name: 'ID' })
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ name: 'BRA_ID', type: 'uuid' })

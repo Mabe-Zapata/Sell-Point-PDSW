@@ -32,7 +32,7 @@ export class AddPasswordFieldsToUser1800000000005 implements MigrationInterface 
       }),
     );
 
-    // PAS_EXPIRED and CURRENT_PAS_HASH added above, failed_attempts already exists in baseline
+    // PAS_EXPIRED and CURRENT_PAS_HASH added above, FAILED_ATTEMPTS already exists in baseline
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

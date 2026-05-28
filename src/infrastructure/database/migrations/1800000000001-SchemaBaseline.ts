@@ -79,7 +79,7 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
           col('PAS_HASH', 'varchar', { length: '255' }),
           col('STA_USR', 'varchar', { length: '30', default: "'ACTIVE'" }),
           col('DEF_BRA_ID', uuidType, { isNullable: true, length: uuidLength }),
-          col('failed_attempts', 'integer', { default: 0 }),
+          col('FAILED_ATTEMPTS', 'integer', { default: 0 }),
           col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
           col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],

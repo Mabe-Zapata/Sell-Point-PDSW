@@ -72,4 +72,13 @@ export class RedisService implements OnModuleDestroy {
 
     await this.redis.del(key);
   }
+
+  async revokeAllUserRefreshTokens(employeeCode: string): Promise<void> {
+    const userKey = this.refreshTokenByEmployeeCodeKey(employeeCode);
+    const uuid = await this.redis.get(userKey);
+    if (uuid) {
+      await this.redis.del(this.refreshTokenKey(uuid));
+      await this.redis.del(userKey);
+    }
+  }
 }

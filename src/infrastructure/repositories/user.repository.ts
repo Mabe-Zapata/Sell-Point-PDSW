@@ -35,7 +35,8 @@ export class UserRepository implements IUserRepository {
       status: UserStatusMapper.toDomain(entity.status),
       defaultBranchId: entity.defaultBranchId,
       failedLoginAttempts: entity.failedLoginAttempts,
-      googleId: entity.googleId,
+      googleId: entity.googleId ?? undefined,
+      googleEmail: entity.googleEmail ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -56,7 +57,8 @@ export class UserRepository implements IUserRepository {
       status: UserStatusMapper.toDb(user.status),
       defaultBranchId: user.defaultBranchId,
       failedLoginAttempts: user.failedLoginAttempts,
-      googleId: user.googleId,
+      googleId: user.googleId ?? null,
+      googleEmail: user.googleEmail ?? null,
     };
   }
 
@@ -202,7 +204,13 @@ export class UserRepository implements IUserRepository {
       const userRepo = manager.getRepository(UserTypeOrmEntity);
       const userRoleRepo = manager.getRepository(UserRoleTypeOrmEntity);
 
-      await userRepo.update(user.id, this.mapToEntity(user));
+      const entity = await userRepo.findOne({ where: { id: user.id } });
+      if (!entity) throw new Error('User not found');
+
+      entity.googleId = user.googleId ?? null;
+      entity.googleEmail = user.googleEmail ?? null;
+
+      await userRepo.save(entity);
 
       await userRoleRepo.delete({ userId: user.id });
       if (resolvedRole) {

@@ -6,7 +6,7 @@ import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
 import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
 import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.entity';
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
 
 const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 
