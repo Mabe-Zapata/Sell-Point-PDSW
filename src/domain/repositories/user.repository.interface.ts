@@ -16,6 +16,7 @@ export interface IUserRepository {
   findByEmployeeId(employeeId: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
+  findByGoogleId(googleId: string): Promise<User | null>;
   findAll(
     pagination?: PaginationParams,
     filters?: UserFilters,

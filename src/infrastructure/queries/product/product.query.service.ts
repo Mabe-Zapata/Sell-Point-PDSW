@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
+ 
+ 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +10,8 @@ import {
 } from '../../../domain/query-services/product.query-service.interface';
 import { ProductTypeOrmEntity } from '../../database/entities/product.typeorm.entity';
 import { CategoryTypeOrmEntity } from '../../database/entities/category.typeorm.entity';
+
+const MAX_LIMIT = 200;
 
 @Injectable()
 export class ProductQueryService implements IProductQueryService {
@@ -32,7 +34,8 @@ export class ProductQueryService implements IProductQueryService {
     isActive?: boolean;
   }): Promise<{ data: ProductListItem[]; total: number; page: number; limit: number }> {
     const { page, limit, q, categoryId, isActive } = params;
-    const offset = (page - 1) * limit;
+    const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
+    const offset = (page - 1) * safeLimit;
     const searchPattern = q ? `%${q}%` : null;
 
     const baseQuery = this.buildProductQuery()
@@ -45,24 +48,26 @@ export class ProductQueryService implements IProductQueryService {
       .andWhere(categoryId ? 'p.categoryId = :categoryId' : '1=1', { categoryId })
       .andWhere(isActive !== undefined ? 'p.isActive = :isActive' : '1=1', { isActive });
 
-    const total = await baseQuery.clone().getCount();
-    const rows = await baseQuery
-      .clone()
-      .select([
-        'p.id AS "id"',
-        'p.code AS "code"',
-        'p.name AS "name"',
-        'p.salePrice AS "salePrice"',
-        'p.costPrice AS "costPrice"',
-        'p.currentStock AS "currentStock"',
-        'p.categoryId AS "categoryId"',
-        'c.name AS "categoryName"',
-        'p.isActive AS "isActive"',
-      ])
-      .orderBy('p.createdAt', 'DESC')
-      .skip(offset)
-      .take(limit)
-      .getRawMany<ProductListItem>();
+    const [total, rows] = await Promise.all([
+      baseQuery.clone().getCount(),
+      baseQuery
+        .clone()
+        .select([
+          'p.id AS "id"',
+          'p.code AS "code"',
+          'p.name AS "name"',
+          'p.salePrice AS "salePrice"',
+          'p.costPrice AS "costPrice"',
+          'p.currentStock AS "currentStock"',
+          'p.categoryId AS "categoryId"',
+          'c.name AS "categoryName"',
+          'p.isActive AS "isActive"',
+        ])
+        .orderBy('p.createdAt', 'DESC')
+        .skip(offset)
+        .take(safeLimit)
+        .getRawMany<ProductListItem>(),
+    ]);
 
     return {
       data: rows.map((row) => ({
@@ -73,7 +78,7 @@ export class ProductQueryService implements IProductQueryService {
       })),
       total,
       page,
-      limit,
+      limit: safeLimit,
     };
   }
 

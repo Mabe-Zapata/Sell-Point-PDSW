@@ -9,7 +9,7 @@ describe('GetDashboardStatsHandler', () => {
   beforeEach(() => {
     mockQueryService = {
       getStats: jest.fn(),
-    } as any;
+    };
 
     handler = new GetDashboardStatsHandler(mockQueryService);
   });

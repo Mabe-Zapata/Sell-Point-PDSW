@@ -1,12 +1,15 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../domain/entities';
 import type { PaginationParams, PaginatedResult, UserFilters } from '../../domain/repositories';
 import { UserStatus } from '../../domain/entities/enums/user-status.enum';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService, RefreshTokenPayload } from '../redis/redis.service';
+import type { IFirebaseAuth } from '../../application/ports/firebase-auth.interface';
+import { FIREBASE_AUTH_TOKEN } from '../common/injection-tokens';
 
 export interface TokenPayload {
   employeeId: string;
@@ -39,6 +42,7 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+    @Inject(FIREBASE_AUTH_TOKEN) private readonly firebaseAuth: IFirebaseAuth,
   ) {}
 
   async hashPassword(plain: string): Promise<string> {
@@ -161,5 +165,126 @@ export class AuthService {
     filters: UserFilters,
   ): Promise<PaginatedResult<User>> {
     return this.userRepository.findAll(pagination, filters);
+  }
+
+  async linkGoogle(idToken: string, user: User): Promise<void> {
+    const token = await this.firebaseAuth.verifyIdToken(idToken);
+
+    if (!token.email_verified) {
+      throw new UnauthorizedException({
+        code: 'GOOGLE_TOKEN_INVALID',
+        message: 'Google token email is not verified',
+      });
+    }
+
+if (user.googleId && user.googleId === token.sub) {
+      return;
+    }
+
+    if (user.googleEmail && user.googleEmail !== token.email) {
+      throw new ConflictException({
+        code: 'GOOGLE_EMAIL_MISMATCH',
+        message: 'Google account email does not match linked email',
+      });
+    }
+
+    const existingGoogleUser = await this.userRepository.findByGoogleId(token.sub);
+    if (existingGoogleUser && existingGoogleUser.id !== user.id) {
+      throw new ConflictException({
+        code: 'GOOGLE_DUPLICATE_LINK',
+        message: 'Google account already linked to another user',
+      });
+    }
+
+    if (admin.apps.length > 0) {
+      try {
+        const firebaseUser = await admin.auth().getUser(token.sub);
+        if (firebaseUser.disabled) {
+          await admin.auth().updateUser(token.sub, { disabled: false });
+        }
+      } catch (err) {
+        // Firebase user doesn't exist yet — normal for first-time link, ignore error
+      }
+    }
+
+    user.setGoogleId(token.sub, token.email);
+    await this.userRepository.update(user);
+  }
+
+async unlinkGoogle(user: User): Promise<void> {
+    if (!user.googleId) return;
+
+    const googleId = user.googleId;
+
+    user.clearGoogleLink();
+    await this.userRepository.update(user);
+
+    await this.redisService.revokeAllUserRefreshTokens(user.employeeId);
+
+    if (admin.apps.length > 0) {
+      await admin.auth().revokeRefreshTokens(googleId);
+    }
+  }
+
+  async loginGoogle(idToken: string): Promise<AuthTokens | null> {
+    const token = await this.firebaseAuth.verifyIdToken(idToken);
+
+    if (!token.email_verified) {
+      throw new UnauthorizedException({
+        code: 'GOOGLE_TOKEN_INVALID',
+        message: 'Google token email is not verified',
+      });
+    }
+
+    let user = await this.userRepository.findByGoogleId(token.sub);
+    let linkedByEmail = false;
+
+    if (!user) {
+      user = await this.userRepository.findByEmail(token.email);
+      linkedByEmail = true;
+    }
+
+    if (!user) {
+      throw new NotFoundException({
+        code: 'GOOGLE_NO_ACCOUNT',
+        message: 'No account found for Google user',
+      });
+    }
+
+    if (user.status === UserStatus.BLOCKED) {
+      await this.redisService.revokeAllUserRefreshTokens(user.employeeId);
+      throw new UnauthorizedException({
+        code: 'USER_BLOCKED',
+        message: 'auth.errors.user_blocked',
+      });
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+      throw new UnauthorizedException({
+        code: 'USER_INACTIVE',
+        message: 'auth.errors.user_inactive',
+      });
+    }
+
+    // If found by email (not googleId yet), set googleId and googleEmail
+    if (linkedByEmail) {
+      user.setGoogleId(token.sub, token.email);
+      await this.userRepository.update(user);
+    }
+
+    const payload: TokenPayload = {
+      employeeId: user.id,
+      employeeCode: user.employeeId,
+      role: user.role ?? '',
+    };
+
+    const accessToken = this.generateAccessToken(payload);
+    const refreshToken = await this.generateRefreshToken(payload, false);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: 900,
+    };
   }
 }

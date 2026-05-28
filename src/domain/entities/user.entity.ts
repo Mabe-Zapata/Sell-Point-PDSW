@@ -13,6 +13,8 @@ export class User {
   readonly passwordHash!: string;
   readonly currentPasswordHash?: string;
   readonly defaultBranchId?: string;
+  readonly googleId?: string;
+  readonly googleEmail?: string;
   readonly passwordExpired!: boolean;
   readonly failedLoginAttempts!: number;
   readonly createdAt!: Date;
@@ -33,6 +35,8 @@ export class User {
     passwordHash: string;
     currentPasswordHash?: string;
     defaultBranchId?: string;
+    googleId?: string;
+    googleEmail?: string;
     failedLoginAttempts?: number;
     passwordExpired?: boolean;
     status: UserStatus;
@@ -51,6 +55,8 @@ export class User {
     this.passwordHash = properties.passwordHash;
     this.currentPasswordHash = properties.currentPasswordHash;
     this.defaultBranchId = properties.defaultBranchId;
+    this.googleId = properties.googleId;
+    this.googleEmail = properties.googleEmail;
     this.passwordExpired = properties.passwordExpired ?? true;
     this.failedLoginAttempts = properties.failedLoginAttempts ?? 0;
     this._status = properties.status;
@@ -100,6 +106,18 @@ export class User {
       throw new BusinessRuleException('User is not blocked');
     }
     this._status = UserStatus.ACTIVE;
+    this._updatedAt = new Date();
+  }
+
+  setGoogleId(googleId: string, googleEmail?: string): void {
+    (this as { googleId?: string }).googleId = googleId;
+    (this as { googleEmail?: string }).googleEmail = googleEmail;
+    this._updatedAt = new Date();
+  }
+
+clearGoogleLink(): void {
+    (this as { googleId?: string }).googleId = undefined;
+    // googleEmail se conserva como auditoría para registrar emails históricamente vinculados
     this._updatedAt = new Date();
   }
 

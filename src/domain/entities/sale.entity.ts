@@ -7,7 +7,7 @@ export class Sale {
 
   branchId!: string;
 
-  customerId!: string;
+  customerId!: string | null;
 
   cashierUserId!: string;
 

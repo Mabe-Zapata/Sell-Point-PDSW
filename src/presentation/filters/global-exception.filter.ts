@@ -43,7 +43,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof InsufficientStockException) {
-        status = HttpStatus.UNPROCESSABLE_ENTITY;
+        status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof BusinessRuleException) {
         status = HttpStatus.UNPROCESSABLE_ENTITY;

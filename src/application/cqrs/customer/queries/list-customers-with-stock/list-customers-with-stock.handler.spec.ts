@@ -10,7 +10,7 @@ describe('ListCustomersWithStockHandler', () => {
     mockQueryService = {
       listCustomers: jest.fn(),
       getCustomerByIdentification: jest.fn(),
-    } as any;
+    };
 
     handler = new ListCustomersWithStockHandler(mockQueryService);
   });

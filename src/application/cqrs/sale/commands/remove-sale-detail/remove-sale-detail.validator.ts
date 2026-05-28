@@ -1,10 +1,14 @@
+import { Injectable } from '@nestjs/common';
+import type { RemoveSaleDetailPayload } from './remove-sale-detail.command';
+
+@Injectable()
 export class RemoveSaleDetailValidator {
-  static validate(saleId: string, saleDetailId: string): void {
-    if (!saleId) {
+  validate(payload: RemoveSaleDetailPayload): void {
+    if (!payload.saleId) {
       throw new Error('Sale ID is required');
     }
-    if (!saleDetailId) {
-      throw new Error('Sale detail ID is required');
+    if (!payload.saleDetailId) {
+      throw new Error('Sale Detail ID is required');
     }
   }
 }

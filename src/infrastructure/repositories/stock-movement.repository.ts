@@ -94,6 +94,7 @@ export class StockMovementRepository implements IStockMovementRepository {
 
   async create(movement: StockMovement): Promise<StockMovement> {
     const entity = this.repo.create(this.mapToEntity(movement) as StockMovementTypeOrmEntity);
+
     const saved = await this.repo.save(entity);
     return this.mapToDomain(saved);
   }

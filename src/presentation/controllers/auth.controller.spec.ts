@@ -13,6 +13,9 @@ describe('AuthController', () => {
     login: jest.fn(),
     validateRefreshToken: jest.fn(),
     generateAccessToken: jest.fn(),
+    getAuthenticatedUser: jest.fn(),
+    linkGoogle: jest.fn(),
+    loginGoogle: jest.fn(),
   };
 
   const mockCommandBus = {
@@ -126,6 +129,63 @@ describe('AuthController', () => {
           message: 'auth.errors.invalid_credentials',
         },
       });
+    });
+  });
+
+  describe('linkGoogle', () => {
+    it('should resolve the authenticated user and call authService.linkGoogle with the token', async () => {
+      const mockUser = {
+        id: 'user-123',
+        employeeId: 'EMP-001',
+        email: 'admin@test.com',
+      };
+
+      mockAuthService.getAuthenticatedUser.mockResolvedValue(mockUser);
+      mockAuthService.linkGoogle.mockResolvedValue(undefined);
+
+      await controller.linkGoogle(
+        { idToken: 'google-id-token' },
+        { user: { employeeId: 'user-123' } } as any,
+      );
+
+      expect(mockAuthService.getAuthenticatedUser).toHaveBeenCalledWith('user-123');
+      expect(mockAuthService.linkGoogle).toHaveBeenCalledWith('google-id-token', mockUser);
+    });
+
+    it('should throw UnauthorizedException when the authenticated user cannot be loaded', async () => {
+      mockAuthService.getAuthenticatedUser.mockResolvedValue(null);
+
+      await expect(
+        controller.linkGoogle(
+          { idToken: 'google-id-token' },
+          { user: { employeeId: 'user-123' } } as any,
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('loginGoogle', () => {
+    it('should call authService.loginGoogle and return tokens', async () => {
+      const mockTokens = {
+        accessToken: 'google-access-token',
+        refreshToken: 'google-refresh-token',
+        expiresIn: 900,
+      };
+
+      mockAuthService.loginGoogle.mockResolvedValue(mockTokens);
+
+      const result = await controller.loginGoogle({ idToken: 'google-id-token' });
+
+      expect(mockAuthService.loginGoogle).toHaveBeenCalledWith('google-id-token');
+      expect(result).toEqual(mockTokens);
+    });
+
+    it('should throw UnauthorizedException when authService.loginGoogle returns null', async () => {
+      mockAuthService.loginGoogle.mockResolvedValue(null);
+
+      await expect(
+        controller.loginGoogle({ idToken: 'google-id-token' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });

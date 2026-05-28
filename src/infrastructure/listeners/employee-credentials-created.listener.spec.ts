@@ -59,8 +59,9 @@ describe('EmployeeCredentialsCreatedListener', () => {
         {
           firstName: 'John',
           username: 'jdoe',
+          email: 'john.doe@example.com',
           temporaryPassword: 'TempPass123!',
-          loginUrl: 'https://app.example.com',
+          loginUrl: 'https://app.example.com/login',
         },
       );
     });
@@ -69,7 +70,7 @@ describe('EmployeeCredentialsCreatedListener', () => {
       const mockConfigService = {
         get: jest.fn().mockImplementation((key: string) => {
           if (key === 'app.url') return null;
-          if (key === 'app.frontendUrl') return 'https://fallback.example.com';
+          if (key === 'app.frontendBaseUrl') return 'https://fallback.example.com';
           return null;
         }),
       };
@@ -95,7 +96,7 @@ describe('EmployeeCredentialsCreatedListener', () => {
 
       expect(mockEmailService.sendEmployeeCredentials).toHaveBeenCalledWith(
         'alice.smith@example.com',
-        expect.objectContaining({ loginUrl: 'https://fallback.example.com' }),
+        expect.objectContaining({ loginUrl: 'https://fallback.example.com/login' }),
       );
     });
 
@@ -125,7 +126,7 @@ describe('EmployeeCredentialsCreatedListener', () => {
 
       expect(mockEmailService.sendEmployeeCredentials).toHaveBeenCalledWith(
         'bob.wilson@example.com',
-        expect.objectContaining({ loginUrl: 'http://localhost:3000' }),
+        expect.objectContaining({ loginUrl: 'http://localhost:5173/login' }),
       );
     });
 

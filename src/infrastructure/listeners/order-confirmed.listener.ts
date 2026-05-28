@@ -5,7 +5,7 @@ import { Inject } from '@nestjs/common';
 import type { IEmailService } from '../../application/ports/IEmailService';
 import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
-import { OrderConfirmationDTO, OrderItemDTO } from '../../application/dtos/order/order-confirmation.dto';
+import { OrderConfirmationDTO, OrderItemDTO } from '../../application/dto/order/order-confirmation.dto';
 
 export class OrderConfirmedListener {
   constructor(

@@ -68,6 +68,7 @@ export { RemoveSaleDetailValidator } from './sale/commands/remove-sale-detail/re
 export { UpdateSaleDetailQuantityValidator } from './sale/commands/update-sale-detail-quantity/update-sale-detail-quantity.validator';
 export { ConfirmSaleValidator } from './sale/commands/confirm-sale/confirm-sale.validator';
 export { CancelSaleValidator } from './sale/commands/cancel-sale/cancel-sale.validator';
+export { QuickConfirmSaleValidator } from './sale/commands/quick-confirm-sale/quick-confirm-sale.validator';
 
 // Sale Queries Validators
 export { GetSaleValidator } from './sale/queries/get-sale/get-sale.validator';

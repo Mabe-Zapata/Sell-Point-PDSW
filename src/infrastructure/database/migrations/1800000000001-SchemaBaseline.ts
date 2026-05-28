@@ -79,7 +79,7 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
           col('PAS_HASH', 'varchar', { length: '255' }),
           col('STA_USR', 'varchar', { length: '30', default: "'ACTIVE'" }),
           col('DEF_BRA_ID', uuidType, { isNullable: true, length: uuidLength }),
-          col('failed_attempts', 'integer', { default: 0 }),
+          col('FAILED_ATTEMPTS', 'integer', { default: 0 }),
           col('CRE_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
           col('UPD_AT', 'timestamp', { precision: 6, default: 'CURRENT_TIMESTAMP' }),
         ],
@@ -199,6 +199,7 @@ export class SchemaBaseline1800000000001 implements MigrationInterface {
     await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CODE', columnNames: ['COD_PRO'], isUnique: true }));
     await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_ACT', columnNames: ['ACT_PRO'] }));
     await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CAT', columnNames: ['CAT_ID'] }));
+    await queryRunner.createIndex('PRODUCTS', new TableIndex({ name: 'IDX_PRO_CREATED_AT', columnNames: ['CRE_AT'] }));
 
     // ─────────────────────────────────────────────────────────────────────────
     // 9. SALES

@@ -71,6 +71,7 @@ export { RemoveSaleDetailHandler } from './sale/commands/remove-sale-detail/Remo
 export { UpdateSaleDetailQuantityHandler } from './sale/commands/update-sale-detail-quantity/UpdateSaleDetailQuantityHandler';
 export { ConfirmSaleHandler } from './sale/commands/confirm-sale/ConfirmSaleHandler';
 export { CancelSaleHandler } from './sale/commands/cancel-sale/CancelSaleHandler';
+export { QuickConfirmSaleHandler } from './sale/commands/quick-confirm-sale/QuickConfirmSaleHandler';
 
 // Sale Queries
 export { GetSaleHandler } from './sale/queries/get-sale/GetSaleHandler';

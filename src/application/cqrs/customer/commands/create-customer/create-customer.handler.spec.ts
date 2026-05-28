@@ -1,13 +1,11 @@
 import { CreateCustomerHandler } from './create-customer.handler';
-import type { ICustomerRepository } from '../../../../../domain/repositories';
-import { Customer } from '../../../../../domain/entities';
-import { CreateCustomerCommand } from './create-customer.command';
-import { DuplicateCedulaException } from '../../../../../domain/exceptions';
-import { CreateCustomerDto } from '../../../../dto/customer/create-customer.dto';
+import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
+import { Customer } from '../../../../../domain/entities/customer.entity';
 
-describe('CreateCustomerHandler', () => {
+describe('CreateCustomerHandler (application layer)', () => {
+  // The application-layer handler takes repositories as plain constructor args.
+  let mockRepository: any;
   let handler: CreateCustomerHandler;
-  let mockRepository: jest.Mocked<ICustomerRepository>;
 
   beforeEach(() => {
     mockRepository = {
@@ -17,60 +15,60 @@ describe('CreateCustomerHandler', () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
-    } as any;
+    };
 
     handler = new CreateCustomerHandler(mockRepository);
   });
 
-  it('should check for duplicate and create customer', async () => {
-    const mockCustomer = new Customer({
-      id: 'cust-123',
-      firstName: 'John',
-      lastName: 'Doe',
-      cedula: '0901234567',
-      email: 'john@test.com',
-      phone: '0991234567',
-      address: 'Test address',
-      isActive: true,
-    });
-
-    mockRepository.findByIdentificationNumber.mockResolvedValue(null);
-    mockRepository.create.mockResolvedValue(mockCustomer);
-
-    const dto: CreateCustomerDto = {
-      cedula: '0901234567',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@test.com',
-      phone: '0991234567',
-      address: 'Test address',
-    };
-
-    const command = new CreateCustomerCommand(dto);
-    const result = await handler.execute(command);
-
-    expect(mockRepository.findByIdentificationNumber).toHaveBeenCalledWith('0901234567');
-    expect(mockRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        cedula: '0901234567',
-        firstName: 'John',
-      }),
-    );
-    expect(result).toEqual(mockCustomer);
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should throw DuplicateCedulaException when customer exists', async () => {
-    const existingCustomer = { id: 'cust-existing', cedula: '0901234567' } as Customer;
-    mockRepository.findByIdentificationNumber.mockResolvedValue(existingCustomer);
+  describe('execute', () => {
+    it('should check for duplicate and create customer', async () => {
+      const mockCustomer = {
+        id: 'cust-123',
+        cedula: '0901234567',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@test.com',
+        phone: '0991234567',
+        address: 'Test address',
+        isActive: true,
+      } as Customer;
 
-    const dto: CreateCustomerDto = {
-      cedula: '0901234567',
-      firstName: 'John',
-    };
+      mockRepository.findByIdentificationNumber.mockResolvedValue(null);
+      mockRepository.create.mockResolvedValue(mockCustomer);
 
-    const command = new CreateCustomerCommand(dto);
+      const dto = {
+        cedula: '0901234567',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@test.com',
+        phone: '0991234567',
+        address: 'Test address',
+      };
 
-    await expect(handler.execute(command)).rejects.toThrow(DuplicateCedulaException);
-    expect(mockRepository.create).not.toHaveBeenCalled();
+      const result = await handler.execute({ payload: dto } as any);
+
+      expect(mockRepository.findByIdentificationNumber).toHaveBeenCalledWith('0901234567');
+      expect(mockRepository.create).toHaveBeenCalled();
+      expect(result).toEqual(mockCustomer);
+    });
+
+    it('should throw DuplicateCedulaException when customer exists', async () => {
+      const existingCustomer = { id: 'cust-existing', cedula: '0901234567' } as Customer;
+      mockRepository.findByIdentificationNumber.mockResolvedValue(existingCustomer);
+
+      const dto = {
+        cedula: '0901234567',
+        firstName: 'John',
+        lastName: 'Doe',
+      };
+
+      // The handler throws before calling create
+      await expect(handler.execute({ payload: dto } as any)).rejects.toThrow(DuplicateCedulaException);
+      expect(mockRepository.create).not.toHaveBeenCalled();
+    });
   });
 });

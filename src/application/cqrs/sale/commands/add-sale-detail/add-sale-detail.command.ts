@@ -1,14 +1,12 @@
+import { ICommand } from '@nestjs/cqrs';
+
 export interface AddSaleDetailPayload {
   saleId: string;
   productId: string;
-  productName: string;
-  productCode: string;
   quantity: number;
   unitPrice: number;
 }
 
-export class AddSaleDetailCommand {
-  constructor(
-    public readonly payload: AddSaleDetailPayload,
-  ) {}
+export class AddSaleDetailCommand implements ICommand {
+  constructor(public readonly payload: AddSaleDetailPayload) {}
 }

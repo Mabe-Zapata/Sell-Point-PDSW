@@ -22,8 +22,8 @@ export class SaleTypeOrmEntity {
   @Column({ name: 'BRA_ID', type: 'uuid' })
   branchId!: string;
 
-  @Column({ name: 'CUS_ID', type: 'uuid' })
-  customerId!: string;
+  @Column({ name: 'CUS_ID', type: 'uuid', nullable: true })
+  customerId?: string | null;
 
   @ManyToOne(() => CustomerTypeOrmEntity)
   @JoinColumn({ name: 'CUS_ID' })
@@ -43,7 +43,8 @@ export class SaleTypeOrmEntity {
   @JoinColumn({ name: 'TAX_RAT_ID' })
   taxRate!: TaxRateTypeOrmEntity;
 
-  @Column({ name: 'SAL_NUM', length: 50, unique: true })
+  @Index('IDX_SAL_NUM')
+  @Column({ name: 'SAL_NUM', length: 50 })
   saleNumber!: string;
 
   @Column({
