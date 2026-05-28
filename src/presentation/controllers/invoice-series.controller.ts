@@ -63,12 +63,14 @@ export class InvoiceSeriesController {
         establishmentCode: dto.establishmentCode,
         emissionPointCode: dto.emissionPointCode,
         currentSequence: dto.currentSequence ?? 0,
-        isActive: dto.isActive ?? true,
+        isActive: false,
       }),
     );
 
-    if (created.isActive) {
-      await this.deactivateOtherBranchSeries(created);
+    if (dto.isActive ?? true) {
+      return InvoiceSeriesResponseDto.fromEntity(
+        await this.invoiceSeriesRepository.activateExclusiveForBranch(created.id),
+      );
     }
 
     return InvoiceSeriesResponseDto.fromEntity(created);
@@ -85,6 +87,7 @@ export class InvoiceSeriesController {
       throw new EntityNotFoundException('InvoiceSeries', id);
     }
 
+    const shouldActivate = dto.isActive ?? existing.isActive;
     const updated = await this.invoiceSeriesRepository.update(
       new InvoiceSeries({
         ...existing,
@@ -92,12 +95,14 @@ export class InvoiceSeriesController {
         establishmentCode: dto.establishmentCode ?? existing.establishmentCode,
         emissionPointCode: dto.emissionPointCode ?? existing.emissionPointCode,
         currentSequence: dto.currentSequence ?? existing.currentSequence,
-        isActive: dto.isActive ?? existing.isActive,
+        isActive: false,
       }),
     );
 
-    if (updated.isActive) {
-      await this.deactivateOtherBranchSeries(updated);
+    if (shouldActivate) {
+      return InvoiceSeriesResponseDto.fromEntity(
+        await this.invoiceSeriesRepository.activateExclusiveForBranch(updated.id),
+      );
     }
 
     return InvoiceSeriesResponseDto.fromEntity(updated);
@@ -111,10 +116,7 @@ export class InvoiceSeriesController {
       throw new EntityNotFoundException('InvoiceSeries', id);
     }
 
-    const activated = await this.invoiceSeriesRepository.update(
-      new InvoiceSeries({ ...existing, isActive: true }),
-    );
-    await this.deactivateOtherBranchSeries(activated);
+    const activated = await this.invoiceSeriesRepository.activateExclusiveForBranch(existing.id);
     return InvoiceSeriesResponseDto.fromEntity(activated);
   }
 
@@ -130,20 +132,5 @@ export class InvoiceSeriesController {
       new InvoiceSeries({ ...existing, isActive: false }),
     );
     return InvoiceSeriesResponseDto.fromEntity(deactivated);
-  }
-
-  private async deactivateOtherBranchSeries(activeSeries: InvoiceSeries): Promise<void> {
-    const branchSeries = await this.invoiceSeriesRepository.findAll(
-      { page: 1, limit: 1000 },
-      { branchId: activeSeries.branchId, isActive: true },
-    );
-
-    await Promise.all(
-      branchSeries.data
-        .filter((series) => series.id !== activeSeries.id)
-        .map((series) =>
-          this.invoiceSeriesRepository.update(new InvoiceSeries({ ...series, isActive: false })),
-        ),
-    );
   }
 }

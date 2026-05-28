@@ -59,6 +59,26 @@ export class InvoiceSeriesRepositoryImpl implements IInvoiceSeriesRepository {
     return this.mapToDomain(updated);
   }
 
+  async activateExclusiveForBranch(id: string): Promise<InvoiceSeries> {
+    const entity = await this.qr.manager.findOne(InvoiceSeriesTypeOrmEntity, {
+      where: { id },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!entity) {
+      throw new Error('InvoiceSeries not found');
+    }
+
+    await this.qr.manager.update(
+      InvoiceSeriesTypeOrmEntity,
+      { branchId: entity.branchId, isActive: true },
+      { isActive: false },
+    );
+    entity.isActive = true;
+    const saved = await this.qr.manager.save(entity);
+    return this.mapToDomain(saved);
+  }
+
   async incrementSequence(id: string): Promise<number> {
     const entity = await this.qr.manager.findOne(InvoiceSeriesTypeOrmEntity, {
       where: { id },

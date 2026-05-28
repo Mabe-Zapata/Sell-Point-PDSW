@@ -101,6 +101,36 @@ export class InvoiceSeriesRepository {
     return this.mapToDomain(updated);
   }
 
+  async activateExclusiveForBranch(id: string): Promise<InvoiceSeries> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entity = await queryRunner.manager.findOne(InvoiceSeriesTypeOrmEntity, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!entity) {
+        throw new Error('InvoiceSeries not found');
+      }
+
+      await queryRunner.manager.update(
+        InvoiceSeriesTypeOrmEntity,
+        { branchId: entity.branchId, isActive: true },
+        { isActive: false },
+      );
+      entity.isActive = true;
+      const saved = await queryRunner.manager.save(entity);
+      await queryRunner.commitTransaction();
+      return this.mapToDomain(saved);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async incrementSequence(id: string): Promise<number> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
