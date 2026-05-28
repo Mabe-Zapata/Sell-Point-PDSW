@@ -51,17 +51,28 @@ async function seedCategories(
   categoryRepo: Repository<CategoryTypeOrmEntity>,
   taxRateRepo: Repository<TaxRateTypeOrmEntity>,
 ): Promise<CategoryTypeOrmEntity[]> {
+  const taxRate = await taxRateRepo.findOne({ where: { isActive: true } });
+  if (!taxRate) {
+    throw new Error('No existe ningún tax rate activo. Corre npm run db:seed primero.');
+  }
+
   const existing = await categoryRepo.find();
   if (existing.length > 0) {
+    for (const category of existing) {
+      if (!category.taxRateId) {
+        category.taxRateId = taxRate.id;
+        await categoryRepo.update(category.id, { taxRateId: taxRate.id });
+      }
+    }
     process.stdout.write(`  Categorías ya existen: ${existing.length} — omitiendo.\n`);
     return existing;
   }
 
-
-    const categories = CATEGORIES.map((name) =>
+  const categories = CATEGORIES.map((name) =>
     categoryRepo.create({
       name,
       description: `Categoría de ${name}`,
+      taxRateId: taxRate.id,
       isActive: true,
     }),
   );
