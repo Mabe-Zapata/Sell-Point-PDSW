@@ -158,7 +158,7 @@ async function seedSales(
   productIds: string[],
   cashierUserId: string,
   branchId: string,
-  taxRateId: string,
+  taxRate: TaxRateTypeOrmEntity,
   ds: DataSource,
 ): Promise<void> {
   const saleRepo = ds.getRepository(SaleTypeOrmEntity);
@@ -205,7 +205,7 @@ async function seedSales(
       }
 
       subtotal = Math.round(subtotal * 100) / 100;
-      const taxAmount = Math.round(subtotal * 0.15 * 100) / 100;
+      const taxAmount = Math.round(subtotal * (taxRate.percentage / 100) * 100) / 100;
       const total = Math.round((subtotal + taxAmount) * 100) / 100;
 
       const sale = saleRepo.create({
@@ -213,7 +213,6 @@ async function seedSales(
         branchId,
         customerId: randomItem(customerIds),
         cashierUserId,
-        taxRateId,
         saleNumber: `SAL-${String(index).padStart(10, '0')}`,
         paymentMethod: 'CASH',
         status: 'CONFIRMED',
@@ -226,6 +225,9 @@ async function seedSales(
       sales.push(sale);
 
       saleItems.forEach((item) => {
+        const lineSubtotal = Math.round(item.quantity * item.unitPrice * 100) / 100;
+        const lineTaxAmount = Math.round(lineSubtotal * (taxRate.percentage / 100) * 100) / 100;
+
         details.push(
           detailRepo.create({
             saleId,
@@ -234,6 +236,9 @@ async function seedSales(
             productCodeSnapshot: item.productCode,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
+            taxRateId: taxRate.id,
+            taxPercentage: taxRate.percentage,
+            taxAmount: lineTaxAmount,
           } as SaleDetailTypeOrmEntity),
         );
       });
@@ -284,7 +289,7 @@ async function main(): Promise<void> {
   const customerIds = await seedCustomers(customerRepo);
   const productIds = await seedProducts(productRepo, categories);
 
-  await seedSales(customerIds, productIds, cashier.id, branchId, taxRate.id, dataSource);
+  await seedSales(customerIds, productIds, cashier.id, branchId, taxRate, dataSource);
 
   process.stdout.write('\n✓ Seed masivo completado.\n');
   process.stdout.write(`  Clientes  : ${TOTAL_CUSTOMERS.toLocaleString()}\n`);

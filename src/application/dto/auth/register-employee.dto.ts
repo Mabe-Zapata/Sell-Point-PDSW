@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { IsEmail, IsString, IsNotEmpty, IsOptional, IsUUID, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -17,42 +17,30 @@ export enum UserRole {
  * Maps to the USR_TABLA entity fields.
  */
 export class RegisterEmployeeDto {
-  @ApiProperty({ description: 'Email address', example: 'jsmith@billflow.com' })
   @IsEmail()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
-  email: string;
-
-  @ApiProperty({ description: 'First name', example: 'John' })
+  email!: string;
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  firstName: string;
-
-  @ApiProperty({ description: 'Last name', example: 'Smith' })
+  firstName!: string;
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  lastName: string;
-
-  @ApiProperty({ description: 'Cedula', example: '1234567890', required: false })
+  lastName!: string;
   @IsString()
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   cedula?: string;
-
-  @ApiProperty({ description: 'Role', enum: UserRole, enumName: 'UserRole', example: 'VENDEDOR' })
   @IsString()
   @IsNotEmpty()
   @IsEnum(UserRole)
-  role: UserRole | string;
-
-  @ApiProperty({ description: 'Username', example: 'jsmith', required: false })
+  role!: UserRole | string;
   @IsString()
   @IsOptional()
   username?: string;
-
-  @ApiProperty({ description: 'Default branch UUID', required: false })
   @IsUUID()
   @IsOptional()
   defaultBranchId?: string;
 }
+

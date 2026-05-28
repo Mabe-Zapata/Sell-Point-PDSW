@@ -1,38 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { SaleDetail } from '../../../domain/entities/sale-detail.entity';
 
 export class SaleDetailResponseDto {
-  @ApiProperty()
   id: number;
-
-  @ApiProperty()
   saleId: string;
-
-  @ApiProperty()
   productId: string;
-
-  @ApiProperty()
   productName: string;
-
-  @ApiProperty()
   productCode: string;
-
-  @ApiProperty()
   quantity: number;
-
-  @ApiProperty()
   unitPrice: number;
-
-  @ApiProperty()
   taxRateId: string;
-
-  @ApiProperty()
   taxPercentage: number;
-
-  @ApiProperty()
   taxAmount: number;
-
-  @ApiProperty()
   createdAt: Date;
 
   constructor(detail: SaleDetail) {
@@ -57,3 +35,4 @@ export class SaleDetailResponseDto {
     return details.map((d) => new SaleDetailResponseDto(d));
   }
 }
+

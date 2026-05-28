@@ -1,35 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../../domain/entities/user.entity';
 
 export class UserResponseDto {
-  @ApiProperty({ example: 'uuid' })
   id!: string;
-
-  @ApiProperty({ example: 'EMP-001' })
   employeeId!: string;
-
-  @ApiProperty({ example: 'jsmith' })
   username!: string;
-
-  @ApiProperty({ example: 'jsmith@billflow.com' })
   email!: string;
-
-  @ApiProperty({ example: 'ADMIN' })
   role?: string;
-
-  @ApiProperty({ example: 'John' })
   firstName?: string;
-
-  @ApiProperty({ example: 'Smith' })
   lastName?: string;
-
-  @ApiProperty({ example: 'ACTIVE' })
   status!: string;
-
-  @ApiProperty({ example: true })
   isActive!: boolean;
-
-  @ApiProperty()
   createdAt!: Date;
 
   static fromEntity(user: User): UserResponseDto {

@@ -1,17 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../../domain/entities/role.entity';
 
 export class RoleResponseDto {
-  @ApiProperty({ example: 'uuid' })
   id!: string;
-
-  @ApiProperty({ example: 'ADMIN' })
   name!: string;
-
-  @ApiProperty({ example: 'Administrador del sistema' })
   description?: string;
-
-  @ApiProperty()
   createdAt!: Date;
 
   static fromEntity(role: Role): RoleResponseDto {

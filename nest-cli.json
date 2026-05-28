@@ -6,8 +6,9 @@
     "deleteOutDir": true,
     "plugins": [
       {
-        "name": "@nestjs/swagger",
+        "name": "@nestjs/swagger/plugin",
         "options": {
+          "dtoFileNameSuffix": [".dto.ts", ".command.ts"],
           "classValidatorShim": true,
           "introspectComments": true
         }

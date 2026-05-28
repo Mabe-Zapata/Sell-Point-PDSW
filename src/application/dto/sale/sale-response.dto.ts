@@ -1,46 +1,20 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Sale } from '../../../domain/entities/sale.entity';
 import { SaleDetail } from '../../../domain/entities/sale-detail.entity';
 import { SaleDetailResponseDto } from './sale-detail-response.dto';
 
 export class SaleResponseDto {
-  @ApiProperty()
   id: string;
-
-  @ApiProperty()
   branchId: string;
-
-  @ApiProperty()
   customerId: string | null;
-
-  @ApiProperty()
   cashierUserId: string;
-
-  @ApiProperty()
   saleNumber: string;
-
-  @ApiProperty()
   status: string;
-
-  @ApiProperty()
   subtotal: number;
-
-  @ApiProperty()
   taxAmount: number;
-
-  @ApiProperty()
   discountAmount: number;
-
-  @ApiProperty()
   total: number;
-
-  @ApiProperty({ type: [SaleDetailResponseDto] })
   details?: SaleDetailResponseDto[];
-
-  @ApiProperty()
   createdAt: Date;
-
-  @ApiProperty()
   updatedAt: Date;
 
   constructor(sale: Sale, details?: SaleDetail[]) {

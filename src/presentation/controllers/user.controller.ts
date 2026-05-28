@@ -1,10 +1,9 @@
 import {
   Controller,
   Get,
-  Post,
+  Body,
   Put,
   Patch,
-  Body,
   Param,
   Query,
   HttpCode,
@@ -21,14 +20,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
-import { CreateUserCommand } from '../../application/cqrs/user/commands/create-user/create-user.command';
 import { UpdateUserCommand } from '../../application/cqrs/user/commands/update-user/update-user.command';
 import { ActivateUserCommand } from '../../application/cqrs/user/commands/activate-user/activate-user.command';
 import { DeactivateUserCommand } from '../../application/cqrs/user/commands/deactivate-user/deactivate-user.command';
 import { GetUserQuery } from '../../application/cqrs/user/queries/get-user/get-user.query';
 import { ListUsersQuery } from '../../application/cqrs/user/queries/list-users/list-users.query';
 
-import { CreateUserDto } from '../../application/dto/user/create-user.dto';
 import { UpdateUserDto } from '../../application/dto/user/update-user.dto';
 import { UserResponseDto } from '../../application/dto/user/user-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
@@ -46,18 +43,6 @@ export class UserController {
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
   ) {}
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Crear un nuevo usuario (solo ADMIN)' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiResponse({ status: 201, description: 'Usuario creado', type: UserResponseDto })
-  @ApiResponse({ status: 400, description: 'Error de validación' })
-  @ApiResponse({ status: 409, description: 'Usuario ya existe' })
-  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    const user = await this.commandBus.execute<CreateUserCommand, User>(new CreateUserCommand(dto));
-    return UserResponseDto.fromEntity(user);
-  }
 
   @Get()
   @ApiOperation({ summary: 'Listar usuarios (solo ADMIN)' })

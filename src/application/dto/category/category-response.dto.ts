@@ -1,26 +1,12 @@
 import { Category } from '../../../domain/entities/category.entity';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class CategoryResponseDto {
-  @ApiProperty({ description: 'Category UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string;
-
-  @ApiProperty({ description: 'Category name', example: 'Beverages' })
   name: string;
-
-  @ApiProperty({ description: 'Category description', example: 'Soda and juices', required: false })
   description?: string;
-
-  @ApiProperty({ description: 'Associated tax rate ID' })
   taxRateId: string;
-
-  @ApiProperty({ description: 'Active status', example: true })
   isActive: boolean;
-
-  @ApiProperty({ description: 'Creation date' })
   createdAt: Date;
-
-  @ApiProperty({ description: 'Last update date' })
   updatedAt: Date;
 
   constructor(category: Category) {
@@ -41,3 +27,4 @@ export class CategoryResponseDto {
     return categories.map((c) => new CategoryResponseDto(c));
   }
 }
+

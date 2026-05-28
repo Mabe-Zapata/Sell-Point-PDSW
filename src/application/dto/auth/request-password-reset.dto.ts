@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { IsEmail } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class RequestPasswordResetDto {
   @IsEmail()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
-  email: string;
+  email!: string;
 }
