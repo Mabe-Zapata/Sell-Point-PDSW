@@ -20,7 +20,7 @@ export class InvoiceSeriesRepository {
       establishmentCode: entity.establishmentCode,
       emissionPointCode: entity.emissionPointCode,
       currentSequence: entity.currentSequence,
-      isActive: entity.isActive,
+      isActive: Boolean(entity.isActive),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
