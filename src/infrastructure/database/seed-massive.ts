@@ -1,6 +1,7 @@
 import 'reflect-metadata';
-//import { randomUUID } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
+import { fakerES } from '@faker-js/faker';
+import { randomUUID } from 'node:crypto';
 import { dataSource } from '../../config/typeorm.config';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
 import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
@@ -13,7 +14,7 @@ import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
 // ─────────────────────────────────────────────
 // CONFIGURACIÓN
 // ─────────────────────────────────────────────
-const BATCH_SIZE = 500; // Reducido para que repository.save() no sature la memoria
+const BATCH_SIZE = 500;
 const TOTAL_CUSTOMERS = 100000;
 const TOTAL_PRODUCTS = 100000;
 const TOTAL_SALES = 100000;
@@ -25,7 +26,7 @@ const CATEGORIES = [
 ];
 
 // ─────────────────────────────────────────────
-// UTILIDADES (sin dependencias externas)
+// UTILIDADES
 // ─────────────────────────────────────────────
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -35,12 +36,12 @@ function randomItem<T>(arr: T[]): T {
   return arr[randomInt(0, arr.length - 1)];
 }
 
-function generateCedula(index: number): string {
-  return String(index).padStart(10, '0');
-}
-
 function randomPrice(min: number, max: number): number {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100;
+}
+
+function generateCedula(): string {
+  return fakerES.string.numeric(10);
 }
 
 // ─────────────────────────────────────────────
@@ -55,7 +56,6 @@ async function seedCategories(
     return existing;
   }
 
-  // repository.create() + repository.save() → siempre respeta el mapeo de columnas
   const categories = CATEGORIES.map((name) =>
     categoryRepo.create({
       name,
@@ -86,24 +86,18 @@ async function seedCustomers(
   const allIds: string[] = [];
 
   for (let batch = 0; batch < TOTAL_CUSTOMERS / BATCH_SIZE; batch++) {
-    const customers = Array.from({ length: BATCH_SIZE }, (_, i) => {
-      const index = batch * BATCH_SIZE + i + 1;
-      // Usar siempre repository.create() para que TypeORM aplique
-      // el mapeo de metadatos (column names, defaults, transformers)
-      // independientemente del motor de base de datos subyacente.
-      return customerRepo.create({
-        cedula: generateCedula(index),
-        firstName: `Nombre${index}`,
-        lastName: `Apellido${index}`,
-        email: `cliente${index}@test.com`,
-        phone: `09${String(randomInt(10000000, 99999999))}`,
-        address: `Calle ${randomInt(1, 100)} y Av. ${randomInt(1, 50)}`,
+    const customers = Array.from({ length: BATCH_SIZE }, () =>
+      customerRepo.create({
+        cedula: generateCedula(),
+        firstName: fakerES.person.firstName(),
+        lastName: fakerES.person.lastName(),
+        email: fakerES.internet.email(),
+        phone: fakerES.phone.number(),
+        address: fakerES.location.streetAddress(),
         isActive: true,
-      });
-    });
+      }),
+    );
 
-    // repository.save() delega al EntityManager del driver activo,
-    // aplica todos los @Column({ name: '...' }) y @BeforeInsert hooks.
     const saved = await customerRepo.save(customers);
     saved.forEach((c) => allIds.push(c.id));
     process.stdout.write(`  Clientes insertados: ${allIds.length}/${TOTAL_CUSTOMERS}\r`);
@@ -131,14 +125,13 @@ async function seedProducts(
   const allIds: string[] = [];
 
   for (let batch = 0; batch < TOTAL_PRODUCTS / BATCH_SIZE; batch++) {
-    const products = Array.from({ length: BATCH_SIZE }, (_, i) => {
-      const index = batch * BATCH_SIZE + i + 1;
+    const products = Array.from({ length: BATCH_SIZE }, () => {
       const salePrice = randomPrice(0.5, 999.99);
       return productRepo.create({
         categoryId: randomItem(categories).id,
-        code: `COD-${String(index).padStart(8, '0')}`,
-        name: `Producto ${index}`,
-        description: `Descripción del producto ${index}`,
+        code: fakerES.string.alphanumeric(10).toUpperCase(),
+        name: fakerES.commerce.productName(),
+        description: fakerES.commerce.productDescription(),
         salePrice,
         costPrice: Math.round(salePrice * 0.6 * 100) / 100,
         currentStock: randomInt(10, 500),
@@ -185,8 +178,8 @@ async function seedSales(
 
     for (let i = 0; i < BATCH_SIZE; i++) {
       const index = batch * BATCH_SIZE + i + 1;
+      const saleId = randomUUID();
 
-      // Seleccionar entre 1 y 2 productos únicos para la venta
       const numProducts = randomInt(1, 2);
       const selectedProductIds = new Set<string>();
       while (selectedProductIds.size < numProducts) {
@@ -194,24 +187,27 @@ async function seedSales(
       }
 
       let subtotal = 0;
-      const saleItems: Array<{ productId: string; quantity: number; unitPrice: number }> = [];
+      const saleItems: Array<{ productId: string; productName: string; productCode: string; quantity: number; unitPrice: number }> = [];
 
       for (const productId of selectedProductIds) {
         const quantity = randomInt(1, 5);
         const unitPrice = randomPrice(0.5, 999.99);
         subtotal += quantity * unitPrice;
-        saleItems.push({ productId, quantity, unitPrice });
+        saleItems.push({
+          productId,
+          productName: fakerES.commerce.productName(),
+          productCode: fakerES.string.alphanumeric(10).toUpperCase(),
+          quantity,
+          unitPrice,
+        });
       }
 
       subtotal = Math.round(subtotal * 100) / 100;
       const taxAmount = Math.round(subtotal * 0.15 * 100) / 100;
       const total = Math.round((subtotal + taxAmount) * 100) / 100;
 
-      // ✅ CLAVE: repository.create() construye la entidad a través del
-      // EntityMetadata del ORM, por lo que los nombres de columna (@Column name),
-      // transformers, y defaults se aplican siempre, sin importar si el
-      // motor es PostgreSQL, MySQL, SQLite u otro.
       const sale = saleRepo.create({
+        id: saleId,
         branchId,
         customerId: randomItem(customerIds),
         cashierUserId,
@@ -227,39 +223,25 @@ async function seedSales(
 
       sales.push(sale);
 
-      // Los detalles se crean DESPUÉS de tener la referencia de la venta.
-      // Como aún no tenemos el id (pre-insert), los añadimos post-save.
       saleItems.forEach((item) => {
         details.push(
           detailRepo.create({
-            // saleId se asignará tras guardar las ventas (ver abajo)
+            saleId,
             productId: item.productId,
-            productNameSnapshot: `Producto ${item.productId.slice(0, 8)}`,
-            productCodeSnapshot: `COD-${String(index).padStart(8, '0')}`,
+            productNameSnapshot: item.productName,
+            productCodeSnapshot: item.productCode,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            // Guardamos el índice para poder mapear post-save
-            __saleIndex: i, // propiedad temporal, no persistida
-          } as SaleDetailTypeOrmEntity & { __saleIndex: number }),
+          } as SaleDetailTypeOrmEntity),
         );
       });
     }
 
-    // 1. Guardar ventas → el ORM genera los UUIDs y aplica @PrimaryGeneratedColumn
-    const savedSales = await saleRepo.save(sales);
+    await saleRepo.save(sales);
+    await detailRepo.save(details);
 
-    // 2. Asignar el saleId real a cada detalle usando el índice temporal
-    const detailsWithSaleId = details.map((detail) => {
-      const idx = (detail as SaleDetailTypeOrmEntity & { __saleIndex: number }).__saleIndex;
-      detail.saleId = savedSales[idx].id;
-      return detail;
-    });
-
-    // 3. Guardar detalles con el saleId correcto
-    await detailRepo.save(detailsWithSaleId);
-
-    insertedSales += savedSales.length;
-    insertedDetails += detailsWithSaleId.length;
+    insertedSales += sales.length;
+    insertedDetails += details.length;
     process.stdout.write(
       `  Ventas: ${insertedSales}/${TOTAL_SALES} | Detalles: ${insertedDetails}\r`,
     );

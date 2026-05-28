@@ -66,7 +66,7 @@ export class UserTypeOrmEntity {
   @Column({ name: 'GOOGLE_EMAIL', type: 'varchar', length: 255, nullable: true })
   googleEmail?: string | null;
 
-  @Column({ name: 'failed_attempts', type: 'int', default: 0 })
+  @Column({ name: 'FAILED_ATTEMPTS', type: 'int', default: 0 })
   failedLoginAttempts!: number;
 
   @CreateDateColumn({ name: 'CRE_AT' })
