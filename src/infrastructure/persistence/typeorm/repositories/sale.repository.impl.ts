@@ -20,6 +20,24 @@ export class SaleRepositoryImpl implements ISaleRepository {
     return entity ? this.mapToDomain(entity) : null;
   }
 
+  async getNextSaleNumber(): Promise<string> {
+    const rows = await this.qr.manager
+      .createQueryBuilder('SaleTypeOrmEntity', 'sale')
+      .select('sale.saleNumber', 'saleNumber')
+      .where('sale.saleNumber LIKE :prefix', { prefix: 'SAL-%' })
+      .getRawMany<{ saleNumber: string }>();
+
+    let maxSequence = 0;
+    for (const row of rows) {
+      const match = /^SAL-(\d+)$/.exec(String(row.saleNumber ?? '').trim());
+      if (!match) continue;
+      const seq = Number(match[1]);
+      if (Number.isFinite(seq) && seq > maxSequence) maxSequence = seq;
+    }
+
+    return `SAL-${String(maxSequence + 1).padStart(6, '0')}`;
+  }
+
   async findAll(pagination?: any, filters?: any): Promise<any> {
     const queryBuilder = this.qr.manager
       .createQueryBuilder('SaleTypeOrmEntity', 'sale')

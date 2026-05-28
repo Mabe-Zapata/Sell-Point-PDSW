@@ -17,7 +17,7 @@ describe('AdjustStockHandler', () => {
   const mockProduct = new Product({
     id: 'prod-123',
     categoryId: 'cat-123',
-    code: 'PROD-001',
+    code: 'PROD-ABCDEF1234567890',
     name: 'Test Product',
     salePrice: 100,
     costPrice: 50,

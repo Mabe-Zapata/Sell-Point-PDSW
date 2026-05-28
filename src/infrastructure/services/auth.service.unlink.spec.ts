@@ -46,7 +46,7 @@ describe('AuthService - Google OAuth Account Management', () => {
     setGoogleId: jest.Func;
   }> = {}) => ({
     id: 'user-uuid-123',
-    employeeId: 'EMP-001',
+    employeeId: 'EMP-ABCDEF1234567890',
     email: 'admin@test.com',
     role: 'ADMIN',
     status: UserStatus.ACTIVE,
@@ -346,7 +346,7 @@ describe('AuthService - Google OAuth Account Management', () => {
       const blockedUser = mockUser({
         status: UserStatus.BLOCKED,
         googleId: 'google-uid-123',
-        employeeId: 'EMP-001',
+        employeeId: 'EMP-ABCDEF1234567890',
       });
 
       mockFirebaseAuth.verifyIdToken.mockResolvedValue({
@@ -358,11 +358,11 @@ describe('AuthService - Google OAuth Account Management', () => {
 
       await expect(authService.loginGoogle('token')).rejects.toThrow(UnauthorizedException);
 
-      expect(mockRedisService.revokeAllUserRefreshTokens).toHaveBeenCalledWith('EMP-001');
+      expect(mockRedisService.revokeAllUserRefreshTokens).toHaveBeenCalledWith('EMP-ABCDEF1234567890');
     });
 
     it('should be called with employeeCode when user is unlinked', async () => {
-      const user = mockUser({ googleId: 'google-uid-123', employeeId: 'EMP-001' });
+      const user = mockUser({ googleId: 'google-uid-123', employeeId: 'EMP-ABCDEF1234567890' });
 
       mockUserRepository.update.mockResolvedValue(undefined);
       (admin.auth as jest.Mock).mockReturnValue({
@@ -372,7 +372,7 @@ describe('AuthService - Google OAuth Account Management', () => {
 
       await authService.unlinkGoogle(user as any);
 
-      expect(mockRedisService.revokeAllUserRefreshTokens).toHaveBeenCalledWith('EMP-001');
+      expect(mockRedisService.revokeAllUserRefreshTokens).toHaveBeenCalledWith('EMP-ABCDEF1234567890');
     });
   });
 });

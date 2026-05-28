@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { BadRequestException } from '@nestjs/common';
 import { RegisterEmployeeCommand } from '../../commands/register-employee/register-employee.command';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
@@ -36,14 +36,14 @@ export class RegisterEmployeeHandler {
     }
 
     // TODO: inject IPasswordHasher/IUuidGenerator once ports are wired.
-    const rawPassword = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '').substring(0, 8);
+    const rawPassword = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').substring(0, 8);
     const passwordHash = await bcrypt.hash(rawPassword, 10);
 
-    const employeeId = `EMP-${Date.now().toString(36).toUpperCase()}`;
+    const employeeId = `EMP-${crypto.randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
     const username = command.username || command.email;
 
     const user = User.createNewEmployee({
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       employeeId,
       email: command.email,
       passwordHash,

@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
 import type { ICategoryRepository } from '../../../domain/repositories/category.repository.interface';
 import type { ITaxRateRepository } from '../../../domain/repositories/tax-rate.repository.interface';
@@ -63,8 +63,8 @@ export class QuickConfirmSaleUseCase {
         throw new BusinessRuleException('User has no default branch assigned');
       }
 
-      const saleId = uuidv4();
-      const saleNumber = `SAL-${Date.now()}-${saleId.slice(0, 8).toUpperCase()}`;
+      const saleId = crypto.randomUUID();
+      const saleNumber = await this.uow.sales.getNextSaleNumber();
 
       // Process sale details with per-line tax calculation
       let subtotal = 0;

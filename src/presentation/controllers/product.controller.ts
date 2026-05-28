@@ -75,7 +75,7 @@ export class ProductController {
   @Get('next-code')
   @ApiOperation({
     summary: 'Get next product code',
-    description: 'Returns the next incremental product code using the PROD-### format.',
+    description: 'Returns a frontend-visible product code using the PROD-<UUID_SUFFIX> format.',
   })
   @ApiResponse({ status: 200, description: 'Next product code retrieved successfully' })
   async nextCode(): Promise<{ code: string }> {

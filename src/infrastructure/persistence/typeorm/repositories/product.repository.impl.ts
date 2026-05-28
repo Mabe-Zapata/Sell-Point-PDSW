@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { QueryRunner } from 'typeorm';
+import { randomUUID } from 'crypto';
 import type { IProductRepository } from '../../../../domain/repositories';
 import { Product } from '../../../../domain/entities';
 import { EntityNotFoundException } from '../../../../domain/exceptions/entity-not-found.exception';
@@ -25,21 +26,7 @@ export class ProductRepositoryImpl implements IProductRepository {
   }
 
   async getNextCode(): Promise<string> {
-    const rows = await this.qr.manager
-      .createQueryBuilder('ProductTypeOrmEntity', 'product')
-      .select('product.code', 'code')
-      .where('product.code LIKE :prefix', { prefix: 'PROD-%' })
-      .getRawMany<{ code: string }>();
-
-    let maxSequence = 0;
-    for (const row of rows) {
-      const match = /^PROD-(\d+)$/.exec(String(row.code ?? '').trim());
-      if (!match) continue;
-      const seq = Number(match[1]);
-      if (Number.isFinite(seq) && seq > maxSequence) maxSequence = seq;
-    }
-
-    return `PROD-${String(maxSequence + 1).padStart(3, '0')}`;
+    return `PROD-${randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
   }
 
   async findAll(pagination?: any, filters?: any): Promise<any> {
