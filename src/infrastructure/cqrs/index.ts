@@ -23,6 +23,7 @@ export { DeactivateProductHandler } from './product/commands/deactivate-product/
 
 // Product Queries
 export { GetProductHandler } from './product/queries/get-product/GetProductHandler';
+export { GetNextProductCodeHandler } from './product/queries/get-next-product-code/GetNextProductCodeHandler';
 export { ListProductsHandler } from './product/queries/list-products/ListProductsHandler';
 export { ListProductsWithStockHandler } from './product/queries/list-products-with-stock/ListProductsWithStockHandler';
 

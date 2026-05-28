@@ -92,6 +92,7 @@ import {
   DeleteProductHandler,
   // Product Queries
   GetProductHandler,
+  GetNextProductCodeHandler,
   ListProductsHandler,
   ListProductsWithStockHandler,
   // Category Commands
@@ -320,6 +321,7 @@ const entities = [
     UpdateProductHandler,
     DeleteProductHandler,
     GetProductHandler,
+    GetNextProductCodeHandler,
     ListProductsHandler,
     ListProductsWithStockHandler,
     CreateCategoryHandler,

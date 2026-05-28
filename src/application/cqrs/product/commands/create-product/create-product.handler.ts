@@ -7,6 +7,7 @@ import { Product } from '../../../../../domain/entities/product.entity';
 import { StockMovement } from '../../../../../domain/entities/stock-movement.entity';
 import { StockMovementType } from '../../../../../domain/entities/enums/stock-movement-type.enum';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
+import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
 
 export class CreateProductHandler {
   constructor(
@@ -21,12 +22,18 @@ export class CreateProductHandler {
       throw new EntityNotFoundException('Category', command.payload.categoryId);
     }
 
+    if (command.payload.costPrice > command.payload.salePrice) {
+      throw new BusinessRuleException('Cost price cannot be greater than sale price');
+    }
+
+    const code = await this.productRepository.getNextCode();
+
     const product = new Product({
       id: randomUUID(),
       categoryId: command.payload.categoryId,
-      code: command.payload.code,
-      name: command.payload.name,
-      description: command.payload.description,
+      code,
+      name: command.payload.name.trim(),
+      description: command.payload.description?.trim() || undefined,
       salePrice: command.payload.salePrice,
       costPrice: command.payload.costPrice,
       currentStock: command.payload.initialStock ?? 0,

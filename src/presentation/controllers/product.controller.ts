@@ -23,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 
 import { CreateProductCommand } from '../../application/cqrs/product/commands/create-product/create-product.command';
+import { GetNextProductCodeQuery } from '../../application/cqrs/product/queries/get-next-product-code/get-next-product-code.query';
 import { GetProductQuery } from '../../application/cqrs/product/queries/get-product/get-product.query';
 import { ListProductsWithStockQuery } from '../../application/cqrs/product/queries/list-products-with-stock/list-products-with-stock.query';
 import { UpdateProductCommand } from '../../application/cqrs/product/commands/update-product/update-product.command';
@@ -69,6 +70,16 @@ export class ProductController {
       new CreateProductCommand(createProductDto),
     );
     return ProductResponseDto.fromEntity(product);
+  }
+
+  @Get('next-code')
+  @ApiOperation({
+    summary: 'Get next product code',
+    description: 'Returns the next incremental product code using the PROD-### format.',
+  })
+  @ApiResponse({ status: 200, description: 'Next product code retrieved successfully' })
+  async nextCode(): Promise<{ code: string }> {
+    return this.queryBus.execute(new GetNextProductCodeQuery());
   }
 
   @Get(':id')
