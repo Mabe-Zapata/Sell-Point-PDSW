@@ -14,6 +14,10 @@ export class SaleConfirmedInvoiceListener implements IEventHandler<SaleConfirmed
 
   async handle(event: SaleConfirmedEvent): Promise<void> {
     try {
+      if (event.invoiceId) {
+        return;
+      }
+
       if (!event.branchId) {
         return;
       }

@@ -6,10 +6,12 @@ import { TypeOrmUnitOfWork } from '../../../../persistence/typeorm/unit-of-work/
 import { CATEGORY_REPOSITORY } from '../../../../common/injection-tokens';
 import { TAX_RATE_REPOSITORY } from '../../../../common/injection-tokens';
 import { USER_REPOSITORY } from '../../../../common/injection-tokens';
+import { CUSTOMER_REPOSITORY } from '../../../../common/injection-tokens';
 import { UNIT_OF_WORK } from '../../../../common/injection-tokens';
 import { CategoryRepository } from '../../../../repositories/category.repository';
 import { TaxRateRepository } from '../../../../repositories/tax-rate.repository';
 import { UserRepository } from '../../../../repositories/user.repository';
+import { CustomerRepository } from '../../../../repositories/customer.repository';
 
 @CommandHandler(QuickConfirmSaleCommand)
 export class QuickConfirmSaleHandler implements ICommandHandler<QuickConfirmSaleCommand> {
@@ -20,8 +22,9 @@ export class QuickConfirmSaleHandler implements ICommandHandler<QuickConfirmSale
     @Inject(CATEGORY_REPOSITORY) categoryRepo: CategoryRepository,
     @Inject(TAX_RATE_REPOSITORY) taxRateRepo: TaxRateRepository,
     @Inject(USER_REPOSITORY) userRepo: UserRepository,
+    @Inject(CUSTOMER_REPOSITORY) customerRepo: CustomerRepository,
   ) {
-    this.useCase = new QuickConfirmSaleUseCase(uow, categoryRepo, taxRateRepo, userRepo);
+    this.useCase = new QuickConfirmSaleUseCase(uow, categoryRepo, taxRateRepo, userRepo, customerRepo);
   }
 
   async execute(command: QuickConfirmSaleCommand) {

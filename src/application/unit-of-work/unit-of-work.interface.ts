@@ -3,6 +3,9 @@ import type {
   ISaleDetailRepository,
   IProductRepository,
   IStockMovementRepository,
+  IInvoiceRepository,
+  IInvoiceItemRepository,
+  IInvoiceSeriesRepository,
 } from '../../domain/repositories';
 
 export interface IUnitOfWork {
@@ -14,4 +17,7 @@ export interface IUnitOfWork {
   saleDetails: ISaleDetailRepository;
   products: IProductRepository;
   stockMovements: IStockMovementRepository;
+  invoices: IInvoiceRepository;
+  invoiceItems: IInvoiceItemRepository;
+  invoiceSeries: IInvoiceSeriesRepository;
 }
