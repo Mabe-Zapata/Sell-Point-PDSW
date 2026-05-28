@@ -24,6 +24,15 @@ export class SaleDetailResponseDto {
   unitPrice: number;
 
   @ApiProperty()
+  taxRateId: string;
+
+  @ApiProperty()
+  taxPercentage: number;
+
+  @ApiProperty()
+  taxAmount: number;
+
+  @ApiProperty()
   createdAt: Date;
 
   constructor(detail: SaleDetail) {
@@ -34,6 +43,9 @@ export class SaleDetailResponseDto {
     this.productCode = detail.productCode;
     this.quantity = detail.quantity;
     this.unitPrice = detail.unitPrice;
+    this.taxRateId = detail.taxRateId;
+    this.taxPercentage = detail.taxPercentage;
+    this.taxAmount = detail.taxAmount;
     this.createdAt = detail.createdAt;
   }
 

@@ -12,7 +12,6 @@ import {
 import { PaymentMethodDb } from './enums/payment-method.db-enum';
 import { CustomerTypeOrmEntity } from './customer.typeorm.entity';
 import { UserTypeOrmEntity } from './user.typeorm.entity';
-import { TaxRateTypeOrmEntity } from './tax-rate.typeorm.entity';
 
 @Entity('SALES')
 export class SaleTypeOrmEntity {
@@ -35,13 +34,6 @@ export class SaleTypeOrmEntity {
   @ManyToOne(() => UserTypeOrmEntity)
   @JoinColumn({ name: 'CAS_USR_ID' })
   cashierUser!: UserTypeOrmEntity;
-
-  @Column({ name: 'TAX_RAT_ID', type: 'uuid' })
-  taxRateId!: string;
-
-  @ManyToOne(() => TaxRateTypeOrmEntity)
-  @JoinColumn({ name: 'TAX_RAT_ID' })
-  taxRate!: TaxRateTypeOrmEntity;
 
   @Index('IDX_SAL_NUM')
   @Column({ name: 'SAL_NUM', length: 50 })

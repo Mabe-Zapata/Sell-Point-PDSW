@@ -1,12 +1,24 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
+import type { ICategoryRepository } from '../../../domain/repositories/category.repository.interface';
 import type { ITaxRateRepository } from '../../../domain/repositories/tax-rate.repository.interface';
 import type { IUserRepository } from '../../../domain/repositories/user.repository.interface';
-import type { IInvoiceSeriesRepository } from '../../../domain/repositories/invoice-series.repository.interface';
 import type { QuickConfirmSalePayload } from '../../cqrs/sale/commands/quick-confirm-sale/quick-confirm-sale.command';
 import { SaleConfirmedEvent } from '../../../domain/events/sale-confirmed.event';
 import { BusinessRuleException } from '../../../domain/exceptions';
 import { StockMovement, StockMovementType } from '../../../domain/entities';
+
+interface SaleDetailData {
+  productId: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  taxRateId: string;
+  taxPercentage: number;
+  taxAmount: number;
+}
 
 export interface QuickConfirmSaleResult {
   id: string;
@@ -20,9 +32,9 @@ export interface QuickConfirmSaleResult {
 export class QuickConfirmSaleUseCase {
   constructor(
     private readonly uow: IUnitOfWork,
+    private readonly categoryRepository: ICategoryRepository,
     private readonly taxRateRepository: ITaxRateRepository,
     private readonly userRepository: IUserRepository,
-    private readonly invoiceSeriesRepository: IInvoiceSeriesRepository,
   ) {}
 
   async execute(payload: QuickConfirmSalePayload): Promise<QuickConfirmSaleResult> {
@@ -37,21 +49,11 @@ export class QuickConfirmSaleUseCase {
       if (detail.quantity <= 0) {
         throw new Error('Quantity must be greater than 0');
       }
-      if (detail.unitPrice < 0) {
-        throw new Error('Unit price must be non-negative');
-      }
     }
 
     await this.uow.start();
 
     try {
-      // Find active tax rate
-      const taxRateResult = await this.taxRateRepository.findAll({ page: 1, limit: 1 }, { isActive: true });
-      const taxRate = taxRateResult.data[0];
-      if (!taxRate) {
-        throw new BusinessRuleException('No active tax rate found. Configure at least one tax rate.');
-      }
-
       // Find user (cashier)
       const user = await this.userRepository.findById(payload.cashierUserId);
       if (!user) {
@@ -61,33 +63,13 @@ export class QuickConfirmSaleUseCase {
         throw new BusinessRuleException('User has no default branch assigned');
       }
 
-      // Find invoice series for branch with pessimistic lock
-      const invoiceSeries = await this.invoiceSeriesRepository.findActiveByBranchId(user.defaultBranchId);
-      if (!invoiceSeries) {
-        throw new BusinessRuleException(
-          `No active invoice series found for branch ${user.defaultBranchId}. Configure one first.`,
-        );
-      }
-
-      // Increment sequence
-      invoiceSeries.currentSequence += 1;
-      await this.invoiceSeriesRepository.update(invoiceSeries);
-
-      // Generate sale number
-      const paddedSeq = String(invoiceSeries.currentSequence).padStart(9, '0');
-      const saleNumber = `${invoiceSeries.establishmentCode}-${invoiceSeries.emissionPointCode}-${paddedSeq}`;
       const saleId = uuidv4();
+      const saleNumber = `SAL-${Date.now()}-${saleId.slice(0, 8).toUpperCase()}`;
 
-      // Process sale details
+      // Process sale details with per-line tax calculation
       let subtotal = 0;
-      const saleDetailsData: Array<{
-        productId: string;
-        productName: string;
-        productCode: string;
-        quantity: number;
-        unitPrice: number;
-        subtotal: number;
-      }> = [];
+      let totalTaxAmount = 0;
+      const saleDetailsData: SaleDetailData[] = [];
 
       for (const detail of payload.details) {
         const product = await this.uow.products.findByIdForUpdate(detail.productId);
@@ -108,6 +90,8 @@ export class QuickConfirmSaleUseCase {
         await this.uow.products.decrementStock(detail.productId, detail.quantity);
         const newStock = previousStock - detail.quantity;
 
+        const unitPrice = Number(product.salePrice);
+
         // Create stock movement
         await this.uow.stockMovements.create(new StockMovement({
           productId: detail.productId,
@@ -121,42 +105,57 @@ export class QuickConfirmSaleUseCase {
           description: `Sale ${saleNumber}`,
         }));
 
-        const lineSubtotal = detail.quantity * detail.unitPrice;
+        // Resolve tax rate from product's category
+        const category = await this.categoryRepository.findById(product.categoryId);
+        if (!category) {
+          throw new BusinessRuleException(`Category not found for product '${product.name}'`);
+        }
+        if (!category.taxRateId) {
+          throw new BusinessRuleException(`Category '${category.name}' has no tax rate assigned`);
+        }
+        const taxRate = await this.taxRateRepository.findById(category.taxRateId);
+        if (!taxRate) {
+          throw new BusinessRuleException(`Tax rate not found for category '${category.name}'`);
+        }
+
+        const lineSubtotal = detail.quantity * unitPrice;
+        const lineTaxAmount = Math.round(lineSubtotal * (Number(taxRate.percentage) / 100) * 100) / 100;
         subtotal += lineSubtotal;
+        totalTaxAmount += lineTaxAmount;
 
         saleDetailsData.push({
           productId: detail.productId,
           productName: product.name,
           productCode: product.code,
           quantity: detail.quantity,
-          unitPrice: detail.unitPrice,
+          unitPrice,
           subtotal: lineSubtotal,
+          taxRateId: taxRate.id,
+          taxPercentage: Number(taxRate.percentage),
+          taxAmount: lineTaxAmount,
         });
       }
 
-      // Calculate tax and total
-      const taxAmount = Math.round(subtotal * (Number(taxRate.percentage) / 100) * 100) / 100;
-      const total = subtotal + taxAmount;
+      const total = subtotal + totalTaxAmount;
 
-      // Create sale
+      // Create sale (no taxRateId at sale level)
       const { Sale, SaleStatus } = await import('../../../domain/entities/index.js');
       const sale = new Sale({
         id: saleId,
         branchId: user.defaultBranchId,
         customerId: payload.customerId || null,
         cashierUserId: payload.cashierUserId,
-        taxRateId: taxRate.id,
         saleNumber,
         status: SaleStatus.CONFIRMED,
         subtotal,
-        taxAmount,
+        taxAmount: totalTaxAmount,
         discountAmount: 0,
         total,
       });
 
       await this.uow.sales.create(sale);
 
-      // Create sale details
+      // Create sale details with tax snapshot
       for (const detail of saleDetailsData) {
         const { SaleDetail } = await import('../../../domain/entities/index.js');
         await this.uow.saleDetails.create(new SaleDetail({
@@ -166,6 +165,9 @@ export class QuickConfirmSaleUseCase {
           productCode: detail.productCode,
           quantity: detail.quantity,
           unitPrice: detail.unitPrice,
+          taxRateId: detail.taxRateId,
+          taxPercentage: detail.taxPercentage,
+          taxAmount: detail.taxAmount,
         }));
       }
 
@@ -187,6 +189,8 @@ export class QuickConfirmSaleUseCase {
             unitPrice: d.unitPrice,
             subtotal: d.subtotal,
           })),
+          undefined,
+          user.defaultBranchId,
         ),
       );
 
@@ -194,7 +198,7 @@ export class QuickConfirmSaleUseCase {
         id: saleId,
         saleNumber,
         subtotal,
-        taxAmount,
+        taxAmount: totalTaxAmount,
         total,
         status: 'CONFIRMED',
       };

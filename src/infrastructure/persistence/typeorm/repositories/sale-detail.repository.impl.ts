@@ -15,7 +15,11 @@ export class SaleDetailRepositoryImpl implements ISaleDetailRepository {
   }
 
   async findBySaleId(saleId: string): Promise<SaleDetail[]> {
-    const entities = await this.qr.manager.find('SaleDetailTypeOrmEntity', { where: { saleId } });
+    const entities = await this.qr.manager
+      .createQueryBuilder('SaleDetailTypeOrmEntity', 'sd')
+      .where('sd.saleId = :saleId', { saleId })
+      .orderBy('sd.createdAt', 'ASC')
+      .getMany();
     return entities.map((e: any) => this.mapToDomain(e));
   }
 
@@ -63,6 +67,9 @@ export class SaleDetailRepositoryImpl implements ISaleDetailRepository {
       productCode: entity.productCodeSnapshot,
       quantity: Number(entity.quantity),
       unitPrice: Number(entity.unitPrice),
+      taxRateId: entity.taxRateId,
+      taxPercentage: Number(entity.taxPercentage),
+      taxAmount: Number(entity.taxAmount),
       createdAt: entity.createdAt,
     });
   }
@@ -75,6 +82,9 @@ export class SaleDetailRepositoryImpl implements ISaleDetailRepository {
       productCodeSnapshot: detail.productCode,
       quantity: detail.quantity,
       unitPrice: detail.unitPrice,
+      taxRateId: detail.taxRateId,
+      taxPercentage: detail.taxPercentage,
+      taxAmount: detail.taxAmount,
     };
   }
 }

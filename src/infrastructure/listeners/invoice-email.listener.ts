@@ -5,29 +5,23 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import type { IEmailService } from '../../application/ports/IEmailService';
 import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
-import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
+import { InvoiceIssuedEvent } from '../../domain/events/invoice-issued.event';
 import type { IPdfService } from '../../application/services/pdf-service.interface';
 import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
 import { Invoice, InvoiceItem } from '../../domain/entities';
 
-@EventsHandler(SaleConfirmedEvent)
-export class InvoiceEmailListener implements IEventHandler<SaleConfirmedEvent> {
+@EventsHandler(InvoiceIssuedEvent)
+export class InvoiceEmailListener implements IEventHandler<InvoiceIssuedEvent> {
   constructor(
     @Inject(EMAIL_SERVICE) private readonly emailService: IEmailService,
     @Inject(PDF_SERVICE) private readonly pdfService: IPdfService,
   ) {}
 
-  async handle(event: SaleConfirmedEvent): Promise<void> {
-    // Only trigger when sale resulted in an invoice
-    if (!event.invoiceId) {
-      return;
-    }
-
+  async handle(event: InvoiceIssuedEvent): Promise<void> {
     try {
-      // Build domain entities for PDF generation
-      const items: InvoiceItem[] = (event.details ?? []).map((d) => new InvoiceItem({
+      const items: InvoiceItem[] = event.items.map((d) => new InvoiceItem({
         id: `item-${d.productId}-${Date.now()}`,
-        invoiceId: event.invoiceId!,
+        invoiceId: event.invoiceId,
         productId: d.productId,
         productName: d.productName,
         quantity: d.quantity,
@@ -35,10 +29,10 @@ export class InvoiceEmailListener implements IEventHandler<SaleConfirmedEvent> {
       }));
 
       const invoice = new Invoice({
-        id: event.invoiceId!,
+        id: event.invoiceId,
         saleId: event.saleId,
-        invoiceNumber: event.invoiceId!,
-        issueDate: event.confirmedAt,
+        invoiceNumber: event.invoiceNumber,
+        issueDate: event.issueDate,
         customerName: event.customerName,
         customerId: event.customerEmail,
         total: event.total,
@@ -50,8 +44,8 @@ export class InvoiceEmailListener implements IEventHandler<SaleConfirmedEvent> {
         event.customerEmail,
         event.invoiceId,
         {
-          invoiceNumber: event.invoiceId,
-          date: event.confirmedAt.toLocaleDateString('es-EC'),
+          invoiceNumber: event.invoiceNumber,
+          date: event.issueDate.toLocaleDateString('es-EC'),
           customerName: event.customerName,
           items: items.map((item) => ({
             description: item.productName,

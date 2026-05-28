@@ -12,11 +12,6 @@ export class ConfirmSaleDetailDto {
   @IsNumber()
   @Min(1)
   quantity: number;
-
-  @ApiProperty()
-  @IsNumber()
-  @Min(0)
-  unitPrice: number;
 }
 
 export class ConfirmSaleRequestDto {

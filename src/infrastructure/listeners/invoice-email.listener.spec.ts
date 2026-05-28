@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoiceEmailListener } from './invoice-email.listener';
-import { SaleConfirmedEvent } from '../../domain/events/sale-confirmed.event';
+import { InvoiceIssuedEvent } from '../../domain/events/invoice-issued.event';
 import type { IEmailService } from '../../application/ports/IEmailService';
 import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
 import type { IPdfService } from '../../application/services/pdf-service.interface';
@@ -41,51 +39,21 @@ describe('InvoiceEmailListener', () => {
   });
 
   describe('handle', () => {
-    it('should NOT call emailService when invoiceId is absent', async () => {
-      const event = new SaleConfirmedEvent(
+    it('should call emailService.sendInvoice with PDF when event is received', async () => {
+      const event = new InvoiceIssuedEvent(
+        'inv-456',
         'sale-123',
-        new Date(),
-        150.00,
+        '001-002-000000015',
         'customer@example.com',
         'John Doe',
-        [
-          {
-            productId: 'prod-1',
-            productName: 'Product 1',
-            quantity: 2,
-            unitPrice: 50.00,
-          },
-        ],
-      );
-
-      await listener.handle(event);
-
-      expect(mockPdfService.generateInvoicePdf).not.toHaveBeenCalled();
-      expect(mockEmailService.sendInvoice).not.toHaveBeenCalled();
-    });
-
-    it('should call emailService.sendInvoice with PDF when invoiceId is present', async () => {
-      const event = new SaleConfirmedEvent(
-        'sale-123',
         new Date('2026-05-25'),
         150.00,
-        'customer@example.com',
-        'John Doe',
+        130.43,
+        19.57,
         [
-          {
-            productId: 'prod-1',
-            productName: 'Product 1',
-            quantity: 2,
-            unitPrice: 50.00,
-          },
-          {
-            productId: 'prod-2',
-            productName: 'Product 2',
-            quantity: 1,
-            unitPrice: 50.00,
-          },
+          { productId: 'prod-1', productName: 'Product 1', quantity: 2, unitPrice: 50.00, subtotal: 100.00 },
+          { productId: 'prod-2', productName: 'Product 2', quantity: 1, unitPrice: 50.00, subtotal: 50.00 },
         ],
-        'invoice-456',
       );
 
       await listener.handle(event);
@@ -93,9 +61,9 @@ describe('InvoiceEmailListener', () => {
       expect(mockPdfService.generateInvoicePdf).toHaveBeenCalled();
       expect(mockEmailService.sendInvoice).toHaveBeenCalledWith(
         'customer@example.com',
-        'invoice-456',
+        'inv-456',
         expect.objectContaining({
-          invoiceNumber: 'invoice-456',
+          invoiceNumber: '001-002-000000015',
           customerName: 'John Doe',
           items: expect.arrayContaining([
             expect.objectContaining({ description: 'Product 1', quantity: 2 }),
@@ -107,20 +75,23 @@ describe('InvoiceEmailListener', () => {
 
     it('should log success message when invoice email sent successfully', async () => {
       const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-      const event = new SaleConfirmedEvent(
+      const event = new InvoiceIssuedEvent(
+        'inv-789',
         'sale-789',
-        new Date(),
-        200.00,
+        '001-001-000000001',
         'test@example.com',
         'Test User',
+        new Date(),
+        200.00,
+        173.91,
+        26.09,
         [],
-        'invoice-789',
       );
 
       await listener.handle(event);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        '[InvoiceEmailListener] Invoice email sent for sale sale-789, invoice invoice-789',
+        '[InvoiceEmailListener] Invoice email sent for sale sale-789, invoice inv-789',
       );
     });
 
@@ -128,14 +99,17 @@ describe('InvoiceEmailListener', () => {
       mockEmailService.sendInvoice.mockRejectedValueOnce(new Error('SMTP connection failed'));
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const event = new SaleConfirmedEvent(
+      const event = new InvoiceIssuedEvent(
+        'inv-456',
         'sale-456',
-        new Date(),
-        100.00,
+        '001-001-000000002',
         'bad@example.com',
         'Bad Customer',
+        new Date(),
+        100.00,
+        86.96,
+        13.04,
         [],
-        'invoice-456',
       );
 
       await expect(listener.handle(event)).resolves.toBeUndefined();
@@ -149,14 +123,17 @@ describe('InvoiceEmailListener', () => {
       mockPdfService.generateInvoicePdf.mockRejectedValueOnce(new Error('PDF generation failed'));
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const event = new SaleConfirmedEvent(
+      const event = new InvoiceIssuedEvent(
+        'inv-999',
         'sale-999',
-        new Date(),
-        75.00,
+        '001-001-000000003',
         'pdf-fail@example.com',
         'PDF Fail',
+        new Date(),
+        75.00,
+        65.22,
+        9.78,
         [],
-        'invoice-999',
       );
 
       await expect(listener.handle(event)).resolves.toBeUndefined();
@@ -173,14 +150,17 @@ describe('InvoiceEmailListener', () => {
       });
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const event = new SaleConfirmedEvent(
+      const event = new InvoiceIssuedEvent(
+        'inv-555',
         'sale-555',
-        new Date(),
-        300.00,
+        '001-001-000000004',
         'invalid@example.com',
         'Invalid Customer',
+        new Date(),
+        300.00,
+        260.87,
+        39.13,
         [],
-        'invoice-555',
       );
 
       await listener.handle(event);

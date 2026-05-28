@@ -3,7 +3,6 @@ export class InvoiceSeries {
   branchId!: string;
   establishmentCode!: string;
   emissionPointCode!: string;
-  sequenceNumber!: number;
   currentSequence!: number;
   isActive!: boolean;
   createdAt!: Date;

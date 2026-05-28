@@ -31,6 +31,7 @@ describe('DeleteCategoryHandler', () => {
     const mockCategory = new Category({
       id: 'cat-123',
       name: 'Test Category',
+      taxRateId: 'tax-15',
       isActive: true,
     });
 
@@ -60,6 +61,7 @@ describe('DeleteCategoryHandler', () => {
     const mockCategory = new Category({
       id: 'cat-123',
       name: 'Test Category',
+      taxRateId: 'tax-15',
       isActive: true,
     });
 

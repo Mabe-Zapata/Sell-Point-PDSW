@@ -17,9 +17,6 @@ export class SaleResponseDto {
   cashierUserId: string;
 
   @ApiProperty()
-  taxRateId: string;
-
-  @ApiProperty()
   saleNumber: string;
 
   @ApiProperty()
@@ -51,7 +48,6 @@ export class SaleResponseDto {
     this.branchId = sale.branchId;
     this.customerId = sale.customerId;
     this.cashierUserId = sale.cashierUserId;
-    this.taxRateId = sale.taxRateId;
     this.saleNumber = sale.saleNumber;
     this.status = sale.status;
     this.subtotal = sale.subtotal;

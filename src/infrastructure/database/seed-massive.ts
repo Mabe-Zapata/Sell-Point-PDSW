@@ -1,10 +1,14 @@
 import 'reflect-metadata';
 import { randomUUID } from 'crypto';
+import { v5 as uuidv5 } from 'uuid';
 import { Repository } from 'typeorm';
 import { dataSource } from '../../config/typeorm.config';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
 import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
 import { CategoryTypeOrmEntity } from './entities/category.typeorm.entity';
+import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
+
+const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 
 const BATCH_SIZE = 1000;
 const TOTAL_CUSTOMERS = 50000;
@@ -29,12 +33,15 @@ function generateCedula(index: number): string {
 
 async function seedCategories(
   categoryRepo: Repository<CategoryTypeOrmEntity>,
+  taxRateRepo: Repository<TaxRateTypeOrmEntity>,
 ): Promise<CategoryTypeOrmEntity[]> {
   const existing = await categoryRepo.find();
   if (existing.length > 0) return existing;
 
+  const defaultTaxRateId = uuidv5('IVA 15%', UUID_NAMESPACE);
+
   const categories = CATEGORIES.map(name =>
-    categoryRepo.create({ id: randomUUID(), name, description: `Categoría de ${name}`, isActive: true }),
+    categoryRepo.create({ id: randomUUID(), name, description: `Categoría de ${name}`, isActive: true, taxRateId: defaultTaxRateId }),
   );
 
   await categoryRepo.save(categories);
@@ -112,9 +119,10 @@ async function main(): Promise<void> {
   const categoryRepo = dataSource.getRepository(CategoryTypeOrmEntity);
   const customerRepo = dataSource.getRepository(CustomerTypeOrmEntity);
   const productRepo = dataSource.getRepository(ProductTypeOrmEntity);
+  const taxRateRepo = dataSource.getRepository(TaxRateTypeOrmEntity);
 
   process.stdout.write('Preparando categorías...\n');
-  const categories = await seedCategories(categoryRepo);
+  const categories = await seedCategories(categoryRepo, taxRateRepo);
 
   await seedCustomers(customerRepo);
   await seedProducts(productRepo, categories);

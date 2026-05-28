@@ -264,7 +264,7 @@ export class PdfService implements IPdfService {
     };
 
     row('Subtotal',   this.formatCurrency(invoice.subtotal ?? 0), startY);
-    row('IVA (15%)',  this.formatCurrency(invoice.iva ?? 0),      startY + 18);
+    row('IVA',        this.formatCurrency(invoice.iva ?? 0),      startY + 18);
 
     // Divider
     const divY = startY + 40;

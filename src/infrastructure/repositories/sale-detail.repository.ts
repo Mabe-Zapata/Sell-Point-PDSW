@@ -21,6 +21,9 @@ export class SaleDetailRepository {
       productCode: entity.productCodeSnapshot,
       quantity: Number(entity.quantity),
       unitPrice: Number(entity.unitPrice),
+      taxRateId: entity.taxRateId,
+      taxPercentage: Number(entity.taxPercentage),
+      taxAmount: Number(entity.taxAmount),
       createdAt: entity.createdAt,
     });
   }
@@ -33,6 +36,9 @@ export class SaleDetailRepository {
       productCodeSnapshot: detail.productCode,
       quantity: detail.quantity,
       unitPrice: detail.unitPrice,
+      taxRateId: detail.taxRateId,
+      taxPercentage: detail.taxPercentage,
+      taxAmount: detail.taxAmount,
     };
   }
 
@@ -42,8 +48,27 @@ export class SaleDetailRepository {
   }
 
   async findBySaleId(saleId: string): Promise<SaleDetail[]> {
-    const entities = await this.repo.find({ where: { saleId } });
+    const entities = await this.repo.find({ where: { saleId }, order: { createdAt: 'ASC' } });
     return entities.map((e) => this.mapToDomain(e));
+  }
+
+  async findAll(pagination = { page: 1, limit: 20 }, filters?: { saleId?: string; productId?: string }) {
+    const [entities, total] = await this.repo.findAndCount({
+      where: {
+        ...(filters?.saleId ? { saleId: filters.saleId } : {}),
+        ...(filters?.productId ? { productId: filters.productId } : {}),
+      },
+      order: { createdAt: 'ASC' },
+      skip: (pagination.page - 1) * pagination.limit,
+      take: pagination.limit,
+    });
+
+    return {
+      data: entities.map((e) => this.mapToDomain(e)),
+      total,
+      page: pagination.page,
+      limit: pagination.limit,
+    };
   }
 
   async create(detail: SaleDetail): Promise<SaleDetail> {

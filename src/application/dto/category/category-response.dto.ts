@@ -11,6 +11,9 @@ export class CategoryResponseDto {
   @ApiProperty({ description: 'Category description', example: 'Soda and juices', required: false })
   description?: string;
 
+  @ApiProperty({ description: 'Associated tax rate ID' })
+  taxRateId: string;
+
   @ApiProperty({ description: 'Active status', example: true })
   isActive: boolean;
 
@@ -24,6 +27,7 @@ export class CategoryResponseDto {
     this.id = category.id;
     this.name = category.name;
     this.description = category.description;
+    this.taxRateId = category.taxRateId;
     this.isActive = category.isActive;
     this.createdAt = category.createdAt;
     this.updatedAt = category.updatedAt;

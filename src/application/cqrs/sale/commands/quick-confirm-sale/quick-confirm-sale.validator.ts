@@ -15,9 +15,6 @@ export class QuickConfirmSaleValidator {
       if (detail.quantity <= 0) {
         throw new Error('Quantity must be greater than 0');
       }
-      if (detail.unitPrice < 0) {
-        throw new Error('Unit price must be non-negative');
-      }
     }
   }
 }

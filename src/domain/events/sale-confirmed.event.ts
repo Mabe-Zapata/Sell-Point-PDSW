@@ -14,6 +14,7 @@ export class SaleConfirmedEvent {
   customerName: string;
   details: SaleConfirmedEventItem[];
   invoiceId?: string;
+  branchId?: string;
 
   constructor(
     saleId: string,
@@ -23,6 +24,7 @@ export class SaleConfirmedEvent {
     customerName: string,
     details: SaleConfirmedEventItem[],
     invoiceId?: string,
+    branchId?: string,
   ) {
     this.saleId = saleId;
     this.confirmedAt = confirmedAt;
@@ -31,5 +33,6 @@ export class SaleConfirmedEvent {
     this.customerName = customerName;
     this.details = details;
     this.invoiceId = invoiceId;
+    this.branchId = branchId;
   }
 }

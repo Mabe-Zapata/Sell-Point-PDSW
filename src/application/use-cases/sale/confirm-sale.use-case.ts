@@ -69,6 +69,8 @@ export class ConfirmSaleUseCase {
             unitPrice: d.unitPrice,
             subtotal: d.unitPrice * d.quantity,
           })),
+          undefined,
+          sale.branchId,
         ),
       );
     } catch (error) {

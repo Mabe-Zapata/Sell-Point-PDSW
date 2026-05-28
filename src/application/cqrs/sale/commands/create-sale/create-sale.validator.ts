@@ -12,9 +12,6 @@ export class CreateSaleValidator {
     if (!payload.cashierUserId) {
       throw new Error('Cashier user ID is required');
     }
-    if (!payload.taxRateId) {
-      throw new Error('Tax rate ID is required');
-    }
     if (!payload.paymentMethod) {
       throw new Error('Payment method is required');
     }

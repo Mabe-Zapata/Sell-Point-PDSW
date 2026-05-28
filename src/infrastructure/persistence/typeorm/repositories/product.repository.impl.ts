@@ -107,7 +107,7 @@ export class ProductRepositoryImpl implements IProductRepository {
       salePrice: Number(entity.salePrice),
       costPrice: Number(entity.costPrice),
       isActive: entity.isActive,
-      currentStock: entity.availableQuantity ?? 0,
+      currentStock: entity.currentStock ?? 0,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -122,7 +122,7 @@ export class ProductRepositoryImpl implements IProductRepository {
       salePrice: product.salePrice,
       costPrice: product.costPrice,
       isActive: product.isActive,
-      availableQuantity: product.currentStock,
+      currentStock: product.currentStock,
     };
   }
 }

@@ -85,6 +85,10 @@ export { GetMovementsHistoryValidator } from './inventory/queries/get-movements-
 export { GetErrorLogValidator } from './error-log/queries/get-error-log/get-error-log.validator';
 export { ListErrorLogsValidator } from './error-log/queries/list-error-logs/list-error-logs.validator';
 
+// Invoice Commands Validators
+export { CreateInvoiceValidator } from './invoice/commands/create-invoice/create-invoice.validator';
+export { CancelInvoiceValidator } from './invoice/commands/cancel-invoice/cancel-invoice.validator';
+
 // Auth Handlers Validators
 export { RegisterEmployeeValidator } from './auth/handlers/register-employee/register-employee.validator';
 export { RequestPasswordResetValidator } from './auth/handlers/request-password-reset/request-password-reset.validator';

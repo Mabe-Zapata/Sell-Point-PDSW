@@ -19,37 +19,44 @@ import {
   ApiProduces,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import type { Response } from 'express';
 import { Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import { CreateInvoiceDto } from '../../application/dto/invoice/create-invoice.dto';
 import { InvoiceResponseDto } from '../../application/dto/invoice/invoice-response.dto';
 import { InvoiceListResponseDto } from '../../application/dto/invoice/invoice-list-response.dto';
-import type { PaginationParams, IInvoiceRepository, IInvoiceItemRepository } from '../../domain/repositories';
+import { InvoiceItemResponseDto } from '../../application/dto/invoice/invoice-item.dto';
+import { Invoice, InvoiceStatus } from '../../domain/entities';
 
 import { INVOICE_QUERY_SERVICE } from '../../application/query-tokens';
 import { PDF_SERVICE } from '../../application/services/pdf-service.interface';
-import { INVOICE_REPOSITORY, INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 import type { IInvoiceQueryService } from '../../domain/query-services/invoice.query-service.interface';
 import type { IPdfService } from '../../application/services/pdf-service.interface';
-import { Invoice, InvoiceItem } from '../../domain/entities';
+import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import type { IInvoiceItemRepository } from '../../domain/repositories';
+
+import { CreateInvoiceCommand } from '../../application/cqrs/invoice/commands/create-invoice/create-invoice.command';
+import { GetInvoiceQuery } from '../../application/cqrs/invoice/queries/get-invoice/get-invoice.query';
+import { ListInvoicesQuery } from '../../application/cqrs/invoice/queries/list-invoices/list-invoices.query';
 
 @ApiTags('invoices')
 @ApiBearerAuth('access-token')
 @Controller('invoices')
 export class InvoiceController {
   constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
     @Inject(INVOICE_QUERY_SERVICE) private readonly invoiceQueryService: IInvoiceQueryService,
-    @Inject(INVOICE_REPOSITORY) private readonly invoiceRepository: IInvoiceRepository,
-    @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
     @Inject(PDF_SERVICE) private readonly pdfService: IPdfService,
+    @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
   ) {}
 
   @Post()
   @ApiOperation({
     summary: 'Create a new invoice',
-    description: 'Generates a new invoice for a sale and persists its item lines.',
+    description: 'Generates a new invoice for a sale using persisted sale detail snapshots.',
   })
   @ApiBody({ type: CreateInvoiceDto })
   @ApiResponse({
@@ -65,31 +72,36 @@ export class InvoiceController {
   })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createInvoiceDto: CreateInvoiceDto): Promise<InvoiceResponseDto> {
-    // Build Invoice domain entity from DTO
-    const invoice = new Invoice({
-      saleId: createInvoiceDto.saleId,
-      seriesId: createInvoiceDto.seriesId,
-      invoiceNumber: `INV-${Date.now()}`,
-      issueDate: new Date(),
-      status: 'PROCESSED' as any,
-    });
-
-    // Persist invoice
-    const savedInvoice = await this.invoiceRepository.create(invoice);
-
-    // Persist items
-    const items = createInvoiceDto.items.map(
-      (itemDto) =>
-        new InvoiceItem({
-          invoiceId: savedInvoice.id,
-          productId: itemDto.productId,
-          quantity: itemDto.quantity,
-          unitPrice: itemDto.unitPrice,
-        }),
+    const result = await this.commandBus.execute(
+      new CreateInvoiceCommand(
+        createInvoiceDto.saleId,
+        createInvoiceDto.branchId,
+      ),
     );
-    await this.invoiceItemRepository.createMany(items);
 
-    return InvoiceResponseDto.fromEntity(savedInvoice);
+    const invoiceData = await this.queryBus.execute(new GetInvoiceQuery(result.id));
+    const items = await this.invoiceItemRepository.findByInvoiceId(result.id);
+
+    return InvoiceResponseDto.fromEntity(
+      new Invoice({
+        id: invoiceData.id,
+        saleId: invoiceData.saleId,
+        seriesId: invoiceData.seriesId,
+        invoiceNumber: invoiceData.invoiceNumber,
+        authorizationNumber: invoiceData.authorizationNumber ?? undefined,
+        issueDate: invoiceData.issueDate,
+        status: invoiceData.status as InvoiceStatus,
+        cancelledAt: invoiceData.cancelledAt ?? undefined,
+        createdAt: invoiceData.createdAt,
+        subtotal: invoiceData.subtotal,
+        iva: invoiceData.iva,
+        total: invoiceData.total,
+        saleNumber: invoiceData.saleNumber,
+        customerName: invoiceData.customerName,
+        customerCedula: invoiceData.customerCedula,
+      }),
+      InvoiceItemResponseDto.fromEntities(items),
+    );
   }
 
   @Get(':id')
@@ -105,13 +117,8 @@ export class InvoiceController {
   })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
   async findOne(@Param('id') id: string): Promise<InvoiceResponseDto> {
-    // Use query service to get full invoice data with customer info for response
-    const invoiceData = await this.invoiceQueryService.getInvoiceById(id);
-    if (!invoiceData) {
-      throw new Error('Invoice not found');
-    }
+    const invoiceData = await this.queryBus.execute(new GetInvoiceQuery(id));
 
-    // Build Invoice domain entity for PDF
     const invoice = new Invoice({
       id: invoiceData.id,
       saleId: invoiceData.saleId,
@@ -119,16 +126,26 @@ export class InvoiceController {
       invoiceNumber: invoiceData.invoiceNumber,
       authorizationNumber: invoiceData.authorizationNumber ?? undefined,
       issueDate: invoiceData.issueDate,
-      status: invoiceData.status as any,
+      status: invoiceData.status as InvoiceStatus,
       cancelledAt: invoiceData.cancelledAt ?? undefined,
       createdAt: invoiceData.createdAt,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
       total: invoiceData.total,
-      subtotal: invoiceData.total / 1.15,
-      iva: invoiceData.total - invoiceData.total / 1.15,
-      invoiceDate: invoiceData.issueDate,
+      saleNumber: invoiceData.saleNumber,
+      customerName: invoiceData.customerName,
+      customerCedula: invoiceData.customerCedula,
+      establishmentCode: invoiceData.establishmentCode,
+      emissionPointCode: invoiceData.emissionPointCode,
     });
 
-    return InvoiceResponseDto.fromEntity(invoice);
+    // Fetch items
+    const items = await this.invoiceItemRepository.findByInvoiceId(id);
+
+    return InvoiceResponseDto.fromEntity(
+      invoice,
+      InvoiceItemResponseDto.fromEntities(items),
+    );
   }
 
   @Get(':id/pdf')
@@ -145,14 +162,12 @@ export class InvoiceController {
   })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
   async getPdf(@Param('id') id: string, @Res() res: Response): Promise<void> {
-    // Fetch invoice data with customer and sale info
     const invoiceData = await this.invoiceQueryService.getInvoiceById(id);
     if (!invoiceData) {
       res.status(404).send('Invoice not found');
       return;
     }
 
-    // Build Invoice domain entity for response DTO
     const invoice = new Invoice({
       id: invoiceData.id,
       saleId: invoiceData.saleId,
@@ -160,19 +175,22 @@ export class InvoiceController {
       invoiceNumber: invoiceData.invoiceNumber,
       authorizationNumber: invoiceData.authorizationNumber ?? undefined,
       issueDate: invoiceData.issueDate,
-      status: invoiceData.status as any,
+      status: invoiceData.status as InvoiceStatus,
       cancelledAt: invoiceData.cancelledAt ?? undefined,
       createdAt: invoiceData.createdAt,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
       total: invoiceData.total,
-      subtotal: invoiceData.total / 1.15,
-      iva: invoiceData.total - invoiceData.total / 1.15,
+      saleNumber: invoiceData.saleNumber,
+      customerName: invoiceData.customerName,
+      customerId: invoiceData.customerCedula,
+      customerCedula: invoiceData.customerCedula,
+      establishmentCode: invoiceData.establishmentCode,
+      emissionPointCode: invoiceData.emissionPointCode,
       invoiceDate: invoiceData.issueDate,
     });
 
-    // Fetch invoice items
     const items = await this.invoiceItemRepository.findByInvoiceId(id);
-
-    // Generate PDF
     const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
 
     res.set({
@@ -219,15 +237,15 @@ export class InvoiceController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const result = await this.invoiceQueryService.listInvoices({
-      page: pagination.page,
-      limit: pagination.limit,
-      branchId,
-      status,
-      invoiceNumber,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
-    });
+    const result = await this.queryBus.execute(
+      new ListInvoicesQuery(pagination, {
+        branchId,
+        status,
+        invoiceNumber,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+      }),
+    );
 
     return {
       data: InvoiceListResponseDto.fromQueryResults(result.data),
