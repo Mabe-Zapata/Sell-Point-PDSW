@@ -7,6 +7,7 @@ import {
   IsOptional,
   Max,
   Min,
+  IsInt,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -18,19 +19,21 @@ export class CreateProductDto {
   categoryId: string;
 
   @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
+  @IsOptional()
+  @MaxLength(20)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  code: string;
+  code?: string;
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
+  @MaxLength(20)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   name: string;
 
   @IsString()
   @IsOptional()
+  @MaxLength(255)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   description?: string;
 
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -46,8 +49,9 @@ export class CreateProductDto {
   costPrice: number;
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(0)
+  @Max(1000)
   @Type(() => Number)
   initialStock?: number;
 }

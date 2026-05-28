@@ -55,6 +55,24 @@ export class ProductRepository implements IProductRepository {
     return entity ? this.mapToDomain(entity) : null;
   }
 
+  async getNextCode(): Promise<string> {
+    const rows = await this.repo
+      .createQueryBuilder('product')
+      .select('product.code', 'code')
+      .where('product.code LIKE :prefix', { prefix: 'PROD-%' })
+      .getRawMany<{ code: string }>();
+
+    let maxSequence = 0;
+    for (const row of rows) {
+      const match = /^PROD-(\d+)$/.exec(String(row.code ?? '').trim());
+      if (!match) continue;
+      const seq = Number(match[1]);
+      if (Number.isFinite(seq) && seq > maxSequence) maxSequence = seq;
+    }
+
+    return `PROD-${String(maxSequence + 1).padStart(3, '0')}`;
+  }
+
   async findAll(
     pagination: PaginationParams = { page: 1, limit: 20 },
     filters: ProductFilters = {},
