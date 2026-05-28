@@ -9,7 +9,7 @@ export class Customer {
   readonly phone?: string;
   readonly address?: string;
   readonly createdAt!: Date;
-  readonly deletedAt?: Date;
+  deletedAt?: Date;
 
   private _isActive!: boolean;
   private _updatedAt!: Date;
@@ -54,6 +54,8 @@ export class Customer {
     }
     this._isActive = true;
     this._updatedAt = new Date();
+    // Soft delete: clear deletedAt when reactivating
+    this.deletedAt = undefined;
   }
 
   deactivate(): void {
@@ -62,5 +64,7 @@ export class Customer {
     }
     this._isActive = false;
     this._updatedAt = new Date();
+    // Soft delete: set deletedAt as audit trail
+    this.deletedAt = new Date();
   }
 }

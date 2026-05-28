@@ -4,7 +4,6 @@ import {
   Post,
   Put,
   Patch,
-  Delete,
   Body,
   Param,
   Query,
@@ -27,7 +26,6 @@ import { GetNextProductCodeQuery } from '../../application/cqrs/product/queries/
 import { GetProductQuery } from '../../application/cqrs/product/queries/get-product/get-product.query';
 import { ListProductsWithStockQuery } from '../../application/cqrs/product/queries/list-products-with-stock/list-products-with-stock.query';
 import { UpdateProductCommand } from '../../application/cqrs/product/commands/update-product/update-product.command';
-import { DeleteProductCommand } from '../../application/cqrs/product/commands/delete-product/delete-product.command';
 import { ActivateProductCommand } from '../../application/cqrs/product/commands/activate-product/activate-product.command';
 import { DeactivateProductCommand } from '../../application/cqrs/product/commands/deactivate-product/deactivate-product.command';
 import { AdjustStockCommand } from '../../application/cqrs/inventory/commands/adjust-stock/adjust-stock.command';
@@ -203,19 +201,6 @@ export class ProductController {
       new DeactivateProductCommand(id),
     );
     return ProductResponseDto.fromEntity(product);
-  }
-
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete a product (soft delete)',
-    description: 'Marks a product as deleted (soft delete)',
-  })
-  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
-  @ApiResponse({ status: 204, description: 'Product deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Product not found' })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.commandBus.execute(new DeleteProductCommand(id));
   }
 
   @Patch(':id/stock')

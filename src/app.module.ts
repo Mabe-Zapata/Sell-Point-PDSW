@@ -89,7 +89,8 @@ import {
   // Product Commands
   CreateProductHandler,
   UpdateProductHandler,
-  DeleteProductHandler,
+  ActivateProductHandler,
+  DeactivateProductHandler,
   // Product Queries
   GetProductHandler,
   GetNextProductCodeHandler,
@@ -98,7 +99,6 @@ import {
   // Category Commands
   CreateCategoryHandler,
   UpdateCategoryHandler,
-  DeleteCategoryHandler,
   ActivateCategoryHandler,
   DeactivateCategoryHandler,
   // Category Queries
@@ -319,14 +319,14 @@ const entities = [
     ListCustomersWithStockHandler,
     CreateProductHandler,
     UpdateProductHandler,
-    DeleteProductHandler,
+    ActivateProductHandler,
+    DeactivateProductHandler,
     GetProductHandler,
     GetNextProductCodeHandler,
     ListProductsHandler,
     ListProductsWithStockHandler,
     CreateCategoryHandler,
     UpdateCategoryHandler,
-    DeleteCategoryHandler,
     ActivateCategoryHandler,
     DeactivateCategoryHandler,
     GetCategoryHandler,

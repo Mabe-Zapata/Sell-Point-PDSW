@@ -4,7 +4,6 @@ import {
   Post,
   Put,
   Patch,
-  Delete,
   Body,
   Param,
   Query,
@@ -26,7 +25,6 @@ import { CreateCategoryCommand } from '../../application/cqrs/category/commands/
 import { GetCategoryQuery } from '../../application/cqrs/category/queries/get-category/get-category.query';
 import { ListCategoriesQuery } from '../../application/cqrs/category/queries/list-categories/list-categories.query';
 import { UpdateCategoryCommand } from '../../application/cqrs/category/commands/update-category/update-category.command';
-import { DeleteCategoryCommand } from '../../application/cqrs/category/commands/delete-category/delete-category.command';
 import { ActivateCategoryCommand } from '../../application/cqrs/category/commands/activate-category/activate-category.command';
 import { DeactivateCategoryCommand } from '../../application/cqrs/category/commands/deactivate-category/deactivate-category.command';
 
@@ -186,19 +184,5 @@ export class CategoryController {
       new DeactivateCategoryCommand(id),
     );
     return CategoryResponseDto.fromEntity(category);
-  }
-
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete a category (physical delete)',
-    description: 'Physically deletes the category from the database if there are no associated products.',
-  })
-  @ApiParam({ name: 'id', description: 'Category UUID', type: String })
-  @ApiResponse({ status: 204, description: 'Category deleted successfully' })
-  @ApiResponse({ status: 400, description: 'Category is in use and cannot be deleted' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.commandBus.execute(new DeleteCategoryCommand(id));
   }
 }

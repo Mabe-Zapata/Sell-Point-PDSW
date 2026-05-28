@@ -17,7 +17,6 @@ export { ListCustomersWithStockHandler } from './customer/queries/list-customers
 // Product Commands
 export { CreateProductHandler } from './product/commands/create-product/CreateProductHandler';
 export { UpdateProductHandler } from './product/commands/update-product/UpdateProductHandler';
-export { DeleteProductHandler } from './product/commands/delete-product/DeleteProductHandler';
 export { ActivateProductHandler } from './product/commands/activate-product/ActivateProductHandler';
 export { DeactivateProductHandler } from './product/commands/deactivate-product/DeactivateProductHandler';
 
@@ -30,7 +29,6 @@ export { ListProductsWithStockHandler } from './product/queries/list-products-wi
 // Category Commands
 export { CreateCategoryHandler } from './category/commands/create-category/CreateCategoryHandler';
 export { UpdateCategoryHandler } from './category/commands/update-category/UpdateCategoryHandler';
-export { DeleteCategoryHandler } from './category/commands/delete-category/DeleteCategoryHandler';
 export { ActivateCategoryHandler } from './category/commands/activate-category/ActivateCategoryHandler';
 export { DeactivateCategoryHandler } from './category/commands/deactivate-category/DeactivateCategoryHandler';
 
