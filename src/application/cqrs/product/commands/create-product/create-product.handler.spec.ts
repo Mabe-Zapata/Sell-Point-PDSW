@@ -14,6 +14,7 @@ describe('CreateProductHandler (application layer)', () => {
       findById: jest.fn(),
     };
     mockProductRepository = {
+      getNextCode: jest.fn(),
       create: jest.fn(),
     };
     mockStockMovementRepository = {
@@ -34,10 +35,11 @@ describe('CreateProductHandler (application layer)', () => {
   describe('execute', () => {
     it('should create product and call repository.create', async () => {
       const mockCategory = { id: 'cat-123' };
+      const generatedCode = 'PROD-ABCDEF1234567890';
       const mockProduct = {
         id: 'prod-123',
         categoryId: 'cat-123',
-        code: 'PROD-001',
+        code: generatedCode,
         name: 'Test Product',
         description: 'Test description',
         salePrice: 100,
@@ -46,11 +48,11 @@ describe('CreateProductHandler (application layer)', () => {
       } as Product;
 
       mockCategoryRepository.findById.mockResolvedValue(mockCategory);
+      mockProductRepository.getNextCode.mockResolvedValue(generatedCode);
       mockProductRepository.create.mockResolvedValue(mockProduct);
 
       const dto = {
         categoryId: 'cat-123',
-        code: 'PROD-001',
         name: 'Test Product',
         description: 'Test description',
         salePrice: 100,
@@ -67,10 +69,11 @@ describe('CreateProductHandler (application layer)', () => {
 
     it('should set isActive to true by default when not provided', async () => {
       const mockCategory = { id: 'cat-123' };
+      const generatedCode = 'PROD-ABCDEF1234567890';
       const mockProduct = {
         id: 'prod-123',
         categoryId: 'cat-123',
-        code: 'PROD-001',
+        code: generatedCode,
         name: 'Test Product',
         salePrice: 100,
         costPrice: 50,
@@ -78,11 +81,11 @@ describe('CreateProductHandler (application layer)', () => {
       } as Product;
 
       mockCategoryRepository.findById.mockResolvedValue(mockCategory);
+      mockProductRepository.getNextCode.mockResolvedValue(generatedCode);
       mockProductRepository.create.mockResolvedValue(mockProduct);
 
       const dto = {
         categoryId: 'cat-123',
-        code: 'PROD-001',
         name: 'Test Product',
         salePrice: 100,
         costPrice: 50,

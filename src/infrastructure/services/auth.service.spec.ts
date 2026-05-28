@@ -62,7 +62,7 @@ describe('AuthService', () => {
     it('should generate a JWT with correct payload and 900s exp', () => {
       const payload: TokenPayload = {
         employeeId: 'user-uuid-123',
-        employeeCode: 'EMP-001',
+        employeeCode: 'EMP-ABCDEF1234567890',
         role: 'ADMIN',
       };
 
@@ -98,7 +98,7 @@ describe('AuthService', () => {
     it('should generate UUID and store in Redis with 7d TTL when rememberMe is false', async () => {
       const payload: TokenPayload = {
         employeeId: 'user-uuid-123',
-        employeeCode: 'EMP-001',
+        employeeCode: 'EMP-ABCDEF1234567890',
         role: 'ADMIN',
       };
 
@@ -111,7 +111,7 @@ describe('AuthService', () => {
         result,
         expect.objectContaining({
           employeeId: 'user-uuid-123',
-          employeeCode: 'EMP-001',
+          employeeCode: 'EMP-ABCDEF1234567890',
           role: 'ADMIN',
         }),
         604800,
@@ -146,7 +146,7 @@ describe('AuthService', () => {
     it('should return TokenPayload when Redis returns valid payload', async () => {
       const storedPayload = {
         employeeId: 'user-uuid-123',
-        employeeCode: 'EMP-001',
+        employeeCode: 'EMP-ABCDEF1234567890',
         role: 'ADMIN',
         createdAt: '2024-01-01T00:00:00.000Z',
       };
@@ -156,7 +156,7 @@ describe('AuthService', () => {
 
       expect(result).toEqual({
         employeeId: 'user-uuid-123',
-        employeeCode: 'EMP-001',
+        employeeCode: 'EMP-ABCDEF1234567890',
         role: 'ADMIN',
       });
     });
@@ -182,7 +182,7 @@ describe('AuthService', () => {
     const hashedPassword = bcrypt.hashSync('password123', 10);
     const mockUser = {
       id: 'user-uuid-123',
-      employeeId: 'EMP-001',
+      employeeId: 'EMP-ABCDEF1234567890',
       passwordHash: hashedPassword,
       role: 'ADMIN',
       email: 'admin@test.com',
@@ -228,7 +228,7 @@ describe('AuthService', () => {
     const hashedPassword = bcrypt.hashSync('password123', 10);
     const mockUser = {
       id: 'user-uuid-123',
-      employeeId: 'EMP-001',
+      employeeId: 'EMP-ABCDEF1234567890',
       passwordHash: hashedPassword,
       role: 'ADMIN',
       email: 'admin@test.com',
@@ -264,7 +264,7 @@ describe('AuthService', () => {
   describe('linkGoogle', () => {
     const mockUser = {
       id: 'user-uuid-123',
-      employeeId: 'EMP-001',
+      employeeId: 'EMP-ABCDEF1234567890',
       role: 'ADMIN',
       email: 'admin@test.com',
       googleId: undefined,
@@ -353,7 +353,7 @@ describe('AuthService', () => {
   describe('loginGoogle', () => {
     const mockUser = {
       id: 'user-uuid-123',
-      employeeId: 'EMP-001',
+      employeeId: 'EMP-ABCDEF1234567890',
       role: 'ADMIN',
       email: 'admin@test.com',
       googleId: 'google-uid-123',

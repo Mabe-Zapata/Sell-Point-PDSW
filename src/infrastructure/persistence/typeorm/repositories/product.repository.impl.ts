@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { QueryRunner } from 'typeorm';
+import { randomUUID } from 'crypto';
 import type { IProductRepository } from '../../../../domain/repositories';
 import { Product } from '../../../../domain/entities';
 import { EntityNotFoundException } from '../../../../domain/exceptions/entity-not-found.exception';
@@ -22,6 +23,10 @@ export class ProductRepositoryImpl implements IProductRepository {
   async findByCode(code: string): Promise<Product | null> {
     const entity = await this.qr.manager.findOne('ProductTypeOrmEntity', { where: { code } });
     return entity ? this.mapToDomain(entity) : null;
+  }
+
+  async getNextCode(): Promise<string> {
+    return `PROD-${randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
   }
 
   async findAll(pagination?: any, filters?: any): Promise<any> {

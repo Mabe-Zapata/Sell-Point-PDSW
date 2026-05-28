@@ -96,7 +96,7 @@ describe('AuthController', () => {
   describe('refresh', () => {
     const mockPayload = {
       employeeId: 'user-uuid-123',
-      employeeCode: 'EMP-001',
+      employeeCode: 'EMP-ABCDEF1234567890',
       role: 'ADMIN' as const,
     };
 
@@ -136,7 +136,7 @@ describe('AuthController', () => {
     it('should resolve the authenticated user and call authService.linkGoogle with the token', async () => {
       const mockUser = {
         id: 'user-123',
-        employeeId: 'EMP-001',
+        employeeId: 'EMP-ABCDEF1234567890',
         email: 'admin@test.com',
       };
 

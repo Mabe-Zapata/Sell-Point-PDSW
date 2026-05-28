@@ -1,7 +1,7 @@
+import { randomUUID } from 'crypto';
 import { CreateSaleCommand } from './create-sale.command';
 import type { ISaleRepository } from '../../../../../domain/repositories';
 import { Sale, SaleStatus } from '../../../../../domain/entities';
-import { v4 as uuidv4 } from 'uuid';
 
 export class CreateSaleHandler {
   constructor(
@@ -9,9 +9,10 @@ export class CreateSaleHandler {
   ) {}
 
   async execute(command: CreateSaleCommand): Promise<Sale> {
-    const saleNumber = `SAL-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
+    const saleNumber = await this.saleRepository.getNextSaleNumber();
 
     const sale = new Sale({
+      id: randomUUID(),
       branchId: command.payload.branchId,
       customerId: command.payload.customerId,
       cashierUserId: command.payload.cashierUserId,

@@ -6,7 +6,7 @@ import { UserTypeOrmEntity } from './entities/user.typeorm.entity';
 import { UserRoleTypeOrmEntity } from './entities/user-role.typeorm.entity';
 import { RoleTypeOrmEntity } from './entities/role.typeorm.entity';
 
-const ADMIN_EMPLOYEE_ID = 'ADMIN-001';
+const ADMIN_SEED_KEY = 'ADMIN-001';
 const ADMIN_USERNAME = 'admin';
 const ADMIN_EMAIL = 'admin@billflow.com';
 const ADMIN_PASSWORD = 'Admin1234!';
@@ -20,6 +20,10 @@ const LAST_NAMES = ['García', 'Rodríguez', 'López', 'Martínez', 'González',
 
 function randomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function makeEmployeeId(seed: string): string {
+  return `EMP-${uuidv5(seed, UUID_NAMESPACE).replace(/-/g, '').slice(0, 16).toUpperCase()}`;
 }
 
 async function main() {
@@ -46,9 +50,10 @@ async function main() {
     const sellerPasswordHash = await bcrypt.hash(SELLER_PASSWORD, SALT_ROUNDS);
 
     // Admin
+    const adminEmployeeId = makeEmployeeId(ADMIN_SEED_KEY);
     const admin = txUserRepo.create({
-      id: uuidv5(ADMIN_EMPLOYEE_ID, UUID_NAMESPACE),
-      employeeId: ADMIN_EMPLOYEE_ID,
+      id: uuidv5(ADMIN_SEED_KEY, UUID_NAMESPACE),
+      employeeId: adminEmployeeId,
       username: ADMIN_USERNAME,
       email: ADMIN_EMAIL,
       passwordHash,
@@ -61,9 +66,10 @@ async function main() {
     // 99 vendedores
     process.stdout.write(`Insertando ${TOTAL_SELLERS} vendedores...\n`);
     for (let i = 1; i <= TOTAL_SELLERS; i++) {
-      const employeeId = `SELLER-${String(i).padStart(3, '0')}`;
+      const seedKey = `SELLER-${String(i).padStart(3, '0')}`;
+      const employeeId = makeEmployeeId(seedKey);
       const seller = txUserRepo.create({
-        id: uuidv5(employeeId, UUID_NAMESPACE),
+        id: uuidv5(seedKey, UUID_NAMESPACE),
         employeeId,
         username: `vendedor${i}`,
         email: `vendedor${i}@billflow.com`,

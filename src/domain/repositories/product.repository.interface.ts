@@ -10,6 +10,7 @@ export interface ProductFilters {
 export interface IProductRepository {
   findById(id: string): Promise<Product | null>;
   findByCode(code: string): Promise<Product | null>;
+  getNextCode(): Promise<string>;
   findAll(
     pagination?: PaginationParams,
     filters?: ProductFilters,

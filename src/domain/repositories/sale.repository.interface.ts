@@ -12,6 +12,7 @@ export interface SaleFilters {
 export interface ISaleRepository {
   findById(id: string): Promise<Sale | null>;
   findBySaleNumber(saleNumber: string): Promise<Sale | null>;
+  getNextSaleNumber(): Promise<string>;
   findAll(
     pagination?: PaginationParams,
     filters?: SaleFilters,

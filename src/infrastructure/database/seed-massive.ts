@@ -40,6 +40,10 @@ function randomPrice(min: number, max: number): number {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100;
 }
 
+function makeProductCode(): string {
+  return `PROD-${randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
+}
+
 function generateCedula(): string {
   return fakerES.string.numeric(10);
 }
@@ -138,13 +142,13 @@ async function seedProducts(
   const allIds: string[] = [];
 
   for (let batch = 0; batch < TOTAL_PRODUCTS / BATCH_SIZE; batch++) {
-    const products = Array.from({ length: BATCH_SIZE }, () => {
-      const salePrice = randomPrice(0.5, 999.99);
-      return productRepo.create({
-        categoryId: randomItem(categories).id,
-        code: fakerES.string.alphanumeric(10).toUpperCase(),
-        name: fakerES.commerce.productName(),
-        description: fakerES.commerce.productDescription(),
+      const products = Array.from({ length: BATCH_SIZE }, () => {
+        const salePrice = randomPrice(0.5, 999.99);
+        return productRepo.create({
+          categoryId: randomItem(categories).id,
+          code: makeProductCode(),
+          name: fakerES.commerce.productName(),
+          description: fakerES.commerce.productDescription(),
         salePrice,
         costPrice: Math.round(salePrice * 0.6 * 100) / 100,
         currentStock: randomInt(10, 500),
@@ -224,7 +228,7 @@ async function seedSales(
         branchId,
         customerId: randomItem(customerIds),
         cashierUserId,
-        saleNumber: `SAL-${String(index).padStart(10, '0')}`,
+        saleNumber: `SAL-${String(index).padStart(6, '0')}`,
         paymentMethod: 'CASH',
         status: 'CONFIRMED',
         subtotal,
@@ -244,7 +248,7 @@ async function seedSales(
             saleId,
             productId: item.productId,
             productNameSnapshot: item.productName,
-            productCodeSnapshot: item.productCode,
+            productCodeSnapshot: makeProductCode(),
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             taxRateId: taxRate.id,

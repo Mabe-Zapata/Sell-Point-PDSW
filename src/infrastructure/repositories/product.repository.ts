@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { ProductTypeOrmEntity } from '../database/entities/product.typeorm.entity';
 import { Product } from '../../domain/entities';
 import type { IProductRepository, ProductFilters, PaginationParams, PaginatedResult } from '../../domain/repositories';
@@ -53,6 +54,10 @@ export class ProductRepository implements IProductRepository {
   async findByCode(code: string): Promise<Product | null> {
     const entity = await this.repo.findOne({ where: { code } });
     return entity ? this.mapToDomain(entity) : null;
+  }
+
+  async getNextCode(): Promise<string> {
+    return `PROD-${randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
   }
 
   async findAll(

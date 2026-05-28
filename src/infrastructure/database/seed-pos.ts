@@ -10,6 +10,10 @@ import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.en
 
 const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 
+function makeProductCode(seed: string): string {
+  return `PROD-${uuidv5(seed, UUID_NAMESPACE).replace(/-/g, '').slice(0, 16).toUpperCase()}`;
+}
+
 async function main() {
   await dataSource.initialize();
   console.log('Database connected for POS seed.');
@@ -66,36 +70,36 @@ async function main() {
   // 2. Seed Products
   const productsData = [
     // Bebidas (category 0)
-    { code: 'BEB-001', name: 'Coca Cola 500ml', salePrice: 1.50, costPrice: 1.00, stock: 100, categoryIndex: 0 },
-    { code: 'BEB-002', name: 'Sprite 500ml', salePrice: 1.50, costPrice: 1.00, stock: 80, categoryIndex: 0 },
-    { code: 'BEB-003', name: 'Agua Sin Gas 600ml', salePrice: 1.00, costPrice: 0.60, stock: 120, categoryIndex: 0 },
-    { code: 'BEB-004', name: 'Jugo Natural Naranja 1L', salePrice: 2.50, costPrice: 1.80, stock: 40, categoryIndex: 0 },
-    { code: 'BEB-005', name: 'Cerveza Pilsener 355ml', salePrice: 2.00, costPrice: 1.20, stock: 60, categoryIndex: 0 },
+    { code: makeProductCode('BEB-001'), name: 'Coca Cola 500ml', salePrice: 1.50, costPrice: 1.00, stock: 100, categoryIndex: 0 },
+    { code: makeProductCode('BEB-002'), name: 'Sprite 500ml', salePrice: 1.50, costPrice: 1.00, stock: 80, categoryIndex: 0 },
+    { code: makeProductCode('BEB-003'), name: 'Agua Sin Gas 600ml', salePrice: 1.00, costPrice: 0.60, stock: 120, categoryIndex: 0 },
+    { code: makeProductCode('BEB-004'), name: 'Jugo Natural Naranja 1L', salePrice: 2.50, costPrice: 1.80, stock: 40, categoryIndex: 0 },
+    { code: makeProductCode('BEB-005'), name: 'Cerveza Pilsener 355ml', salePrice: 2.00, costPrice: 1.20, stock: 60, categoryIndex: 0 },
     // Snacks (category 1)
-    { code: 'SNK-001', name: 'Papas Lays Clásicas 40g', salePrice: 0.80, costPrice: 0.50, stock: 200, categoryIndex: 1 },
-    { code: 'SNK-002', name: 'Galletas Oreo 120g', salePrice: 1.20, costPrice: 0.80, stock: 150, categoryIndex: 1 },
-    { code: 'SNK-003', name: 'Chifles Verde 60g', salePrice: 1.00, costPrice: 0.60, stock: 90, categoryIndex: 1 },
-    { code: 'SNK-004', name: 'Chocolate Nacional 50g', salePrice: 1.50, costPrice: 1.00, stock: 75, categoryIndex: 1 },
+    { code: makeProductCode('SNK-001'), name: 'Papas Lays Clásicas 40g', salePrice: 0.80, costPrice: 0.50, stock: 200, categoryIndex: 1 },
+    { code: makeProductCode('SNK-002'), name: 'Galletas Oreo 120g', salePrice: 1.20, costPrice: 0.80, stock: 150, categoryIndex: 1 },
+    { code: makeProductCode('SNK-003'), name: 'Chifles Verde 60g', salePrice: 1.00, costPrice: 0.60, stock: 90, categoryIndex: 1 },
+    { code: makeProductCode('SNK-004'), name: 'Chocolate Nacional 50g', salePrice: 1.50, costPrice: 1.00, stock: 75, categoryIndex: 1 },
     // Lácteos (category 2)
-    { code: 'LAC-001', name: 'Leche Entera 1L', salePrice: 1.20, costPrice: 0.90, stock: 100, categoryIndex: 2 },
-    { code: 'LAC-002', name: 'Yogurt Natural 1L', salePrice: 2.00, costPrice: 1.40, stock: 50, categoryIndex: 2 },
-    { code: 'LAC-003', name: 'Queso Fresco 500g', salePrice: 3.50, costPrice: 2.50, stock: 30, categoryIndex: 2 },
+    { code: makeProductCode('LAC-001'), name: 'Leche Entera 1L', salePrice: 1.20, costPrice: 0.90, stock: 100, categoryIndex: 2 },
+    { code: makeProductCode('LAC-002'), name: 'Yogurt Natural 1L', salePrice: 2.00, costPrice: 1.40, stock: 50, categoryIndex: 2 },
+    { code: makeProductCode('LAC-003'), name: 'Queso Fresco 500g', salePrice: 3.50, costPrice: 2.50, stock: 30, categoryIndex: 2 },
     // Carnes (category 3)
-    { code: 'CAR-001', name: 'Pechuga de Pollo 1kg', salePrice: 4.50, costPrice: 3.20, stock: 40, categoryIndex: 3 },
-    { code: 'CAR-002', name: 'Carne Molida 1kg', salePrice: 5.00, costPrice: 3.80, stock: 35, categoryIndex: 3 },
+    { code: makeProductCode('CAR-001'), name: 'Pechuga de Pollo 1kg', salePrice: 4.50, costPrice: 3.20, stock: 40, categoryIndex: 3 },
+    { code: makeProductCode('CAR-002'), name: 'Carne Molida 1kg', salePrice: 5.00, costPrice: 3.80, stock: 35, categoryIndex: 3 },
     // Granos Básicos (category 4)
-    { code: 'GRA-001', name: 'Arroz Premium 1kg', salePrice: 1.10, costPrice: 0.80, stock: 200, categoryIndex: 4 },
-    { code: 'GRA-002', name: 'Azúcar Blanca 1kg', salePrice: 1.00, costPrice: 0.70, stock: 180, categoryIndex: 4 },
-    { code: 'GRA-003', name: 'Fideos Tallarín 500g', salePrice: 0.90, costPrice: 0.60, stock: 160, categoryIndex: 4 },
-    { code: 'GRA-004', name: 'Aceite Vegetal 1L', salePrice: 2.80, costPrice: 2.00, stock: 60, categoryIndex: 4 },
+    { code: makeProductCode('GRA-001'), name: 'Arroz Premium 1kg', salePrice: 1.10, costPrice: 0.80, stock: 200, categoryIndex: 4 },
+    { code: makeProductCode('GRA-002'), name: 'Azúcar Blanca 1kg', salePrice: 1.00, costPrice: 0.70, stock: 180, categoryIndex: 4 },
+    { code: makeProductCode('GRA-003'), name: 'Fideos Tallarín 500g', salePrice: 0.90, costPrice: 0.60, stock: 160, categoryIndex: 4 },
+    { code: makeProductCode('GRA-004'), name: 'Aceite Vegetal 1L', salePrice: 2.80, costPrice: 2.00, stock: 60, categoryIndex: 4 },
     // Limpieza (category 5)
-    { code: 'LIM-001', name: 'Detergente Líquido 750ml', salePrice: 3.00, costPrice: 2.10, stock: 45, categoryIndex: 5 },
-    { code: 'LIM-002', name: 'Jabón de Barra x3', salePrice: 1.50, costPrice: 1.00, stock: 80, categoryIndex: 5 },
-    { code: 'LIM-003', name: 'Cloro 1L', salePrice: 1.80, costPrice: 1.20, stock: 55, categoryIndex: 5 },
+    { code: makeProductCode('LIM-001'), name: 'Detergente Líquido 750ml', salePrice: 3.00, costPrice: 2.10, stock: 45, categoryIndex: 5 },
+    { code: makeProductCode('LIM-002'), name: 'Jabón de Barra x3', salePrice: 1.50, costPrice: 1.00, stock: 80, categoryIndex: 5 },
+    { code: makeProductCode('LIM-003'), name: 'Cloro 1L', salePrice: 1.80, costPrice: 1.20, stock: 55, categoryIndex: 5 },
     // Panadería (category 6)
-    { code: 'PAN-001', name: 'Pan de Leche', salePrice: 0.25, costPrice: 0.15, stock: 500, categoryIndex: 6 },
-    { code: 'PAN-002', name: 'Empanada de Queso', salePrice: 0.80, costPrice: 0.50, stock: 100, categoryIndex: 6 },
-    { code: 'PAN-003', name: 'Pastel de Chocolate', salePrice: 3.00, costPrice: 2.00, stock: 10, categoryIndex: 6 },
+    { code: makeProductCode('PAN-001'), name: 'Pan de Leche', salePrice: 0.25, costPrice: 0.15, stock: 500, categoryIndex: 6 },
+    { code: makeProductCode('PAN-002'), name: 'Empanada de Queso', salePrice: 0.80, costPrice: 0.50, stock: 100, categoryIndex: 6 },
+    { code: makeProductCode('PAN-003'), name: 'Pastel de Chocolate', salePrice: 3.00, costPrice: 2.00, stock: 10, categoryIndex: 6 },
   ];
 
   for (const prodData of productsData) {
