@@ -20,7 +20,7 @@ export class CreateProductDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(20)
+  @MaxLength(30)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   code?: string;
 
