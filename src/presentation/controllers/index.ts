@@ -9,3 +9,4 @@ export { RoleController } from './role.controller';
 export { ErrorLogController } from './error-log.controller';
 export { SaleController } from './sale.controller';
 export { TaxRateController } from './tax-rate.controller';
+export { InvoiceSeriesController } from './invoice-series.controller';

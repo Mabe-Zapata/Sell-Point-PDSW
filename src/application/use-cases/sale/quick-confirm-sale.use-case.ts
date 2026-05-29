@@ -3,10 +3,14 @@ import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
 import type { ICategoryRepository } from '../../../domain/repositories/category.repository.interface';
 import type { ITaxRateRepository } from '../../../domain/repositories/tax-rate.repository.interface';
 import type { IUserRepository } from '../../../domain/repositories/user.repository.interface';
+import type { ICustomerRepository } from '../../../domain/repositories/customer.repository.interface';
 import type { QuickConfirmSalePayload } from '../../cqrs/sale/commands/quick-confirm-sale/quick-confirm-sale.command';
 import { SaleConfirmedEvent } from '../../../domain/events/sale-confirmed.event';
+import { InvoiceIssuedEvent } from '../../../domain/events/invoice-issued.event';
 import { BusinessRuleException } from '../../../domain/exceptions';
-import { StockMovement, StockMovementType } from '../../../domain/entities';
+import { InvoiceItem, StockMovement, StockMovementType } from '../../../domain/entities';
+import { CreateInvoiceCommand } from '../../cqrs/invoice/commands/create-invoice/create-invoice.command';
+import { CreateInvoiceHandler } from '../../cqrs/invoice/commands/create-invoice/create-invoice.handler';
 
 interface SaleDetailData {
   productId: string;
@@ -27,6 +31,30 @@ export interface QuickConfirmSaleResult {
   taxAmount: number;
   total: number;
   status: string;
+  invoice: {
+    id: string;
+    saleId: string;
+    seriesId: string;
+    invoiceNumber: string;
+    issueDate: Date;
+    status: string;
+    subtotal: number;
+    iva: number;
+    total: number;
+    pdfUrl: string;
+    items: Array<{
+      id: string;
+      productId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+      subtotal: number;
+      taxRateId?: string;
+      taxPercentage: number;
+      taxAmount: number;
+      total: number;
+    }>;
+  };
 }
 
 export class QuickConfirmSaleUseCase {
@@ -35,7 +63,23 @@ export class QuickConfirmSaleUseCase {
     private readonly categoryRepository: ICategoryRepository,
     private readonly taxRateRepository: ITaxRateRepository,
     private readonly userRepository: IUserRepository,
+    private readonly customerRepository: ICustomerRepository,
   ) {}
+
+  private mapInvoiceItems(items: InvoiceItem[]): QuickConfirmSaleResult['invoice']['items'] {
+    return items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      subtotal: item.subtotal,
+      taxRateId: item.taxRateId,
+      taxPercentage: item.taxPercentage ?? 0,
+      taxAmount: item.taxAmount ?? 0,
+      total: item.total,
+    }));
+  }
 
   async execute(payload: QuickConfirmSalePayload): Promise<QuickConfirmSaleResult> {
     // Validate
@@ -62,6 +106,18 @@ export class QuickConfirmSaleUseCase {
       if (!user.defaultBranchId) {
         throw new BusinessRuleException('User has no default branch assigned');
       }
+
+      const customer = payload.customerId
+        ? await this.customerRepository.findById(payload.customerId)
+        : null;
+      if (payload.customerId && !customer) {
+        throw new BusinessRuleException(`Customer with ID '${payload.customerId}' not found`);
+      }
+
+      const customerName = customer
+        ? [customer.firstName, customer.lastName].filter(Boolean).join(' ')
+        : 'Consumidor Final';
+      const customerEmail = customer?.email;
 
       const saleId = crypto.randomUUID();
       const saleNumber = await this.uow.sales.getNextSaleNumber();
@@ -171,6 +227,21 @@ export class QuickConfirmSaleUseCase {
         }));
       }
 
+      const invoiceHandler = new CreateInvoiceHandler(
+        this.uow.invoices,
+        this.uow.invoiceItems,
+        this.uow.invoiceSeries,
+        this.uow.saleDetails,
+      );
+      const invoice = await invoiceHandler.execute(
+        new CreateInvoiceCommand(
+          saleId,
+          user.defaultBranchId,
+          customerEmail,
+          customerName,
+        ),
+      );
+
       // Commit transaction
       await this.uow.commit();
 
@@ -180,8 +251,8 @@ export class QuickConfirmSaleUseCase {
           saleId,
           new Date(),
           total,
-          'unknown@customer.com',
-          'Customer',
+          customerEmail,
+          customerName,
           saleDetailsData.map((d) => ({
             productId: d.productId,
             productName: d.productName,
@@ -189,10 +260,33 @@ export class QuickConfirmSaleUseCase {
             unitPrice: d.unitPrice,
             subtotal: d.subtotal,
           })),
-          undefined,
+          invoice.id,
           user.defaultBranchId,
         ),
       );
+
+      if (customerEmail) {
+        this.uow.dispatchEvent(
+          new InvoiceIssuedEvent(
+            invoice.id,
+            invoice.saleId,
+            invoice.invoiceNumber,
+            customerEmail,
+            customerName,
+            invoice.issueDate,
+            invoice.total,
+            invoice.subtotal,
+            invoice.iva,
+            invoice.items.map((item) => ({
+              productId: item.productId,
+              productName: item.productName,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              subtotal: item.subtotal,
+            })),
+          ),
+        );
+      }
 
       return {
         id: saleId,
@@ -201,6 +295,19 @@ export class QuickConfirmSaleUseCase {
         taxAmount: totalTaxAmount,
         total,
         status: 'CONFIRMED',
+        invoice: {
+          id: invoice.id,
+          saleId: invoice.saleId,
+          seriesId: invoice.seriesId,
+          invoiceNumber: invoice.invoiceNumber,
+          issueDate: invoice.issueDate,
+          status: invoice.status,
+          subtotal: invoice.subtotal,
+          iva: invoice.iva,
+          total: invoice.total,
+          pdfUrl: `/invoices/${invoice.id}/pdf`,
+          items: this.mapInvoiceItems(invoice.items),
+        },
       };
     } catch (error) {
       await this.uow.rollback();

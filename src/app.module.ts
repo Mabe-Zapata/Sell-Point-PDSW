@@ -201,7 +201,7 @@ import {
 import {
   CustomerController, ProductController, InvoiceController, DashboardController,
   AuthController, CategoryController, UserController, RoleController,
-  ErrorLogController, SaleController, TaxRateController,
+  ErrorLogController, SaleController, TaxRateController, InvoiceSeriesController,
 } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
@@ -256,6 +256,7 @@ const entities = [
     AppController, CustomerController, ProductController, InvoiceController,
     DashboardController, AuthController, CategoryController, UserController,
     RoleController,   ErrorLogController, SaleController, TaxRateController,
+    InvoiceSeriesController,
   ],
   providers: [
     AppService,

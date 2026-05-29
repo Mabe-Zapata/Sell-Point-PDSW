@@ -10,11 +10,17 @@ import type {
   ISaleDetailRepository,
   IProductRepository,
   IStockMovementRepository,
+  IInvoiceRepository,
+  IInvoiceItemRepository,
+  IInvoiceSeriesRepository,
 } from '../../../../domain/repositories';
 import { SaleRepositoryImpl } from '../repositories/sale.repository.impl';
 import { SaleDetailRepositoryImpl } from '../repositories/sale-detail.repository.impl';
 import { ProductRepositoryImpl } from '../repositories/product.repository.impl';
 import { StockMovementRepositoryImpl } from '../repositories/stock-movement.repository.impl';
+import { InvoiceRepositoryImpl } from '../repositories/invoice.repository.impl';
+import { InvoiceItemRepositoryImpl } from '../repositories/invoice-item.repository.impl';
+import { InvoiceSeriesRepositoryImpl } from '../repositories/invoice-series.repository.impl';
 
 @Injectable()
 export class TypeOrmUnitOfWork implements IUnitOfWork {
@@ -86,5 +92,26 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
       throw new Error('UnitOfWork not started. Call start() first.');
     }
     return new StockMovementRepositoryImpl(this.queryRunner);
+  }
+
+  get invoices(): IInvoiceRepository {
+    if (!this.started) {
+      throw new Error('UnitOfWork not started. Call start() first.');
+    }
+    return new InvoiceRepositoryImpl(this.queryRunner);
+  }
+
+  get invoiceItems(): IInvoiceItemRepository {
+    if (!this.started) {
+      throw new Error('UnitOfWork not started. Call start() first.');
+    }
+    return new InvoiceItemRepositoryImpl(this.queryRunner);
+  }
+
+  get invoiceSeries(): IInvoiceSeriesRepository {
+    if (!this.started) {
+      throw new Error('UnitOfWork not started. Call start() first.');
+    }
+    return new InvoiceSeriesRepositoryImpl(this.queryRunner);
   }
 }

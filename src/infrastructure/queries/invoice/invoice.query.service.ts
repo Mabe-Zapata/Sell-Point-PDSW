@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { PaginatedResult } from '../../../domain/repositories/pagination.types';
 import {
   IInvoiceQueryService,
+  InvoiceKpis,
   InvoiceListItem,
 } from '../../../domain/query-services/invoice.query-service.interface';
 import { InvoiceTypeOrmEntity } from '../../database/entities/invoice.typeorm.entity';
@@ -28,12 +29,12 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         (qb) =>
           qb
             .from(InvoiceItemTypeOrmEntity, 'ii')
-            .select('ii.invoiceId', 'invoiceId')
-            .addSelect('SUM(ii.quantity * ii.unitPrice)', 'subtotal')
-            .addSelect('SUM(COALESCE(ii.taxAmount, 0))', 'iva')
+            .select('ii.invoiceId', 'INVOICE_ID')
+            .addSelect('SUM(ii.quantity * ii.unitPrice)', 'SUBTOTAL')
+            .addSelect('SUM(COALESCE(ii.taxAmount, 0))', 'IVA')
             .groupBy('ii.invoiceId'),
         'totals',
-        'totals.invoiceId = i.id',
+        '"totals"."INVOICE_ID" = i.id',
       )
       .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId');
   }
@@ -52,11 +53,12 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       'sal.saleNumber AS "saleNumber"',
       'ser.establishmentCode AS "establishmentCode"',
       'ser.emissionPointCode AS "emissionPointCode"',
-      'COALESCE(totals.subtotal, 0) AS "subtotal"',
-      'COALESCE(totals.iva, 0) AS "iva"',
-      '(COALESCE(totals.subtotal, 0) + COALESCE(totals.iva, 0)) AS "total"',
+      'COALESCE("totals"."SUBTOTAL", 0) AS "subtotal"',
+      'COALESCE("totals"."IVA", 0) AS "iva"',
+      '(COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0)) AS "total"',
       'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
       'cus.cedula AS "customerCedula"',
+      'cus.email AS "customerEmail"',
     ];
   }
 
@@ -68,7 +70,14 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       total: Number(row.total),
       customerName: row.customerName ?? '',
       customerCedula: row.customerCedula ?? '',
+      customerEmail: row.customerEmail ?? undefined,
     };
+  }
+
+  private readNumeric(row: Record<string, unknown> | undefined, key: string): number {
+    const value = row?.[key] ?? row?.[key.toUpperCase()];
+    const parsed = Number(value ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   async listInvoices(params: {
@@ -135,5 +144,38 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     }
 
     return this.normalizeRow(row);
+  }
+
+  async getInvoiceKpis(params: { branchId?: string } = {}): Promise<InvoiceKpis> {
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+    last30Days.setHours(0, 0, 0, 0);
+
+    const row = await this.buildInvoiceQuery()
+      .where(params.branchId ? 'ser.branchId = :branchId' : '1=1', {
+        branchId: params.branchId,
+      })
+      .select([
+        `SUM(CASE WHEN i.status <> :cancelledStatus THEN COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0) ELSE 0 END) AS "totalInvoiced"`,
+        `SUM(CASE WHEN i.status <> :cancelledStatus THEN 1 ELSE 0 END) AS "issuedCount"`,
+        `SUM(CASE WHEN i.status = :cancelledStatus THEN COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0) ELSE 0 END) AS "cancelledTotal"`,
+        `SUM(CASE WHEN i.status = :cancelledStatus THEN 1 ELSE 0 END) AS "cancelledCount"`,
+        `SUM(CASE WHEN i.status <> :cancelledStatus AND i.issueDate >= :last30Days THEN COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0) ELSE 0 END) AS "last30DaysTotal"`,
+        `SUM(CASE WHEN i.status <> :cancelledStatus AND i.issueDate >= :last30Days THEN 1 ELSE 0 END) AS "last30DaysCount"`,
+      ])
+      .setParameters({
+        cancelledStatus: 'CANCELLED',
+        last30Days,
+      })
+      .getRawOne<Record<string, unknown>>();
+
+    return {
+      totalInvoiced: this.readNumeric(row, 'totalInvoiced'),
+      issuedCount: this.readNumeric(row, 'issuedCount'),
+      cancelledTotal: this.readNumeric(row, 'cancelledTotal'),
+      cancelledCount: this.readNumeric(row, 'cancelledCount'),
+      last30DaysTotal: this.readNumeric(row, 'last30DaysTotal'),
+      last30DaysCount: this.readNumeric(row, 'last30DaysCount'),
+    };
   }
 }

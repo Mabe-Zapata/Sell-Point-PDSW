@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { fakerES } from '@faker-js/faker';
 import { randomUUID } from 'node:crypto';
 import { dataSource } from '../../config/typeorm.config';
@@ -10,6 +10,9 @@ import { SaleTypeOrmEntity } from './entities/sale.typeorm.entity';
 import { SaleDetailTypeOrmEntity } from './entities/sale-detail.typeorm.entity';
 import { UserTypeOrmEntity } from './entities/user.typeorm.entity';
 import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
+import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.entity';
+import { InvoiceTypeOrmEntity } from './entities/invoice.typeorm.entity';
+import { InvoiceItemTypeOrmEntity } from './entities/invoice-item.typeorm.entity';
 
 // ─────────────────────────────────────────────
 // CONFIGURACIÓN
@@ -18,6 +21,8 @@ const BATCH_SIZE = 500;
 const TOTAL_CUSTOMERS = 100000;
 const TOTAL_PRODUCTS = 100000;
 const TOTAL_SALES = 100000;
+const DEFAULT_ESTABLISHMENT_CODE = '001';
+const DEFAULT_EMISSION_POINT_CODE = '001';
 
 const CATEGORIES = [
   'Electrónica', 'Ropa', 'Alimentos', 'Hogar',
@@ -46,6 +51,10 @@ function makeProductCode(): string {
 
 function generateCedula(): string {
   return fakerES.string.numeric(10);
+}
+
+function makeInvoiceNumber(sequence: number): string {
+  return `${DEFAULT_ESTABLISHMENT_CODE}-${DEFAULT_EMISSION_POINT_CODE}-${String(sequence).padStart(9, '0')}`;
 }
 
 // ─────────────────────────────────────────────
@@ -274,6 +283,172 @@ async function seedSales(
 }
 
 // ─────────────────────────────────────────────
+// SERIES DE FACTURAS
+// ─────────────────────────────────────────────
+async function seedInvoiceSeries(
+  seriesRepo: Repository<InvoiceSeriesTypeOrmEntity>,
+  branchId: string,
+): Promise<InvoiceSeriesTypeOrmEntity> {
+  const existing = await seriesRepo.findOne({
+    where: {
+      branchId,
+      establishmentCode: DEFAULT_ESTABLISHMENT_CODE,
+      emissionPointCode: DEFAULT_EMISSION_POINT_CODE,
+    },
+  });
+
+  if (existing) {
+    if (!existing.isActive) {
+      await seriesRepo.update(existing.id, { isActive: true });
+      existing.isActive = true;
+    }
+
+    process.stdout.write(
+      `  Serie de facturas ya existe: ${existing.establishmentCode}-${existing.emissionPointCode} — secuencia ${existing.currentSequence}\n`,
+    );
+    return existing;
+  }
+
+  const created = await seriesRepo.save(
+    seriesRepo.create({
+      branchId,
+      establishmentCode: DEFAULT_ESTABLISHMENT_CODE,
+      emissionPointCode: DEFAULT_EMISSION_POINT_CODE,
+      currentSequence: 0,
+      isActive: true,
+    }),
+  );
+
+  process.stdout.write(
+    `  Serie de facturas creada: ${created.establishmentCode}-${created.emissionPointCode}\n`,
+  );
+  return created;
+}
+
+// ─────────────────────────────────────────────
+// FACTURAS + ITEMS DESDE VENTAS + DETALLES
+// ─────────────────────────────────────────────
+async function seedInvoicesFromSales(
+  ds: DataSource,
+  series: InvoiceSeriesTypeOrmEntity,
+): Promise<void> {
+  const saleRepo = ds.getRepository(SaleTypeOrmEntity);
+  const detailRepo = ds.getRepository(SaleDetailTypeOrmEntity);
+  const invoiceRepo = ds.getRepository(InvoiceTypeOrmEntity);
+  const invoiceItemRepo = ds.getRepository(InvoiceItemTypeOrmEntity);
+  const seriesRepo = ds.getRepository(InvoiceSeriesTypeOrmEntity);
+
+  const salesCount = await saleRepo.count({ where: { status: 'CONFIRMED' } });
+  const existingInvoiceCount = await invoiceRepo.count({ where: { seriesId: series.id } });
+  const missingInvoiceCount = await saleRepo
+    .createQueryBuilder('sale')
+    .leftJoin(InvoiceTypeOrmEntity, 'invoice', 'invoice.saleId = sale.id')
+    .where('sale.status = :status', { status: 'CONFIRMED' })
+    .andWhere('invoice.id IS NULL')
+    .getCount();
+
+  if (salesCount === 0) {
+    process.stdout.write('  No hay ventas confirmadas para facturar — omitiendo.\n');
+    return;
+  }
+
+  if (missingInvoiceCount === 0) {
+    process.stdout.write(`  Facturas ya existen para todas las ventas confirmadas: ${existingInvoiceCount} — omitiendo.\n`);
+    return;
+  }
+
+  let nextSequence = Math.max(series.currentSequence, existingInvoiceCount);
+  let insertedInvoices = 0;
+  let insertedInvoiceItems = 0;
+
+  process.stdout.write(
+    `\nGenerando facturas para ventas confirmadas sin factura en lotes de ${BATCH_SIZE}...\n`,
+  );
+
+  while (true) {
+    const sales = await saleRepo
+      .createQueryBuilder('sale')
+      .leftJoin(InvoiceTypeOrmEntity, 'invoice', 'invoice.saleId = sale.id')
+      .where('sale.status = :status', { status: 'CONFIRMED' })
+      .andWhere('invoice.id IS NULL')
+      .orderBy('sale.createdAt', 'ASC')
+      .addOrderBy('sale.saleNumber', 'ASC')
+      .take(BATCH_SIZE)
+      .getMany();
+
+    if (sales.length === 0) break;
+
+    const saleIds = sales.map((sale) => sale.id);
+    const details = await detailRepo.find({ where: { saleId: In(saleIds) } });
+    const detailsBySaleId = new Map<string, SaleDetailTypeOrmEntity[]>();
+
+    for (const detail of details) {
+      const saleDetails = detailsBySaleId.get(detail.saleId) ?? [];
+      saleDetails.push(detail);
+      detailsBySaleId.set(detail.saleId, saleDetails);
+    }
+
+    const invoices: InvoiceTypeOrmEntity[] = [];
+    const invoiceItems: InvoiceItemTypeOrmEntity[] = [];
+
+    for (const sale of sales) {
+      const saleDetails = detailsBySaleId.get(sale.id) ?? [];
+      if (saleDetails.length === 0) {
+        continue;
+      }
+
+      nextSequence += 1;
+      const invoiceId = randomUUID();
+
+      invoices.push(
+        invoiceRepo.create({
+          id: invoiceId,
+          saleId: sale.id,
+          seriesId: series.id,
+          invoiceNumber: makeInvoiceNumber(nextSequence),
+          issueDate: sale.createdAt,
+          status: 'ISSUED',
+        }),
+      );
+
+      for (const detail of saleDetails) {
+        invoiceItems.push(
+          invoiceItemRepo.create({
+            invoiceId,
+            productId: detail.productId,
+            productNameSnapshot: detail.productNameSnapshot,
+            quantity: detail.quantity,
+            unitPrice: detail.unitPrice,
+            taxRateId: detail.taxRateId,
+            taxPercentage: detail.taxPercentage,
+            taxAmount: detail.taxAmount,
+          }),
+        );
+      }
+    }
+
+    if (invoices.length === 0) break;
+
+    await invoiceRepo.save(invoices);
+    await invoiceItemRepo.save(invoiceItems);
+
+    insertedInvoices += invoices.length;
+    insertedInvoiceItems += invoiceItems.length;
+
+    process.stdout.write(
+      `  Facturas: ${insertedInvoices}/${missingInvoiceCount} nuevas | Items: ${insertedInvoiceItems}\r`,
+    );
+  }
+
+  await seriesRepo.update(series.id, { currentSequence: nextSequence });
+  series.currentSequence = nextSequence;
+
+  process.stdout.write(`\n  ✓ Facturas completadas: ${insertedInvoices}\n`);
+  process.stdout.write(`  ✓ Items de factura completados: ${insertedInvoiceItems}\n`);
+  process.stdout.write(`  ✓ Secuencia fiscal actualizada: ${nextSequence}\n`);
+}
+
+// ─────────────────────────────────────────────
 // MAIN
 // ─────────────────────────────────────────────
 async function main(): Promise<void> {
@@ -285,6 +460,7 @@ async function main(): Promise<void> {
   const productRepo = dataSource.getRepository(ProductTypeOrmEntity);
   const userRepo = dataSource.getRepository(UserTypeOrmEntity);
   const taxRateRepo = dataSource.getRepository(TaxRateTypeOrmEntity);
+  const invoiceSeriesRepo = dataSource.getRepository(InvoiceSeriesTypeOrmEntity);
 
   const cashier = await userRepo.findOne({ where: { isActive: true } });
   if (!cashier) {
@@ -305,11 +481,14 @@ async function main(): Promise<void> {
   const productIds = await seedProducts(productRepo, categories);
 
   await seedSales(customerIds, productIds, cashier.id, branchId, taxRate, dataSource);
+  const invoiceSeries = await seedInvoiceSeries(invoiceSeriesRepo, branchId);
+  await seedInvoicesFromSales(dataSource, invoiceSeries);
 
   process.stdout.write('\n✓ Seed masivo completado.\n');
   process.stdout.write(`  Clientes  : ${TOTAL_CUSTOMERS.toLocaleString()}\n`);
   process.stdout.write(`  Productos : ${TOTAL_PRODUCTS.toLocaleString()}\n`);
   process.stdout.write(`  Ventas    : ${TOTAL_SALES.toLocaleString()}\n`);
+  process.stdout.write(`  Facturas  : hasta ${TOTAL_SALES.toLocaleString()}\n`);
   process.stdout.write(
     `  Detalles  : entre ${TOTAL_SALES.toLocaleString()} y ${(TOTAL_SALES * 2).toLocaleString()}\n`,
   );

@@ -10,7 +10,7 @@ export class SaleConfirmedEvent {
   saleId: string;
   confirmedAt: Date;
   total: number;
-  customerEmail: string;
+  customerEmail?: string;
   customerName: string;
   details: SaleConfirmedEventItem[];
   invoiceId?: string;
@@ -20,7 +20,7 @@ export class SaleConfirmedEvent {
     saleId: string,
     confirmedAt: Date,
     total: number,
-    customerEmail: string,
+    customerEmail: string | undefined,
     customerName: string,
     details: SaleConfirmedEventItem[],
     invoiceId?: string,

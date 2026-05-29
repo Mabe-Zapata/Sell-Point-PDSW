@@ -14,6 +14,10 @@ export class OrderConfirmedListener {
 
   async handle(event: SaleConfirmedEvent): Promise<void> {
     try {
+      if (!event.customerEmail) {
+        return;
+      }
+
       const items: OrderItemDTO[] = event.details?.map((d) => ({
         productId: d.productId,
         productName: d.productName,
@@ -24,8 +28,8 @@ export class OrderConfirmedListener {
 
       const dto = new OrderConfirmationDTO({
         orderId: event.saleId,
-        customerEmail: event.customerEmail ?? 'unknown@customer.com',
-        customerName: event.customerName ?? 'Customer',
+        customerEmail: event.customerEmail,
+        customerName: event.customerName || 'Consumidor Final',
         items,
         total: event.total,
       });

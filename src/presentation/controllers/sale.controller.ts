@@ -7,6 +7,7 @@ import {
   Query,
   Headers,
   Req,
+  Inject,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -30,6 +31,16 @@ import { ListSalesQuery } from '../../application/cqrs/sale/queries/list-sales/l
 import { ConfirmSaleRequestDto } from '../../application/dto/sale/sale-confirm-request.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { SaleResponseDto } from '../../application/dto/sale/sale-response.dto';
+import { InvoiceResponseDto } from '../../application/dto/invoice/invoice-response.dto';
+import { InvoiceItemResponseDto } from '../../application/dto/invoice/invoice-item.dto';
+import { Invoice, InvoiceStatus } from '../../domain/entities';
+import { INVOICE_QUERY_SERVICE } from '../../application/query-tokens';
+import type { IInvoiceQueryService, InvoiceListItem } from '../../domain/query-services/invoice.query-service.interface';
+import { CUSTOMER_REPOSITORY, INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import type { IInvoiceItemRepository, ICustomerRepository } from '../../domain/repositories';
+import { CreateInvoiceCommand } from '../../application/cqrs/invoice/commands/create-invoice/create-invoice.command';
+import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
+import type { QuickConfirmSaleResult } from '../../application/use-cases/sale/quick-confirm-sale.use-case';
 
 @ApiTags('sales')
 @ApiBearerAuth('access-token')
@@ -38,7 +49,36 @@ export class SaleController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    @Inject(INVOICE_QUERY_SERVICE) private readonly invoiceQueryService: IInvoiceQueryService,
+    @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
+    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
   ) {}
+
+  private async toInvoiceResponse(invoiceData: InvoiceListItem): Promise<InvoiceResponseDto> {
+    const items = await this.invoiceItemRepository.findByInvoiceId(invoiceData.id);
+    return InvoiceResponseDto.fromEntity(
+      new Invoice({
+        id: invoiceData.id,
+        saleId: invoiceData.saleId,
+        seriesId: invoiceData.seriesId,
+        invoiceNumber: invoiceData.invoiceNumber,
+        authorizationNumber: invoiceData.authorizationNumber ?? undefined,
+        issueDate: invoiceData.issueDate,
+        status: invoiceData.status as InvoiceStatus,
+        cancelledAt: invoiceData.cancelledAt ?? undefined,
+        createdAt: invoiceData.createdAt,
+        subtotal: invoiceData.subtotal,
+        iva: invoiceData.iva,
+        total: invoiceData.total,
+        saleNumber: invoiceData.saleNumber,
+        customerName: invoiceData.customerName,
+        customerCedula: invoiceData.customerCedula,
+        establishmentCode: invoiceData.establishmentCode,
+        emissionPointCode: invoiceData.emissionPointCode,
+      }),
+      InvoiceItemResponseDto.fromEntities(items),
+    );
+  }
 
   @Post('confirm')
   @HttpCode(HttpStatus.OK)
@@ -51,7 +91,7 @@ export class SaleController {
     @Req() req: { user: { employeeId: string } },
     @Body() dto: ConfirmSaleRequestDto,
     @Headers('x-idempotency-key') idempotencyKey?: string,
-  ): Promise<{ id: string; saleNumber: string; subtotal: number; taxAmount: number; total: number; status: string }> {
+  ): Promise<QuickConfirmSaleResult> {
     return this.commandBus.execute(
       new QuickConfirmSaleCommand({
         customerId: dto.customerId || null,
@@ -73,6 +113,53 @@ export class SaleController {
   ): Promise<{ success: boolean; saleId: string }> {
     await this.commandBus.execute(new CancelSaleCommand(saleId));
     return { success: true, saleId };
+  }
+
+  @Get(':saleId/invoice')
+  async findInvoiceBySale(@Param('saleId') saleId: string): Promise<InvoiceResponseDto> {
+    const invoiceData = await this.invoiceQueryService.getInvoiceBySaleId(saleId);
+    if (!invoiceData) {
+      throw new EntityNotFoundException('Invoice', `sale ${saleId}`);
+    }
+
+    return this.toInvoiceResponse(invoiceData);
+  }
+
+  @Post(':saleId/invoice/retry')
+  @HttpCode(HttpStatus.OK)
+  async retryInvoiceForSale(@Param('saleId') saleId: string): Promise<InvoiceResponseDto> {
+    const existingInvoice = await this.invoiceQueryService.getInvoiceBySaleId(saleId);
+    if (existingInvoice) {
+      return this.toInvoiceResponse(existingInvoice);
+    }
+
+    const sale = await this.queryBus.execute(new GetSaleQuery(saleId));
+    if (!sale) {
+      throw new EntityNotFoundException('Sale', saleId);
+    }
+
+    const customer = sale.customerId
+      ? await this.customerRepository.findById(sale.customerId)
+      : null;
+    const customerName = customer
+      ? [customer.firstName, customer.lastName].filter(Boolean).join(' ')
+      : 'Consumidor Final';
+
+    const created = await this.commandBus.execute(
+      new CreateInvoiceCommand(
+        saleId,
+        sale.branchId,
+        customer?.email,
+        customerName,
+      ),
+    );
+
+    const invoiceData = await this.invoiceQueryService.getInvoiceById(created.id);
+    if (!invoiceData) {
+      throw new EntityNotFoundException('Invoice', created.id);
+    }
+
+    return this.toInvoiceResponse(invoiceData);
   }
 
   @Get(':id')
