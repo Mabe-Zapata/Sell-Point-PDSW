@@ -10,7 +10,6 @@ import {
   EmployeeCredentialsCreatedListener,
   PasswordChangedListener,
   PasswordResetRequestedListener,
-  InvoiceEmailListener,
 } from '../listeners';
 import { PdfService } from '../services/pdf.service';
 
@@ -28,7 +27,6 @@ import { PdfService } from '../services/pdf.service';
     EmployeeCredentialsCreatedListener,
     PasswordChangedListener,
     PasswordResetRequestedListener,
-    InvoiceEmailListener,
   ],
   exports: [EMAIL_SERVICE, PDF_SERVICE, HandlebarsCompiler, BrevoRestTransporter],
 })
