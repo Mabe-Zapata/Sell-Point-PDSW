@@ -8,10 +8,40 @@
 #   docker compose -f docker-compose.deploy.yml up -d
 #   docker compose -f docker-compose.deploy.yml down -v
 #
-# Ports:
+# Puertos:
 #   frontend  -> http://localhost:80
-#   backend   -> http://localhost:3000
-#   swagger   -> http://localhost:3000/api/docs
+#   backend   -> http://localhost:3000 (solo accesible via nginx del frontend)
+#   swagger   -> http://localhost:80/api/docs
+#
+# ============================================================
+# ESCENARIOS DE DESPLIEGUE
+# ============================================================
+#
+# ESCENARIO 1: Docker completo (frontend + backend en la misma maquina/VM)
+#   - BACKEND_URL default: http://backend:3000
+#   - Funciona out-of-the-box con docker network interno
+#
+# ESCENARIO 2: Backend en VM Linux, Frontend en Windows (tu PC)
+#   - Ejecutar ONLY el contenedor de backend en la VM Linux:
+#     docker run -d --name sellpoint-backend \
+#       -p 3000:3000 \
+#       -e DB_TYPE=postgres \
+#       -e POSTGRES_HOST=<IP_LINUX_VM> \
+#       ... (resto de variables de entorno)
+#       meliodasdev/sellpoint-backend:latest
+#   - En tu PC Windows, ejecutar SOLO el frontend:
+#     docker run -d --name sellpoint-frontend \
+#       -p 80:80 \
+#       -e BACKEND_URL=http://<IP_LINUX_VM>:3000 \
+#       meliodasdev/sellpoint-frontend:latest
+#
+# ESCENARIO 3: Tu backend en Linux, frontend en maquina de tu companero (Windows)
+#   - Mismo procedimiento que Escenario 2, pero con la IP de tu Linux
+#   - BACKEND_URL=http://<TU_IP_LINUX>:3000
+#
+# IMPORTANTE: La variable BACKEND_URL controla la comunicacion frontend->backend
+#   - Valor por defecto (sin configurar): http://backend:3000 (para docker-compose completo)
+#   - En escenarios separados, usar la IP del host donde corre el backend
 # ============================================================
 
 services:
@@ -69,6 +99,11 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    environment:
+      # URL del backend - configurable por escenario
+      # Escenario 1 (Docker completo): http://backend:3000
+      # Escenario 2 (Backend en otra VM/host): http://<IP_BACKEND>:3000
+      - BACKEND_URL=${BACKEND_URL:-http://backend:3000}
     depends_on:
       backend:
         condition: service_healthy
