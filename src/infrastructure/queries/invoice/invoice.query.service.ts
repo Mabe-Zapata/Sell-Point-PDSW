@@ -28,12 +28,12 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         (qb) =>
           qb
             .from(InvoiceItemTypeOrmEntity, 'ii')
-            .select('ii.invoiceId', 'invoiceId')
-            .addSelect('SUM(ii.quantity * ii.unitPrice)', 'subtotal')
-            .addSelect('SUM(COALESCE(ii.taxAmount, 0))', 'iva')
+            .select('ii.invoiceId', 'INVOICE_ID')
+            .addSelect('SUM(ii.quantity * ii.unitPrice)', 'SUBTOTAL')
+            .addSelect('SUM(COALESCE(ii.taxAmount, 0))', 'IVA')
             .groupBy('ii.invoiceId'),
         'totals',
-        'totals.invoiceId = i.id',
+        '"totals"."INVOICE_ID" = i.id',
       )
       .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId');
   }
@@ -52,9 +52,9 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       'sal.saleNumber AS "saleNumber"',
       'ser.establishmentCode AS "establishmentCode"',
       'ser.emissionPointCode AS "emissionPointCode"',
-      'COALESCE(totals.subtotal, 0) AS "subtotal"',
-      'COALESCE(totals.iva, 0) AS "iva"',
-      '(COALESCE(totals.subtotal, 0) + COALESCE(totals.iva, 0)) AS "total"',
+      'COALESCE("totals"."SUBTOTAL", 0) AS "subtotal"',
+      'COALESCE("totals"."IVA", 0) AS "iva"',
+      '(COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0)) AS "total"',
       'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
       'cus.cedula AS "customerCedula"',
       'cus.email AS "customerEmail"',
