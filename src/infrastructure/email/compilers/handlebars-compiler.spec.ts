@@ -66,6 +66,21 @@ describe('HandlebarsCompiler', () => {
       expect(result).toContain('https://sellpoint.com/login');
     });
 
+    it('should resolve templates using the default runtime-relative path', async () => {
+      const defaultCompiler = new HandlebarsCompiler();
+
+      const result = await defaultCompiler.compile('new-employee-credentials', {
+        firstName: 'Ana',
+        email: 'ana@example.com',
+        username: 'ana.user',
+        temporaryPassword: 'TempPass123!',
+        loginUrl: 'https://sellpoint.com/login',
+      });
+
+      expect(result).toContain('Ana');
+      expect(result).toContain('ana@example.com');
+    });
+
     it('should compile password-change-notification template', async () => {
       const result = await compiler.compile('password-change-notification', {
         firstName: 'Carlos',

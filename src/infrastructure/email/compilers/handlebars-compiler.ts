@@ -21,7 +21,7 @@ export class HandlebarsCompiler implements ITemplateCompiler {
   private readonly templatesPath: string;
 
   constructor(templatesPath?: string) {
-    this.templatesPath = templatesPath ?? path.resolve(process.cwd(), 'src/infrastructure/email/templates');
+    this.templatesPath = templatesPath ?? path.resolve(__dirname, '../templates');
   }
 
   async compile(templateName: string, data: Record<string, unknown>): Promise<string> {

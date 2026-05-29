@@ -34,7 +34,6 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev
 
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/src/infrastructure/email/templates ./src/infrastructure/email/templates
 
 ENV NODE_ENV=production
 ENV PORT=3000
