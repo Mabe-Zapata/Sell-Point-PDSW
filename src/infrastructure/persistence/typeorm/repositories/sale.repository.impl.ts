@@ -117,6 +117,7 @@ export class SaleRepositoryImpl implements ISaleRepository {
 
   private mapToEntity(sale: Sale): any {
     return {
+      id: sale.id,
       branchId: sale.branchId,
       customerId: sale.customerId,
       cashierUserId: sale.cashierUserId,

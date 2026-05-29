@@ -29,6 +29,7 @@ export class IdempotencyService {
           key,
           requestHash,
           status: IdempotencyEntryStatus.IN_PROGRESS,
+          createdAt: new Date(),
           updatedAt: new Date(),
         }),
       );

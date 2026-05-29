@@ -155,6 +155,11 @@ export class InvoiceController {
     return { success: true, invoiceId: id, email };
   }
 
+  @Get('kpis')
+  async getKpis(@Query('branchId') branchId?: string) {
+    return this.invoiceQueryService.getInvoiceKpis({ branchId });
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get an invoice by ID',

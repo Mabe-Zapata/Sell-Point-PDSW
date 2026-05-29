@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column } from 'typeorm';
 import { dbLongTextColumn } from './db-column.helper';
 
 export enum IdempotencyEntryStatus {
@@ -25,7 +25,7 @@ export class IdempotencyEntryTypeOrmEntity {
   })
   status!: IdempotencyEntryStatus;
 
-  @CreateDateColumn({ name: 'CRE_AT' })
+  @Column({ name: 'CRE_AT', type: 'timestamp' })
   createdAt!: Date;
 
   @Column({ name: 'UPD_AT', type: 'timestamp', nullable: true })

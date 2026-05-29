@@ -14,6 +14,7 @@ const SELLER_PASSWORD = 'Seller1234!';
 const SALT_ROUNDS = 10;
 const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 const TOTAL_SELLERS = 99;
+const DEFAULT_BRANCH_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
 const FIRST_NAMES = ['Carlos', 'María', 'Juan', 'Ana', 'Luis', 'Sofia', 'Pedro', 'Laura', 'Diego', 'Gabriela'];
 const LAST_NAMES = ['García', 'Rodríguez', 'López', 'Martínez', 'González', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores'];
@@ -58,6 +59,7 @@ async function main() {
       email: ADMIN_EMAIL,
       passwordHash,
       isActive: true,
+      defaultBranchId: DEFAULT_BRANCH_ID,
     });
     const savedAdmin = await txUserRepo.save(admin);
     await txUserRoleRepo.save(txUserRoleRepo.create({ userId: savedAdmin.id, roleId: adminRole.id }));
@@ -77,6 +79,7 @@ async function main() {
         firstName: randomItem(FIRST_NAMES),
         lastName: randomItem(LAST_NAMES),
         isActive: true,
+        defaultBranchId: DEFAULT_BRANCH_ID,
       });
       const savedSeller = await txUserRepo.save(seller);
       await txUserRoleRepo.save(txUserRoleRepo.create({ userId: savedSeller.id, roleId: sellerRole.id }));

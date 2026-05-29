@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { PaginatedResult } from '../../../domain/repositories/pagination.types';
 import {
   IInvoiceQueryService,
+  InvoiceKpis,
   InvoiceListItem,
 } from '../../../domain/query-services/invoice.query-service.interface';
 import { InvoiceTypeOrmEntity } from '../../database/entities/invoice.typeorm.entity';
@@ -73,6 +74,12 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     };
   }
 
+  private readNumeric(row: Record<string, unknown> | undefined, key: string): number {
+    const value = row?.[key] ?? row?.[key.toUpperCase()];
+    const parsed = Number(value ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
   async listInvoices(params: {
     page: number;
     limit: number;
@@ -137,5 +144,38 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     }
 
     return this.normalizeRow(row);
+  }
+
+  async getInvoiceKpis(params: { branchId?: string } = {}): Promise<InvoiceKpis> {
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+    last30Days.setHours(0, 0, 0, 0);
+
+    const row = await this.buildInvoiceQuery()
+      .where(params.branchId ? 'ser.branchId = :branchId' : '1=1', {
+        branchId: params.branchId,
+      })
+      .select([
+        `SUM(CASE WHEN i.status <> :cancelledStatus THEN COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0) ELSE 0 END) AS "totalInvoiced"`,
+        `SUM(CASE WHEN i.status <> :cancelledStatus THEN 1 ELSE 0 END) AS "issuedCount"`,
+        `SUM(CASE WHEN i.status = :cancelledStatus THEN COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0) ELSE 0 END) AS "cancelledTotal"`,
+        `SUM(CASE WHEN i.status = :cancelledStatus THEN 1 ELSE 0 END) AS "cancelledCount"`,
+        `SUM(CASE WHEN i.status <> :cancelledStatus AND i.issueDate >= :last30Days THEN COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0) ELSE 0 END) AS "last30DaysTotal"`,
+        `SUM(CASE WHEN i.status <> :cancelledStatus AND i.issueDate >= :last30Days THEN 1 ELSE 0 END) AS "last30DaysCount"`,
+      ])
+      .setParameters({
+        cancelledStatus: 'CANCELLED',
+        last30Days,
+      })
+      .getRawOne<Record<string, unknown>>();
+
+    return {
+      totalInvoiced: this.readNumeric(row, 'totalInvoiced'),
+      issuedCount: this.readNumeric(row, 'issuedCount'),
+      cancelledTotal: this.readNumeric(row, 'cancelledTotal'),
+      cancelledCount: this.readNumeric(row, 'cancelledCount'),
+      last30DaysTotal: this.readNumeric(row, 'last30DaysTotal'),
+      last30DaysCount: this.readNumeric(row, 'last30DaysCount'),
+    };
   }
 }

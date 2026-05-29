@@ -22,6 +22,15 @@ export interface InvoiceListItem {
   emissionPointCode: string;
 }
 
+export interface InvoiceKpis {
+  totalInvoiced: number;
+  issuedCount: number;
+  cancelledTotal: number;
+  cancelledCount: number;
+  last30DaysTotal: number;
+  last30DaysCount: number;
+}
+
 export interface IInvoiceQueryService {
   listInvoices(params: {
     page: number;
@@ -34,4 +43,5 @@ export interface IInvoiceQueryService {
   }): Promise<PaginatedResult<InvoiceListItem>>;
   getInvoiceById(id: string): Promise<InvoiceListItem | null>;
   getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null>;
+  getInvoiceKpis(params?: { branchId?: string }): Promise<InvoiceKpis>;
 }
