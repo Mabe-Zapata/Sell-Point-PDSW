@@ -26,6 +26,7 @@ export class ProductQueryService implements IProductQueryService {
       .leftJoin(CategoryTypeOrmEntity, 'c', 'c.id = p.categoryId');
   }
 
+  // Uses covering index: idx_products_perf ON products (created_at DESC, category_id, is_active)
   async listProducts(params: {
     page: number;
     limit: number;
@@ -36,7 +37,7 @@ export class ProductQueryService implements IProductQueryService {
     const { page, limit, q, categoryId, isActive } = params;
     const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
     const offset = (page - 1) * safeLimit;
-    const searchPattern = q ? `%${q}%` : null;
+    const searchPattern = q ? `${q}%` : null;
 
     const baseQuery = this.buildProductQuery()
       .where(

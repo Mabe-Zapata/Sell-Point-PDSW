@@ -83,8 +83,6 @@ export class User {
     }
     this._status = UserStatus.ACTIVE;
     this._updatedAt = new Date();
-    // Soft delete: clear deletedAt when reactivating
-    this.deletedAt = undefined;
   }
 
   deactivate(): void {
@@ -93,8 +91,6 @@ export class User {
     }
     this._status = UserStatus.INACTIVE;
     this._updatedAt = new Date();
-    // Soft delete: set deletedAt as audit trail
-    this.deletedAt = new Date();
   }
 
   block(): void {

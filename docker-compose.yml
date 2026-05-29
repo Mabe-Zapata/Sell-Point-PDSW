@@ -19,19 +19,25 @@ services:
       start_period: 20s
 
   oracle:
-    image: gvenzl/oracle-free:latest
+    image: container-registry.oracle.com/database/enterprise:21.3.0.0
     container_name: sellpoint-oracle
     restart: unless-stopped
     ports:
       - "1521:1521"
     environment:
-      ORACLE_PASSWORD: ${ORACLE_PASSWORD}
-      ORACLE_DATABASE: ${ORACLE_DATABASE}
-      APP_USER: ${ORACLE_APP_USER}
-      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD}
+      # 1. Variables requeridas nativamente por la imagen oficial Enterprise:
+      - ORACLE_PWD=${ORACLE_PASSWORD}      # Contraseña de SYS/SYSTEM
+      - ORACLE_SID=ORCLCDB
+      - ORACLE_PDB=${ORACLE_DATABASE}     # Aquí se le pasará "ORCLPDB1"
+
+      # 2. Variables explícitas requeridas por TU script shell de inicialización:
+      - APP_USER=${ORACLE_APP_USER}         # Tomará "SELL_POINT" de tu .env
+      - APP_USER_PASSWORD=${ORACLE_APP_PASSWORD} # Tomará "sellpoint123" de tu .env
+      - ORACLE_DATABASE=${ORACLE_DATABASE}   # Tomará "ORCLPDB1" de tu .env
     volumes:
       - oracle_data:/opt/oracle/oradata
-      - ./docker/oracle/startdb:/container-entrypoint-startdb.d
+      # Oracle Enterprise image executes setup-time scripts from this directory.
+      - ./docker/oracle/startdb:/opt/oracle/scripts/extensions/setup
     healthcheck:
       test: ["CMD", "healthcheck.sh"]
       interval: 30s

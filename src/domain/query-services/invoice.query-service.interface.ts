@@ -31,6 +31,28 @@ export interface InvoiceKpis {
   last30DaysCount: number;
 }
 
+export interface InvoiceHeaderResult {
+  id: string;
+  invoiceNumber: string;
+  totalAmount: number;
+  createdAt: Date;
+  customerName: string;
+}
+
+export interface InvoiceItemResult {
+  id: string;
+  invoiceId: string;
+  quantity: number;
+  price: number;
+  productName: string;
+}
+
+export interface InvoiceTotalResult {
+  invoiceId: string;
+  subtotal: number;
+  iva: number;
+}
+
 export interface IInvoiceQueryService {
   listInvoices(params: {
     page: number;
@@ -44,4 +66,16 @@ export interface IInvoiceQueryService {
   getInvoiceById(id: string): Promise<InvoiceListItem | null>;
   getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null>;
   getInvoiceKpis(params?: { branchId?: string }): Promise<InvoiceKpis>;
+
+  // Split query methods for performance
+  listInvoiceHeaders(
+    customerId: string | null,
+    startDate: Date | null,
+    endDate: Date | null,
+    limit: number,
+    offset: number,
+  ): Promise<InvoiceHeaderResult[]>;
+
+  listInvoiceItems(invoiceIds: string[]): Promise<InvoiceItemResult[]>;
+  listInvoiceTotals(invoiceIds: string[]): Promise<InvoiceTotalResult[]>;
 }

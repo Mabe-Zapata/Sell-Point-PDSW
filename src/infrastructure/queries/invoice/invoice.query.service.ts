@@ -6,12 +6,16 @@ import {
   IInvoiceQueryService,
   InvoiceKpis,
   InvoiceListItem,
+  InvoiceHeaderResult,
+  InvoiceItemResult,
+  InvoiceTotalResult,
 } from '../../../domain/query-services/invoice.query-service.interface';
 import { InvoiceTypeOrmEntity } from '../../database/entities/invoice.typeorm.entity';
 import { InvoiceItemTypeOrmEntity } from '../../database/entities/invoice-item.typeorm.entity';
 import { InvoiceSeriesTypeOrmEntity } from '../../database/entities/invoice-series.typeorm.entity';
 import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
 import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
+import { ProductTypeOrmEntity } from '../../database/entities/product.typeorm.entity';
 
 @Injectable()
 export class InvoiceQueryService implements IInvoiceQueryService {
@@ -177,5 +181,64 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       last30DaysTotal: this.readNumeric(row, 'last30DaysTotal'),
       last30DaysCount: this.readNumeric(row, 'last30DaysCount'),
     };
+  }
+
+  async listInvoiceHeaders(
+    customerId: string | null,
+    startDate: Date | null,
+    endDate: Date | null,
+    limit: number,
+    offset: number,
+  ): Promise<InvoiceHeaderResult[]> {
+    return this.invoiceRepository
+      .createQueryBuilder('i')
+      .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
+      .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId')
+      .where(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
+      .andWhere(startDate ? 'i.createdAt >= :startDate' : '1=1', { startDate })
+      .andWhere(endDate ? 'i.createdAt <= :endDate' : '1=1', { endDate })
+      .select([
+        'i.id AS "id"',
+        'i.invoiceNumber AS "invoiceNumber"',
+        'i.totalAmount AS "totalAmount"',
+        'i.createdAt AS "createdAt"',
+        'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
+      ])
+      .orderBy('i.createdAt', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getRawMany<InvoiceHeaderResult>();
+  }
+
+  async listInvoiceItems(invoiceIds: string[]): Promise<InvoiceItemResult[]> {
+    if (!invoiceIds.length) return [];
+
+    return this.invoiceRepository
+      .createQueryBuilder('ii')
+      .innerJoin(ProductTypeOrmEntity, 'p', 'p.id = ii.productId')
+      .where('ii.invoiceId IN (:...invoiceIds)', { invoiceIds })
+      .select([
+        'ii.id AS "id"',
+        'ii.invoiceId AS "invoiceId"',
+        'ii.quantity AS "quantity"',
+        'ii.unitPrice AS "price"',
+        'p.name AS "productName"',
+      ])
+      .getRawMany<InvoiceItemResult>();
+  }
+
+  async listInvoiceTotals(invoiceIds: string[]): Promise<InvoiceTotalResult[]> {
+    if (!invoiceIds.length) return [];
+
+    return this.invoiceRepository
+      .createQueryBuilder('ii')
+      .select([
+        'ii.invoiceId AS "invoiceId"',
+        'SUM(ii.quantity * ii.unitPrice) AS "subtotal"',
+        'SUM(COALESCE(ii.taxAmount, 0)) AS "iva"',
+      ])
+      .where('ii.invoiceId IN (:...invoiceIds)', { invoiceIds })
+      .groupBy('ii.invoiceId')
+      .getRawMany<InvoiceTotalResult>();
   }
 }

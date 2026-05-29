@@ -2,6 +2,7 @@ import { PaginationParams } from '../../../../../domain/repositories/pagination.
 
 export interface ListInvoicesFilters {
   branchId?: string;
+  customerId?: string;
   status?: string;
   invoiceNumber?: string;
   startDate?: Date;
