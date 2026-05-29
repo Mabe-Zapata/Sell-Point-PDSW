@@ -23,6 +23,7 @@ const TOTAL_PRODUCTS = 100000;
 const TOTAL_SALES = 100000;
 const DEFAULT_ESTABLISHMENT_CODE = '001';
 const DEFAULT_EMISSION_POINT_CODE = '001';
+const CUSTOMER_CEDULA_BASE = 8000000000;
 
 const CATEGORIES = [
   'Electrónica', 'Ropa', 'Alimentos', 'Hogar',
@@ -45,12 +46,16 @@ function randomPrice(min: number, max: number): number {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100;
 }
 
-function makeProductCode(): string {
-  return `PROD-${randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
+function makeProductCode(sequence: number): string {
+  return `PROD-${String(sequence).padStart(8, '0')}`;
 }
 
-function generateCedula(): string {
-  return fakerES.string.numeric(10);
+function makeCedula(sequence: number): string {
+  return String(CUSTOMER_CEDULA_BASE + sequence);
+}
+
+function makeCustomerEmail(sequence: number): string {
+  return `seed.customer.${sequence}@billflow.local`;
 }
 
 function makeInvoiceNumber(sequence: number): string {
@@ -108,21 +113,37 @@ async function seedCustomers(
     return all.map((c) => c.id);
   }
 
+  const existingCustomers = await customerRepo.find({ select: ['cedula', 'email'] });
+  const usedCedulas = new Set(existingCustomers.map((customer) => customer.cedula).filter((value): value is string => Boolean(value)));
+  const usedEmails = new Set(existingCustomers.map((customer) => customer.email).filter((value): value is string => Boolean(value)));
+
   process.stdout.write(`\nInsertando ${TOTAL_CUSTOMERS} clientes en lotes de ${BATCH_SIZE}...\n`);
   const allIds: string[] = [];
+  let sequence = 1;
 
   for (let batch = 0; batch < TOTAL_CUSTOMERS / BATCH_SIZE; batch++) {
-    const customers = Array.from({ length: BATCH_SIZE }, () =>
-      customerRepo.create({
-        cedula: generateCedula(),
+    const customers: CustomerTypeOrmEntity[] = [];
+
+    while (customers.length < BATCH_SIZE) {
+      const cedula = makeCedula(sequence);
+      const email = makeCustomerEmail(sequence);
+      sequence += 1;
+
+      if (usedCedulas.has(cedula) || usedEmails.has(email)) continue;
+
+      usedCedulas.add(cedula);
+      usedEmails.add(email);
+
+      customers.push(customerRepo.create({
+        cedula,
         firstName: fakerES.person.firstName(),
         lastName: fakerES.person.lastName(),
-        email: fakerES.internet.email(),
+        email,
         phone: fakerES.phone.number(),
         address: fakerES.location.streetAddress(),
         isActive: true,
-      }),
-    );
+      }));
+    }
 
     const saved = await customerRepo.save(customers);
     saved.forEach((c) => allIds.push(c.id));
@@ -151,13 +172,15 @@ async function seedProducts(
   const allIds: string[] = [];
 
   for (let batch = 0; batch < TOTAL_PRODUCTS / BATCH_SIZE; batch++) {
-      const products = Array.from({ length: BATCH_SIZE }, () => {
-        const salePrice = randomPrice(0.5, 999.99);
-        return productRepo.create({
-          categoryId: randomItem(categories).id,
-          code: makeProductCode(),
-          name: fakerES.commerce.productName(),
-          description: fakerES.commerce.productDescription(),
+    const batchOffset = batch * BATCH_SIZE;
+    const products = Array.from({ length: BATCH_SIZE }, (_, index) => {
+      const sequence = batchOffset + index + 1;
+      const salePrice = randomPrice(0.5, 999.99);
+      return productRepo.create({
+        categoryId: randomItem(categories).id,
+        code: makeProductCode(sequence),
+        name: fakerES.commerce.productName(),
+        description: fakerES.commerce.productDescription(),
         salePrice,
         costPrice: Math.round(salePrice * 0.6 * 100) / 100,
         currentStock: randomInt(10, 500),
@@ -248,7 +271,7 @@ async function seedSales(
 
       sales.push(sale);
 
-      saleItems.forEach((item) => {
+      saleItems.forEach((item, itemIndex) => {
         const lineSubtotal = Math.round(item.quantity * item.unitPrice * 100) / 100;
         const lineTaxAmount = Math.round(lineSubtotal * (taxRate.percentage / 100) * 100) / 100;
 
@@ -257,7 +280,7 @@ async function seedSales(
             saleId,
             productId: item.productId,
             productNameSnapshot: item.productName,
-            productCodeSnapshot: makeProductCode(),
+            productCodeSnapshot: makeProductCode(index * 10 + itemIndex + 1),
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             taxRateId: taxRate.id,

@@ -129,14 +129,19 @@ async function main() {
     { firstName: 'Carlos', lastName: 'López', cedula: '1701234567', phone: '0999876543', email: 'carlos@email.com' },
   ];
 
+  const existingCustomers = await customerRepo.find({ select: ['cedula', 'email'] });
+  const usedCedulas = new Set(existingCustomers.map((customer) => customer.cedula).filter((value): value is string => Boolean(value)));
+  const usedEmails = new Set(existingCustomers.map((customer) => customer.email).filter((value): value is string => Boolean(value)));
+
   for (const custData of customersData) {
-    const existing = await customerRepo.findOne({ where: { cedula: custData.cedula } });
-    if (existing) {
+    if (usedCedulas.has(custData.cedula) || usedEmails.has(custData.email)) {
       console.log(`Customer "${custData.firstName} ${custData.lastName}" already exists, skipping.`);
     } else {
       await customerRepo.save(
         customerRepo.create({ ...custData, isActive: true }),
       );
+      usedCedulas.add(custData.cedula);
+      usedEmails.add(custData.email);
       console.log(`Customer "${custData.firstName} ${custData.lastName}" created.`);
     }
   }
