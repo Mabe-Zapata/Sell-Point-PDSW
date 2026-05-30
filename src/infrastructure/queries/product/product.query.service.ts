@@ -37,12 +37,13 @@ export class ProductQueryService implements IProductQueryService {
     const { page, limit, q, categoryId, isActive } = params;
     const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
     const offset = (page - 1) * safeLimit;
+
     const searchPattern = q ? `${q}%` : null;
 
     const baseQuery = this.buildProductQuery()
       .where(
         searchPattern
-          ? '(LOWER(p.name) LIKE LOWER(:searchPattern) OR LOWER(p.code) LIKE LOWER(:searchPattern))'
+          ? '(UPPER(p.name) LIKE UPPER(:searchPattern) OR UPPER(p.code) LIKE UPPER(:searchPattern))'
           : '1=1',
         { searchPattern },
       )

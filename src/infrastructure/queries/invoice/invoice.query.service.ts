@@ -22,7 +22,24 @@ export class InvoiceQueryService implements IInvoiceQueryService {
   constructor(
     @InjectRepository(InvoiceTypeOrmEntity)
     private readonly invoiceRepository: Repository<InvoiceTypeOrmEntity>,
+    @InjectRepository(InvoiceItemTypeOrmEntity)
+    private readonly invoiceItemRepository: Repository<InvoiceItemTypeOrmEntity>,
   ) {}
+
+  private async batchIds<T>(
+    ids: string[],
+    batchSize: number,
+    fetchFn: (batch: string[]) => Promise<T[]>,
+  ): Promise<T[]> {
+    const results: T[] = [];
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = ids.slice(i, i + batchSize);
+      // eslint-disable-next-line no-await-in-loop
+      const batchResults = await fetchFn(batch);
+      results.push(...batchResults);
+    }
+    return results;
+  }
 
   private buildInvoiceQuery() {
     return this.invoiceRepository
@@ -183,24 +200,34 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     };
   }
 
-  async listInvoiceHeaders(
-    customerId: string | null,
-    startDate: Date | null,
-    endDate: Date | null,
-    limit: number,
-    offset: number,
-  ): Promise<InvoiceHeaderResult[]> {
+  async listInvoiceHeaders(params: {
+    branchId?: string | null;
+    customerId?: string | null;
+    status?: string | null;
+    invoiceNumber?: string | null;
+    startDate?: Date | null;
+    endDate?: Date | null;
+    limit: number;
+    offset: number;
+  }): Promise<InvoiceHeaderResult[]> {
+    const { branchId, customerId, status, invoiceNumber, startDate, endDate, limit, offset } = params;
+
     return this.invoiceRepository
       .createQueryBuilder('i')
       .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
       .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId')
-      .where(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
+      .where(branchId ? 'sal.branchId = :branchId' : '1=1', { branchId })
+      .andWhere(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
+      .andWhere(status ? 'i.status = :status' : '1=1', { status })
+      .andWhere(invoiceNumber ? 'UPPER(i.invoiceNumber) LIKE UPPER(:invoicePattern)' : '1=1', {
+        invoicePattern: invoiceNumber ? `%${invoiceNumber}%` : null,
+      })
       .andWhere(startDate ? 'i.createdAt >= :startDate' : '1=1', { startDate })
       .andWhere(endDate ? 'i.createdAt <= :endDate' : '1=1', { endDate })
       .select([
         'i.id AS "id"',
         'i.invoiceNumber AS "invoiceNumber"',
-        'i.totalAmount AS "totalAmount"',
+        'sal.total AS "totalAmount"',
         'i.createdAt AS "createdAt"',
         'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
       ])
@@ -210,35 +237,63 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       .getRawMany<InvoiceHeaderResult>();
   }
 
+  async countInvoiceHeaders(params: {
+    branchId?: string | null;
+    customerId?: string | null;
+    status?: string | null;
+    invoiceNumber?: string | null;
+    startDate?: Date | null;
+    endDate?: Date | null;
+  }): Promise<number> {
+    const { branchId, customerId, status, invoiceNumber, startDate, endDate } = params;
+
+    return this.invoiceRepository
+      .createQueryBuilder('i')
+      .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
+      .where(branchId ? 'sal.branchId = :branchId' : '1=1', { branchId })
+      .andWhere(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
+      .andWhere(status ? 'i.status = :status' : '1=1', { status })
+      .andWhere(invoiceNumber ? 'UPPER(i.invoiceNumber) LIKE UPPER(:invoicePattern)' : '1=1', {
+        invoicePattern: invoiceNumber ? `%${invoiceNumber}%` : null,
+      })
+      .andWhere(startDate ? 'i.createdAt >= :startDate' : '1=1', { startDate })
+      .andWhere(endDate ? 'i.createdAt <= :endDate' : '1=1', { endDate })
+      .getCount();
+  }
+
   async listInvoiceItems(invoiceIds: string[]): Promise<InvoiceItemResult[]> {
     if (!invoiceIds.length) return [];
 
-    return this.invoiceRepository
-      .createQueryBuilder('ii')
-      .innerJoin(ProductTypeOrmEntity, 'p', 'p.id = ii.productId')
-      .where('ii.invoiceId IN (:...invoiceIds)', { invoiceIds })
-      .select([
-        'ii.id AS "id"',
-        'ii.invoiceId AS "invoiceId"',
-        'ii.quantity AS "quantity"',
-        'ii.unitPrice AS "price"',
-        'p.name AS "productName"',
-      ])
-      .getRawMany<InvoiceItemResult>();
+    return this.batchIds(invoiceIds, 1000, (batch) =>
+      this.invoiceItemRepository
+        .createQueryBuilder('ii')
+        .innerJoin(ProductTypeOrmEntity, 'p', 'p.id = ii.productId')
+        .where('ii.invoiceId IN (:...batch)', { batch })
+        .select([
+          'ii.id AS "id"',
+          'ii.invoiceId AS "invoiceId"',
+          'ii.quantity AS "quantity"',
+          'ii.unitPrice AS "price"',
+          'p.name AS "productName"',
+        ])
+        .getRawMany<InvoiceItemResult>(),
+    );
   }
 
   async listInvoiceTotals(invoiceIds: string[]): Promise<InvoiceTotalResult[]> {
     if (!invoiceIds.length) return [];
 
-    return this.invoiceRepository
-      .createQueryBuilder('ii')
-      .select([
-        'ii.invoiceId AS "invoiceId"',
-        'SUM(ii.quantity * ii.unitPrice) AS "subtotal"',
-        'SUM(COALESCE(ii.taxAmount, 0)) AS "iva"',
-      ])
-      .where('ii.invoiceId IN (:...invoiceIds)', { invoiceIds })
-      .groupBy('ii.invoiceId')
-      .getRawMany<InvoiceTotalResult>();
+    return this.batchIds(invoiceIds, 1000, (batch) =>
+      this.invoiceItemRepository
+        .createQueryBuilder('ii')
+        .select([
+          'ii.invoiceId AS "invoiceId"',
+          'SUM(ii.quantity * ii.unitPrice) AS "subtotal"',
+          'SUM(COALESCE(ii.taxAmount, 0)) AS "iva"',
+        ])
+        .where('ii.invoiceId IN (:...batch)', { batch })
+        .groupBy('ii.invoiceId')
+        .getRawMany<InvoiceTotalResult>()
+    );
   }
 }

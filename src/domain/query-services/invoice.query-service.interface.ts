@@ -68,13 +68,25 @@ export interface IInvoiceQueryService {
   getInvoiceKpis(params?: { branchId?: string }): Promise<InvoiceKpis>;
 
   // Split query methods for performance
-  listInvoiceHeaders(
-    customerId: string | null,
-    startDate: Date | null,
-    endDate: Date | null,
-    limit: number,
-    offset: number,
-  ): Promise<InvoiceHeaderResult[]>;
+  listInvoiceHeaders(params: {
+    branchId?: string | null;
+    customerId?: string | null;
+    status?: string | null;
+    invoiceNumber?: string | null;
+    startDate?: Date | null;
+    endDate?: Date | null;
+    limit: number;
+    offset: number;
+  }): Promise<InvoiceHeaderResult[]>;
+
+  countInvoiceHeaders(params: {
+    branchId?: string | null;
+    customerId?: string | null;
+    status?: string | null;
+    invoiceNumber?: string | null;
+    startDate?: Date | null;
+    endDate?: Date | null;
+  }): Promise<number>;
 
   listInvoiceItems(invoiceIds: string[]): Promise<InvoiceItemResult[]>;
   listInvoiceTotals(invoiceIds: string[]): Promise<InvoiceTotalResult[]>;

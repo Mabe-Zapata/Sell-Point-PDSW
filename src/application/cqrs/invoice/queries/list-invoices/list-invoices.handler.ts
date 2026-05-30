@@ -2,7 +2,6 @@ import { ListInvoicesQuery } from './list-invoices.query';
 import type {
   IInvoiceQueryService,
   InvoiceListItem,
-  InvoiceHeaderResult,
 } from '../../../../../domain/query-services/invoice.query-service.interface';
 import type { PaginatedResult } from '../../../../../domain/repositories/pagination.types';
 
@@ -16,33 +15,37 @@ export class ListInvoicesHandler {
     const filters = query.filters ?? {};
     const offset = (page - 1) * limit;
 
-    // Query A: Get headers
-    const headers = await this.invoiceQueryService.listInvoiceHeaders(
-      filters.customerId ?? null,
-      filters.startDate ?? null,
-      filters.endDate ?? null,
-      limit,
-      offset,
-    );
+    const [headers, total] = await Promise.all([
+      this.invoiceQueryService.listInvoiceHeaders({
+        branchId: filters.branchId ?? null,
+        customerId: filters.customerId ?? null,
+        status: filters.status ?? null,
+        invoiceNumber: filters.invoiceNumber ?? null,
+        startDate: filters.startDate ?? null,
+        endDate: filters.endDate ?? null,
+        limit,
+        offset,
+      }),
+      this.invoiceQueryService.countInvoiceHeaders({
+        branchId: filters.branchId ?? null,
+        customerId: filters.customerId ?? null,
+        status: filters.status ?? null,
+        invoiceNumber: filters.invoiceNumber ?? null,
+        startDate: filters.startDate ?? null,
+        endDate: filters.endDate ?? null,
+      }),
+    ]);
 
     if (!headers.length) {
-      return { data: [], total: 0, page, limit };
+      return { data: [], total, page, limit };
     }
 
     const invoiceIds = headers.map(h => h.id);
 
-    // Query B and Query C in parallel
-    const [items, totals] = await Promise.all([
-      this.invoiceQueryService.listInvoiceItems(invoiceIds),
-      this.invoiceQueryService.listInvoiceTotals(invoiceIds),
-    ]);
-
-    // In-memory join
-    const itemsByInvoice = groupBy(items, 'invoiceId');
+    const totals = await this.invoiceQueryService.listInvoiceTotals(invoiceIds);
     const totalsByInvoice = new Map(totals.map(t => [t.invoiceId, t]));
 
     const data: InvoiceListItem[] = headers.map(header => {
-      const itemResults = itemsByInvoice.get(header.id) ?? [];
       const totalResult = totalsByInvoice.get(header.id);
 
       return {
@@ -63,25 +66,9 @@ export class ListInvoicesHandler {
         total: header.totalAmount,
         establishmentCode: '',
         emissionPointCode: '',
-        items: itemResults.map(item => ({
-          id: item.id,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.price,
-        })),
       };
     });
 
-    return { data, total: data.length, page, limit };
+    return { data, total, page, limit };
   }
-}
-
-function groupBy<T>(arr: T[], key: keyof T): Map<string, T[]> {
-  return arr.reduce((map, item) => {
-    const k = String(item[key]);
-    const group = map.get(k) ?? [];
-    group.push(item);
-    map.set(k, group);
-    return map;
-  }, new Map<string, T[]>());
 }
