@@ -4,6 +4,10 @@ export class AddFiscalSnapshotToInvoiceItems1800000000017 implements MigrationIn
   name = 'AddFiscalSnapshotToInvoiceItems1800000000017';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const dbType = queryRunner.connection.options.type;
+    const taxRateIdType = dbType === 'postgres' ? 'uuid' : 'varchar';
+    const taxRateIdLength = dbType === 'postgres' ? undefined : '36';
+
     const table = await queryRunner.getTable('INVOICE_ITEMS');
     if (!table) return;
 
@@ -23,8 +27,8 @@ export class AddFiscalSnapshotToInvoiceItems1800000000017 implements MigrationIn
 
     await ensureColumn(new TableColumn({
       name: 'TAX_RAT_ID',
-      type: 'varchar',
-      length: '36',
+      type: taxRateIdType,
+      length: taxRateIdLength,
       isNullable: true,
     }));
 

@@ -6,7 +6,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -15,7 +14,7 @@ export class CorrelationInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    
+
     // Capturar o generar Correlation ID
     const correlationId = request.headers['x-correlation-id'] || uuidv4();
     request['correlationId'] = correlationId;
@@ -24,12 +23,20 @@ export class CorrelationInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse();
     response.setHeader('X-Correlation-Id', correlationId);
 
+    let logged = false;
+    const logCompletion = (event: 'finish' | 'close') => {
+      if (logged) return;
+      logged = true;
+      this.logger.log(
+        `Request ${event}: ${request.method} ${request.url} | Status: ${response.statusCode} | CorrelationId: ${correlationId}`,
+      );
+    };
+
+    response.once('finish', () => logCompletion('finish'));
+    response.once('close', () => logCompletion('close'));
+
     this.logger.log(`Request received: ${request.method} ${request.url} | CorrelationId: ${correlationId}`);
 
-    return next.handle().pipe(
-      tap(() => {
-        this.logger.log(`Request completed: ${request.method} ${request.url} | CorrelationId: ${correlationId}`);
-      }),
-    );
+    return next.handle();
   }
 }

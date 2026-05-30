@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PaginatedResult } from '../../../domain/repositories/pagination.types';
 import {
   IInvoiceQueryService,
   InvoiceKpis,
@@ -101,46 +100,6 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  async listInvoices(params: {
-    page: number;
-    limit: number;
-    branchId?: string;
-    status?: string;
-    invoiceNumber?: string;
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<PaginatedResult<InvoiceListItem>> {
-    const { page, limit, branchId, status, invoiceNumber, startDate, endDate } = params;
-    const offset = (page - 1) * limit;
-    const searchPattern = invoiceNumber ? `%${invoiceNumber}%` : null;
-
-    const baseQuery = this.buildInvoiceQuery()
-      .where(branchId ? 'ser.branchId = :branchId' : '1=1', { branchId })
-      .andWhere(status ? 'i.status = :status' : '1=1', { status })
-      .andWhere(
-        searchPattern ? 'LOWER(i.invoiceNumber) LIKE LOWER(:searchPattern)' : '1=1',
-        { searchPattern },
-      )
-      .andWhere(startDate ? 'i.createdAt >= :startDate' : '1=1', { startDate })
-      .andWhere(endDate ? 'i.createdAt <= :endDate' : '1=1', { endDate });
-
-    const total = await baseQuery.clone().getCount();
-    const rows = await baseQuery
-      .clone()
-      .select(this.invoiceSelect())
-      .orderBy('i.createdAt', 'DESC')
-      .skip(offset)
-      .take(limit)
-      .getRawMany<InvoiceListItem>();
-
-    return {
-      data: rows.map((row) => this.normalizeRow(row)),
-      total,
-      page,
-      limit,
-    };
-  }
-
   async getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null> {
     const row = await this.buildInvoiceQuery()
       .where('i.saleId = :saleId', { saleId })
@@ -212,18 +171,40 @@ export class InvoiceQueryService implements IInvoiceQueryService {
   }): Promise<InvoiceHeaderResult[]> {
     const { branchId, customerId, status, invoiceNumber, startDate, endDate, limit, offset } = params;
 
-    return this.invoiceRepository
-      .createQueryBuilder('i')
-      .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
-      .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId')
+    const searchPattern = invoiceNumber ? `%${invoiceNumber}%` : null;
+    const needsSaleJoin = Boolean(branchId) || Boolean(customerId);
+
+    const filterQuery = this.invoiceRepository.createQueryBuilder('i');
+
+    if (needsSaleJoin) {
+      filterQuery.innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId');
+    }
+
+    const pagedIds = await filterQuery
       .where(branchId ? 'sal.branchId = :branchId' : '1=1', { branchId })
       .andWhere(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
       .andWhere(status ? 'i.status = :status' : '1=1', { status })
-      .andWhere(invoiceNumber ? 'UPPER(i.invoiceNumber) LIKE UPPER(:invoicePattern)' : '1=1', {
-        invoicePattern: invoiceNumber ? `%${invoiceNumber}%` : null,
+      .andWhere(searchPattern ? 'UPPER(i.invoiceNumber) LIKE UPPER(:searchPattern)' : '1=1', {
+        searchPattern,
       })
       .andWhere(startDate ? 'i.createdAt >= :startDate' : '1=1', { startDate })
       .andWhere(endDate ? 'i.createdAt <= :endDate' : '1=1', { endDate })
+      .select('i.id', 'id')
+      .orderBy('i.createdAt', 'DESC')
+      .offset(offset)
+      .limit(limit)
+      .getRawMany<{ id: string }>();
+
+    const ids = pagedIds.map((row) => String(row.id));
+
+    if (!ids.length) {
+      return [];
+    }
+
+    const rows = await this.invoiceRepository
+      .createQueryBuilder('i')
+      .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
+      .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId')
       .select([
         'i.id AS "id"',
         'i.invoiceNumber AS "invoiceNumber"',
@@ -231,10 +212,18 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         'i.createdAt AS "createdAt"',
         'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
       ])
-      .orderBy('i.createdAt', 'DESC')
-      .skip(offset)
-      .take(limit)
+      .where('i.id IN (:...ids)', { ids })
       .getRawMany<InvoiceHeaderResult>();
+
+    const rowsById = new Map(rows.map((row) => [String(row.id), row]));
+
+    return ids
+      .map((id) => rowsById.get(id))
+      .filter((row): row is InvoiceHeaderResult => Boolean(row))
+      .map((row) => ({
+        ...row,
+        totalAmount: Number(row.totalAmount),
+      }));
   }
 
   async countInvoiceHeaders(params: {
@@ -247,14 +236,21 @@ export class InvoiceQueryService implements IInvoiceQueryService {
   }): Promise<number> {
     const { branchId, customerId, status, invoiceNumber, startDate, endDate } = params;
 
-    return this.invoiceRepository
-      .createQueryBuilder('i')
-      .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
+    const searchPattern = invoiceNumber ? `%${invoiceNumber}%` : null;
+    const needsSaleJoin = Boolean(branchId) || Boolean(customerId);
+
+    const query = this.invoiceRepository.createQueryBuilder('i');
+
+    if (needsSaleJoin) {
+      query.innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId');
+    }
+
+    return query
       .where(branchId ? 'sal.branchId = :branchId' : '1=1', { branchId })
       .andWhere(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
       .andWhere(status ? 'i.status = :status' : '1=1', { status })
-      .andWhere(invoiceNumber ? 'UPPER(i.invoiceNumber) LIKE UPPER(:invoicePattern)' : '1=1', {
-        invoicePattern: invoiceNumber ? `%${invoiceNumber}%` : null,
+      .andWhere(searchPattern ? 'UPPER(i.invoiceNumber) LIKE UPPER(:searchPattern)' : '1=1', {
+        searchPattern,
       })
       .andWhere(startDate ? 'i.createdAt >= :startDate' : '1=1', { startDate })
       .andWhere(endDate ? 'i.createdAt <= :endDate' : '1=1', { endDate })

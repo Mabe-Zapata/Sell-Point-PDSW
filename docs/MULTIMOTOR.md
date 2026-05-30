@@ -146,9 +146,9 @@ const salesIdRef = dbType === 'oracle' ? '"id"' : 'id';
 
 ### Oracle — APP_USER Only on First Start
 
-`gvenzl/oracle-free` creates `APP_USER` only during the **first initialization** of the container volume. Changing `.env` after the first start does not recreate the user.
+The Oracle Enterprise container creates `APP_USER` only during the **first initialization** of the container volume. Changing `.env` after the first start does not recreate the user, so you must recreate the volume or alter the user manually.
 
-The startup script at `docker/oracle/startdb/001_create_app_user.sh` runs on **every boot** and uses `CREATE OR REPLACE` semantics to be idempotent.
+The script at `docker/oracle/startdb/001_create_app_user.sh` is mounted into the Oracle Enterprise setup hooks and runs on **fresh volume initialization**. It is idempotent because it creates the user if missing and otherwise alters the password.
 
 To force a fresh Oracle init:
 

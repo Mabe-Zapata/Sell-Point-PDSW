@@ -7,9 +7,11 @@ dotenv.config();
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { configuration } from './configuration';
+import { TypeormQueryLogger } from './typeorm-query.logger';
 
 const config = configuration();
 const isOracle = config.database.type === 'oracle';
+const dbLabel = `${config.database.type}:${config.database.host}:${config.database.port}/${config.database.name}`;
 
 // Estructura limpia y aislada para Oracle evitando colisiones
 const baseConfig: any = {
@@ -17,7 +19,9 @@ const baseConfig: any = {
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../infrastructure/database/migrations/*{.ts,.js}'],
   synchronize: false,
-  logging: true,
+  logging: ['query', 'error', 'warn'],
+  logger: new TypeormQueryLogger(dbLabel),
+  maxQueryExecutionTime: 1,
 };
 
 if (isOracle) {

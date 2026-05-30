@@ -88,6 +88,7 @@ async function seedCategories(
 
   const categories = CATEGORIES.map((name) =>
     categoryRepo.create({
+      id: randomUUID(),
       name,
       description: `Categoría de ${name}`,
       taxRateId: taxRate.id,
@@ -135,6 +136,7 @@ async function seedCustomers(
       usedEmails.add(email);
 
       customers.push(customerRepo.create({
+        id: randomUUID(),
         cedula,
         firstName: fakerES.person.firstName(),
         lastName: fakerES.person.lastName(),
@@ -177,6 +179,7 @@ async function seedProducts(
       const sequence = batchOffset + index + 1;
       const salePrice = randomPrice(0.5, 999.99);
       return productRepo.create({
+        id: randomUUID(),
         categoryId: randomItem(categories).id,
         code: makeProductCode(sequence),
         name: fakerES.commerce.productName(),
@@ -334,6 +337,7 @@ async function seedInvoiceSeries(
 
   const created = await seriesRepo.save(
     seriesRepo.create({
+      id: randomUUID(),
       branchId,
       establishmentCode: DEFAULT_ESTABLISHMENT_CODE,
       emissionPointCode: DEFAULT_EMISSION_POINT_CODE,
@@ -437,6 +441,7 @@ async function seedInvoicesFromSales(
       for (const detail of saleDetails) {
         invoiceItems.push(
           invoiceItemRepo.create({
+            id: randomUUID(),
             invoiceId,
             productId: detail.productId,
             productNameSnapshot: detail.productNameSnapshot,

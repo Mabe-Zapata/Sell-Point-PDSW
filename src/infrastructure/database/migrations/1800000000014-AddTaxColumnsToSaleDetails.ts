@@ -4,6 +4,10 @@ export class AddTaxColumnsToSaleDetails1800000000014 implements MigrationInterfa
   name = 'AddTaxColumnsToSaleDetails1800000000014';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const dbType = queryRunner.connection.options.type;
+    const taxRateIdType = dbType === 'postgres' ? 'uuid' : 'varchar';
+    const taxRateIdLength = dbType === 'postgres' ? undefined : '36';
+
     const table = await queryRunner.getTable('SALE_DETAILS');
     if (!table) return;
 
@@ -13,8 +17,8 @@ export class AddTaxColumnsToSaleDetails1800000000014 implements MigrationInterfa
         'SALE_DETAILS',
         new TableColumn({
           name: 'TAX_RAT_ID',
-          type: 'varchar',
-          length: '36',
+          type: taxRateIdType,
+          length: taxRateIdLength,
           isNullable: true,
         }),
       );
