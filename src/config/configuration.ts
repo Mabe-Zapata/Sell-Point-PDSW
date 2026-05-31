@@ -89,7 +89,7 @@ export const configuration = () => {
     app: {
       mode: appMode,
       port: intFrom(process.env.PORT, '3000'),
-      frontendBaseUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+      frontendBaseUrl: process.env.FRONTEND_URL || 'http://localhost:4321',
     },
     database,
     tax: {

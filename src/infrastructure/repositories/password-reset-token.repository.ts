@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, IsNull, MoreThan } from 'typeorm';
 import { PasswordResetTokenTypeOrmEntity } from '../database/entities/password-reset-token.typeorm.entity';
 import { PasswordResetToken } from '../../domain/entities/password-reset-token.entity';
 import type { IPasswordResetTokenRepository } from '../../domain/repositories/password-reset-token.repository.interface';
 import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class PasswordResetTokenRepository implements IPasswordResetTokenRepository {
@@ -75,6 +76,28 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
     };
   }
 
+  async findByRawToken(rawToken: string): Promise<PasswordResetToken | null> {
+    const limit = 100;
+    let page = 1;
+
+    while (true) {
+      const result = await this.findAll({ page, limit });
+
+      for (const token of result.data) {
+        const matches = await bcrypt.compare(rawToken, token.tokenHash);
+        if (matches) {
+          return token;
+        }
+      }
+
+      if ((page * limit) >= result.total) {
+        return null;
+      }
+
+      page += 1;
+    }
+  }
+
   async markAsUsed(id: string): Promise<void> {
     await this.repo.update(id, { usedAt: new Date() });
   }
@@ -91,3 +114,4 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
     return entity ? this.mapToDomain(entity) : null;
   }
 }
+

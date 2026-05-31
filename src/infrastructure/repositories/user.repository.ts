@@ -207,6 +207,12 @@ export class UserRepository implements IUserRepository {
       const entity = await userRepo.findOne({ where: { id: user.id } });
       if (!entity) throw new Error('User not found');
 
+      // Update all password and status fields
+      entity.passwordHash = user.passwordHash;
+      entity.currentPasswordHash = user.currentPasswordHash ?? undefined;
+      entity.passwordExpired = user.passwordExpired;
+      entity.failedLoginAttempts = user.failedLoginAttempts;
+      entity.status = UserStatusMapper.toDb(user.status);
       entity.googleId = user.googleId ?? null;
       entity.googleEmail = user.googleEmail ?? null;
 

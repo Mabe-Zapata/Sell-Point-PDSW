@@ -61,7 +61,7 @@ describe('EmployeeCredentialsCreatedListener', () => {
           username: 'jdoe',
           email: 'john.doe@example.com',
           temporaryPassword: 'TempPass123!',
-          loginUrl: 'https://app.example.com/login',
+          loginUrl: 'https://app.example.com/auth',
         },
       );
     });
@@ -96,7 +96,7 @@ describe('EmployeeCredentialsCreatedListener', () => {
 
       expect(mockEmailService.sendEmployeeCredentials).toHaveBeenCalledWith(
         'alice.smith@example.com',
-        expect.objectContaining({ loginUrl: 'https://fallback.example.com/login' }),
+        expect.objectContaining({ loginUrl: 'https://fallback.example.com/auth' }),
       );
     });
 
@@ -126,7 +126,7 @@ describe('EmployeeCredentialsCreatedListener', () => {
 
       expect(mockEmailService.sendEmployeeCredentials).toHaveBeenCalledWith(
         'bob.wilson@example.com',
-        expect.objectContaining({ loginUrl: 'http://localhost:5173/login' }),
+        expect.objectContaining({ loginUrl: 'http://localhost:4321/auth' }),
       );
     });
 

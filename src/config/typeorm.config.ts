@@ -22,6 +22,8 @@ const baseConfig: any = {
   logging: ['query', 'error', 'warn'],
   logger: new TypeormQueryLogger(dbLabel),
   maxQueryExecutionTime: 1,
+  // Force UTC so timestamps are consistent between app server and database
+  options: config.database.type === 'postgres' ? { timezone: 'UTC' } : undefined,
 };
 
 if (isOracle) {

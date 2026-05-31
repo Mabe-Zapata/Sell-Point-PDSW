@@ -32,6 +32,6 @@ export class PasswordResetToken {
     if (this.usedAt !== null) {
       return false;
     }
-    return this.expiresAt > new Date();
+    return this.expiresAt.getTime() > Date.now();
   }
 }
