@@ -66,7 +66,7 @@ export class ProductRepository implements IProductRepository {
     filters: ProductFilters = {},
   ): Promise<PaginatedResult<Product>> {
     const { page, limit } = pagination;
-    const { q, categoryId, isActive } = filters;
+    const { q, categoryId, isActive, createdFrom, createdTo } = filters;
 
     const queryBuilder = this.repo.createQueryBuilder('product');
     queryBuilder.andWhere('product.deletedAt IS NULL');
@@ -79,6 +79,12 @@ export class ProductRepository implements IProductRepository {
     }
     if (isActive !== undefined) {
       queryBuilder.andWhere('product.isActive = :isActive', { isActive });
+    }
+    if (createdFrom) {
+      queryBuilder.andWhere('product.createdAt >= :createdFrom', { createdFrom });
+    }
+    if (createdTo) {
+      queryBuilder.andWhere('product.createdAt <= :createdTo', { createdTo });
     }
 
     const total = await queryBuilder.getCount();

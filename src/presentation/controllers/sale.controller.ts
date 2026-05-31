@@ -177,12 +177,18 @@ export class SaleController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'q', required: false, type: String })
   @ApiQuery({ name: 'customerId', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by sale status (DRAFT, CONFIRMED, CANCELLED)' })
+  @ApiQuery({ name: 'createdFrom', description: 'Filter by creation date from (ISO 8601)', required: false, type: String })
+  @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({ status: 200, description: 'List of sales' })
   async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('q') searchQuery?: string,
     @Query('customerId') customerId?: string,
+    @Query('status') status?: string,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
   ) {
     const pagination: PaginationParams = {
       page: page ? parseInt(page, 10) : 1,
@@ -190,7 +196,16 @@ export class SaleController {
     };
 
     const result = await this.queryBus.execute(
-      new ListSalesQuery(pagination, searchQuery, undefined, customerId),
+      new ListSalesQuery(
+        pagination,
+        searchQuery,
+        undefined,
+        customerId,
+        undefined,
+        status,
+        createdFrom ? new Date(createdFrom) : undefined,
+        createdTo ? new Date(createdTo) : undefined,
+      ),
     );
 
     return {

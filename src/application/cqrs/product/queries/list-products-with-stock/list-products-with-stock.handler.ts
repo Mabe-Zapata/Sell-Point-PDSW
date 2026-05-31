@@ -13,6 +13,8 @@ export class ListProductsWithStockHandler {
       q: query.q,
       categoryId: query.categoryId,
       isActive: query.isActive,
+      createdFrom: query.createdFrom,
+      createdTo: query.createdTo,
     });
   }
 }

@@ -103,7 +103,7 @@ export class SaleRepository implements ISaleRepository {
     filters: SaleFilters = {},
   ): Promise<PaginatedResult<Sale>> {
     const { page, limit } = pagination;
-    const { q, branchId, customerId, cashierUserId, status } = filters;
+    const { q, branchId, customerId, cashierUserId, status, createdFrom, createdTo } = filters;
 
     const queryBuilder = this.repo.createQueryBuilder('sale');
 
@@ -118,6 +118,12 @@ export class SaleRepository implements ISaleRepository {
     }
     if (status) {
       queryBuilder.andWhere('sale.status = :status', { status });
+    }
+    if (createdFrom) {
+      queryBuilder.andWhere('sale.createdAt >= :createdFrom', { createdFrom });
+    }
+    if (createdTo) {
+      queryBuilder.andWhere('sale.createdAt <= :createdTo', { createdTo });
     }
 
     const total = await queryBuilder.getCount();

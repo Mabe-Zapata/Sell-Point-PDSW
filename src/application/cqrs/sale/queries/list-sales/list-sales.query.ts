@@ -8,5 +8,7 @@ export class ListSalesQuery {
     public readonly customerId?: string,
     public readonly cashierUserId?: string,
     public readonly status?: string,
+    public readonly createdFrom?: Date,
+    public readonly createdTo?: Date,
   ) {}
 }

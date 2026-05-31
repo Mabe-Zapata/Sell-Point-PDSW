@@ -5,6 +5,9 @@ import { PaginationParams, PaginatedResult } from './pagination.types';
 export interface CustomerFilters {
   q?: string;
   cedula?: string;
+  isActive?: boolean;
+  createdFrom?: Date;
+  createdTo?: Date;
 }
 
 export interface ICustomerRepository {

@@ -5,6 +5,8 @@ export interface ProductFilters {
   q?: string;
   categoryId?: string;
   isActive?: boolean;
+  createdFrom?: Date;
+  createdTo?: Date;
 }
 
 export interface IProductRepository {

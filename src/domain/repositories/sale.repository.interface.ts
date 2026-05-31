@@ -7,6 +7,8 @@ export interface SaleFilters {
   customerId?: string;
   cashierUserId?: string;
   status?: string;
+  createdFrom?: Date;
+  createdTo?: Date;
 }
 
 export interface ISaleRepository {

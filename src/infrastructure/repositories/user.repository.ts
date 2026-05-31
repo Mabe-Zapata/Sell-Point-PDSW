@@ -127,7 +127,7 @@ export class UserRepository implements IUserRepository {
     filters: UserFilters = {},
   ): Promise<PaginatedResult<User>> {
     const { page, limit } = pagination;
-    const { q, status, role, username, email, employeeId, isActive } = filters;
+    const { q, status, role, username, email, employeeId, isActive, createdFrom, createdTo } = filters;
 
     const queryBuilder = this.createBaseQueryBuilder().where('1=1');
 
@@ -162,6 +162,12 @@ export class UserRepository implements IUserRepository {
       queryBuilder.andWhere(isActive ? 'user.status = :activeStatus' : 'user.status <> :activeStatus', {
         activeStatus: 'ACTIVE',
       });
+    }
+    if (createdFrom) {
+      queryBuilder.andWhere('user.createdAt >= :createdFrom', { createdFrom });
+    }
+    if (createdTo) {
+      queryBuilder.andWhere('user.createdAt <= :createdTo', { createdTo });
     }
 
     const total = await queryBuilder.getCount();

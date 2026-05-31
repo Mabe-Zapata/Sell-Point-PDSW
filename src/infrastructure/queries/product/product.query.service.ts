@@ -33,8 +33,10 @@ export class ProductQueryService implements IProductQueryService {
     q?: string;
     categoryId?: string;
     isActive?: boolean;
+    createdFrom?: Date;
+    createdTo?: Date;
   }): Promise<{ data: ProductListItem[]; total: number; page: number; limit: number }> {
-    const { page, limit, q, categoryId, isActive } = params;
+    const { page, limit, q, categoryId, isActive, createdFrom, createdTo } = params;
     const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
     const offset = (page - 1) * safeLimit;
 
@@ -49,7 +51,9 @@ export class ProductQueryService implements IProductQueryService {
         { searchPattern },
       )
       .andWhere(categoryId ? 'p.categoryId = :categoryId' : '1=1', { categoryId })
-      .andWhere(isActive !== undefined ? 'p.isActive = :isActive' : '1=1', { isActive });
+      .andWhere(isActive !== undefined ? 'p.isActive = :isActive' : '1=1', { isActive })
+      .andWhere(createdFrom ? 'p.createdAt >= :createdFrom' : '1=1', { createdFrom })
+      .andWhere(createdTo ? 'p.createdAt <= :createdTo' : '1=1', { createdTo });
 
     const [total, pagedIds] = await Promise.all([
       baseFilterQuery.clone().getCount(),
