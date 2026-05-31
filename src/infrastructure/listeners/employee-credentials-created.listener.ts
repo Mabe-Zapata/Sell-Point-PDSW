@@ -16,8 +16,8 @@ export class EmployeeCredentialsCreatedListener implements IEventHandler<Employe
     try {
       const frontendBaseUrl = this.configService.get<string>('app.frontendBaseUrl') ??
         this.configService.get<string>('app.url') ??
-        'http://localhost:5173';
-      const loginUrl = `${frontendBaseUrl}/login`;
+        'http://localhost:4321';
+      const loginUrl = `${frontendBaseUrl}/auth`;
 
       const result = await this.emailService.sendEmployeeCredentials(event.email, {
         firstName: event.firstName,

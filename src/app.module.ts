@@ -294,10 +294,7 @@ const entities = [
     TypeOrmUnitOfWork,
     // Idempotency Service
     IdempotencyService,
-    // Application - Listeners
-    EmployeeCredentialsCreatedListener,
-    PasswordResetRequestedListener,
-    PasswordChangedListener,
+    // Application - Listeners (from EmailModule — do not duplicate here)
     InvoiceEmailListener,
     OrderConfirmedListener,
     SaleConfirmedInvoiceListener,

@@ -1,10 +1,9 @@
-import * as bcrypt from 'bcrypt';
+﻿import * as bcrypt from 'bcrypt';
 import { BadRequestException } from '@nestjs/common';
 import { ResetPasswordCommand } from '../../commands/reset-password/reset-password.command';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
 import type { IPasswordResetTokenRepository } from '../../../../../domain/repositories/password-reset-token.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
-import { PasswordResetToken } from '../../../../../domain/entities/password-reset-token.entity';
 import { PasswordChangedEvent } from '../../../../../domain/events/password-changed.event';
 import type { IUnitOfWork } from '../../../../unit-of-work/unit-of-work.interface';
 
@@ -18,24 +17,11 @@ export class ResetPasswordHandler {
   ) {}
 
   async execute(command: ResetPasswordCommand): Promise<{ success: boolean }> {
-    // Find the token by iterating through available tokens (we need to find by plain token comparison)
-    // The repository only supports findByHash which requires the hash, not the plain token
-    // So we iterate through tokens to find a match using bcrypt.compare
-    const tokensResult = await this.tokenRepository.findAll({ page: 1, limit: 100 }, {});
-    
-    let resetToken: PasswordResetToken | null = null;
-    for (const token of tokensResult.data) {
-      const isValidToken = await bcrypt.compare(command.token, token.tokenHash);
-      if (isValidToken) {
-        resetToken = token;
-        break;
-      }
-    }
+    const resetToken = await this.tokenRepository.findByRawToken(command.token);
 
     if (!resetToken) {
-      throw new BadRequestException('Token inválido o expirado');
+      throw new BadRequestException('Token invÃ¡lido o expirado');
     }
-
     // Check if token is valid (not expired, not used)
     if (!resetToken.isValid()) {
       throw new BadRequestException('El token ha expirado o ya fue utilizado');
@@ -54,16 +40,16 @@ export class ResetPasswordHandler {
     if (user.currentPasswordHash) {
       const matchesCurrent = await bcrypt.compare(command.newPassword, user.passwordHash);
       if (matchesCurrent) {
-        throw new BadRequestException('La nueva contraseña no puede ser igual a la contraseña actual');
+        throw new BadRequestException('La nueva contraseÃ±a no puede ser igual a la contraseÃ±a actual');
       }
       const matchesPrevious = await bcrypt.compare(command.newPassword, user.currentPasswordHash);
       if (matchesPrevious) {
-        throw new BadRequestException('La nueva contraseña no puede ser igual a la contraseña anterior');
+        throw new BadRequestException('La nueva contraseÃ±a no puede ser igual a la contraseÃ±a anterior');
       }
     } else {
       const matchesCurrent = await bcrypt.compare(command.newPassword, user.passwordHash);
       if (matchesCurrent) {
-        throw new BadRequestException('La nueva contraseña no puede ser igual a la contraseña actual');
+        throw new BadRequestException('La nueva contraseÃ±a no puede ser igual a la contraseÃ±a actual');
       }
     }
 
@@ -106,3 +92,5 @@ export class ResetPasswordHandler {
     return { success: true };
   }
 }
+
+

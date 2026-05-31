@@ -1,5 +1,3 @@
-import { PaginatedResult } from '../repositories/pagination.types';
-
 export interface InvoiceListItem {
   id: string;
   saleId: string;
@@ -54,15 +52,6 @@ export interface InvoiceTotalResult {
 }
 
 export interface IInvoiceQueryService {
-  listInvoices(params: {
-    page: number;
-    limit: number;
-    branchId?: string;
-    status?: string;
-    invoiceNumber?: string;
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<PaginatedResult<InvoiceListItem>>;
   getInvoiceById(id: string): Promise<InvoiceListItem | null>;
   getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null>;
   getInvoiceKpis(params?: { branchId?: string }): Promise<InvoiceKpis>;

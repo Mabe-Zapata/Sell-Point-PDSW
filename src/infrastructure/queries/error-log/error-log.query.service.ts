@@ -24,6 +24,10 @@ export class ErrorLogQueryService implements IErrorLogQueryService {
       .leftJoin(UserTypeOrmEntity, 'usr', 'usr.id = el.userId');
   }
 
+  private buildFilterQuery() {
+    return this.errorLogRepository.createQueryBuilder('el');
+  }
+
   async listErrorLogs(params: {
     page: number;
     limit: number;
@@ -35,14 +39,33 @@ export class ErrorLogQueryService implements IErrorLogQueryService {
     const { page, limit, exceptionType, userId, startDate, endDate } = params;
     const offset = (page - 1) * limit;
 
-    const baseQuery = this.buildQuery()
+    const filterQuery = this.buildFilterQuery()
       .where(exceptionType ? 'el.exceptionType = :exceptionType' : '1=1', { exceptionType })
       .andWhere(userId ? 'el.userId = :userId' : '1=1', { userId })
       .andWhere(startDate ? 'el.createdAt >= :startDate' : '1=1', { startDate })
       .andWhere(endDate ? 'el.createdAt <= :endDate' : '1=1', { endDate });
 
-    const total = await baseQuery.clone().getCount();
-    const rows = await baseQuery
+    const total = await filterQuery.clone().getCount();
+    const pagedIds = await filterQuery
+      .clone()
+      .select('el.id', 'id')
+      .orderBy('el.createdAt', 'DESC')
+      .offset(offset)
+      .limit(limit)
+      .getRawMany<{ id: string }>();
+
+    const ids = pagedIds.map((row) => String(row.id));
+
+    if (!ids.length) {
+      return {
+        data: [],
+        total,
+        page,
+        limit,
+      };
+    }
+
+    const rows = await this.buildQuery()
       .clone()
       .select([
         'el.id AS "id"',
@@ -54,13 +77,16 @@ export class ErrorLogQueryService implements IErrorLogQueryService {
         'el.createdAt AS "createdAt"',
         'usr.username AS "userUsername"',
       ])
-      .orderBy('el.createdAt', 'DESC')
-      .skip(offset)
-      .take(limit)
+      .where('el.id IN (:...ids)', { ids })
       .getRawMany<ErrorLogListItem>();
 
+    const rowsById = new Map(rows.map((row) => [String(row.id), row]));
+    const orderedRows = ids
+      .map((id) => rowsById.get(id))
+      .filter((row): row is ErrorLogListItem => Boolean(row));
+
     return {
-      data: rows.map((row) => ({
+      data: orderedRows.map((row) => ({
         ...row,
         source: row.source ?? '',
       })),

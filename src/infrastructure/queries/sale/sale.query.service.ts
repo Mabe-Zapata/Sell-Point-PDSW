@@ -32,6 +32,10 @@ export class SaleQueryService implements ISaleQueryService {
       .innerJoin(UserTypeOrmEntity, 'usr', 'usr.id = sal.cashierUserId');
   }
 
+  private buildSaleFilterQuery() {
+    return this.saleRepository.createQueryBuilder('sal');
+  }
+
   async listSales(params: {
     page: number;
     limit: number;
@@ -44,16 +48,35 @@ export class SaleQueryService implements ISaleQueryService {
     const { page, limit, branchId, customerId, status, startDate, endDate } = params;
     const offset = (page - 1) * limit;
 
-    const baseQuery = this.buildSaleQuery()
+    const filterQuery = this.buildSaleFilterQuery()
       .where(branchId ? 'sal.branchId = :branchId' : '1=1', { branchId })
       .andWhere(customerId ? 'sal.customerId = :customerId' : '1=1', { customerId })
       .andWhere(status ? 'sal.status = :status' : '1=1', { status })
       .andWhere(startDate ? 'sal.createdAt >= :startDate' : '1=1', { startDate })
       .andWhere(endDate ? 'sal.createdAt <= :endDate' : '1=1', { endDate });
 
-    const total = await baseQuery.clone().getCount();
-    const rows = await baseQuery
+    const total = await filterQuery.clone().getCount();
+    const pagedIds = await filterQuery
       .clone()
+      .select('sal.id', 'id')
+      .orderBy('sal.createdAt', 'DESC')
+      .offset(offset)
+      .limit(limit)
+      .getRawMany<{ id: string }>();
+
+    const ids = pagedIds.map((row) => String(row.id));
+
+    if (!ids.length) {
+      return {
+        data: [],
+        total,
+        page,
+        limit,
+      };
+    }
+
+    const rows = await this.buildSaleQuery()
+      .where('sal.id IN (:...ids)', { ids })
       .select([
         'sal.id AS "id"',
         'sal.saleNumber AS "saleNumber"',
@@ -68,13 +91,15 @@ export class SaleQueryService implements ISaleQueryService {
         'TRIM(COALESCE(cus."FIR_NAM_CUS", \'\') || \' \' || COALESCE(cus."APE_CUS", \'\')) AS "customerName"',
         'usr.username AS "cashierUsername"',
       ])
-      .orderBy('sal.createdAt', 'DESC')
-      .skip(offset)
-      .take(limit)
       .getRawMany<SaleListItem>();
 
+    const rowsById = new Map(rows.map((row) => [String(row.id), row]));
+    const orderedRows = ids
+      .map((id) => rowsById.get(id))
+      .filter((row): row is SaleListItem => Boolean(row));
+
     return {
-      data: rows.map((row) => ({
+      data: orderedRows.map((row) => ({
         ...row,
         subtotal: Number(row.subtotal),
         taxAmount: Number(row.taxAmount),

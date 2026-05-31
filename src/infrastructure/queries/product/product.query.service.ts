@@ -40,7 +40,8 @@ export class ProductQueryService implements IProductQueryService {
 
     const searchPattern = q ? `${q}%` : null;
 
-    const baseQuery = this.buildProductQuery()
+    const baseFilterQuery = this.productRepository
+      .createQueryBuilder('p')
       .where(
         searchPattern
           ? '(UPPER(p.name) LIKE UPPER(:searchPattern) OR UPPER(p.code) LIKE UPPER(:searchPattern))'
@@ -50,29 +51,49 @@ export class ProductQueryService implements IProductQueryService {
       .andWhere(categoryId ? 'p.categoryId = :categoryId' : '1=1', { categoryId })
       .andWhere(isActive !== undefined ? 'p.isActive = :isActive' : '1=1', { isActive });
 
-    const [total, rows] = await Promise.all([
-      baseQuery.clone().getCount(),
-      baseQuery
+    const [total, pagedIds] = await Promise.all([
+      baseFilterQuery.clone().getCount(),
+      baseFilterQuery
         .clone()
-        .select([
-          'p.id AS "id"',
-          'p.code AS "code"',
-          'p.name AS "name"',
-          'p.salePrice AS "salePrice"',
-          'p.costPrice AS "costPrice"',
-          'p.currentStock AS "currentStock"',
-          'p.categoryId AS "categoryId"',
-          'c.name AS "categoryName"',
-          'p.isActive AS "isActive"',
-        ])
+        .select('p.id', 'id')
         .orderBy('p.createdAt', 'DESC')
-        .skip(offset)
-        .take(safeLimit)
-        .getRawMany<ProductListItem>(),
+        .offset(offset)
+        .limit(safeLimit)
+        .getRawMany<{ id: string }>(),
     ]);
 
+    const ids = pagedIds.map((row) => String(row.id));
+
+    if (!ids.length) {
+      return {
+        data: [],
+        total,
+        page,
+        limit: safeLimit,
+      };
+    }
+
+    const rows = await this.buildProductQuery()
+      .select([
+        'p.id AS "id"',
+        'p.code AS "code"',
+        'p.name AS "name"',
+        'p.salePrice AS "salePrice"',
+        'p.costPrice AS "costPrice"',
+        'p.currentStock AS "currentStock"',
+        'p.categoryId AS "categoryId"',
+        'c.name AS "categoryName"',
+        'p.isActive AS "isActive"',
+      ])
+      .where('p.id IN (:...ids)', { ids })
+      .orderBy('p.createdAt', 'DESC')
+      .getRawMany<ProductListItem>();
+
+    const rowsById = new Map(rows.map((row) => [String(row.id), row]));
+    const orderedRows = ids.map((id) => rowsById.get(id)).filter((row): row is ProductListItem => Boolean(row));
+
     return {
-      data: rows.map((row) => ({
+      data: orderedRows.map((row) => ({
         ...row,
         salePrice: Number(row.salePrice),
         costPrice: Number(row.costPrice),

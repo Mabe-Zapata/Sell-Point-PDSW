@@ -7,6 +7,10 @@ export class AddTaxRateIdToCategories1800000000013 implements MigrationInterface
   name = 'AddTaxRateIdToCategories1800000000013';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const dbType = queryRunner.connection.options.type;
+    const taxRateIdType = dbType === 'postgres' ? 'uuid' : 'varchar';
+    const taxRateIdLength = dbType === 'postgres' ? undefined : '36';
+
     const table = await queryRunner.getTable('CATEGORIES');
     if (!table) return;
 
@@ -18,15 +22,14 @@ export class AddTaxRateIdToCategories1800000000013 implements MigrationInterface
       'CATEGORIES',
       new TableColumn({
         name: 'TAX_RAT_ID',
-        type: 'varchar',
-        length: '36',
+        type: taxRateIdType,
+        length: taxRateIdLength,
         isNullable: true,
       }),
     );
 
     // 2. Set default tax rate (IVA 15%) for existing rows
     const defaultTaxRateId = uuidv5('IVA 15%', UUID_NAMESPACE);
-    const dbType = queryRunner.connection.options.type;
     if (dbType === 'oracle') {
       await queryRunner.query(`UPDATE "CATEGORIES" SET "TAX_RAT_ID" = '${defaultTaxRateId}' WHERE "TAX_RAT_ID" IS NULL`);
     } else {
@@ -38,20 +41,24 @@ export class AddTaxRateIdToCategories1800000000013 implements MigrationInterface
       'CATEGORIES',
       new TableColumn({
         name: 'TAX_RAT_ID',
-        type: 'varchar',
-        length: '36',
+        type: taxRateIdType,
+        length: taxRateIdLength,
         isNullable: true,
       }),
       new TableColumn({
         name: 'TAX_RAT_ID',
-        type: 'varchar',
-        length: '36',
+        type: taxRateIdType,
+        length: taxRateIdLength,
         isNullable: false,
       }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    const dbType = queryRunner.connection.options.type;
+    const taxRateIdType = dbType === 'postgres' ? 'uuid' : 'varchar';
+    const taxRateIdLength = dbType === 'postgres' ? undefined : '36';
+
     const table = await queryRunner.getTable('CATEGORIES');
     if (!table) return;
 
@@ -60,14 +67,14 @@ export class AddTaxRateIdToCategories1800000000013 implements MigrationInterface
       'CATEGORIES',
       new TableColumn({
         name: 'TAX_RAT_ID',
-        type: 'varchar',
-        length: '36',
+        type: taxRateIdType,
+        length: taxRateIdLength,
         isNullable: false,
       }),
       new TableColumn({
         name: 'TAX_RAT_ID',
-        type: 'varchar',
-        length: '36',
+        type: taxRateIdType,
+        length: taxRateIdLength,
         isNullable: true,
       }),
     );

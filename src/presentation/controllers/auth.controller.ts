@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+﻿/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -27,6 +27,9 @@ import { ResetPasswordValidator } from '../../application/cqrs/auth/handlers/res
 import { resolvePublicIpv4 } from '../../infrastructure/http/request-ip.util';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import type { Request } from 'express';
+import { Inject } from '@nestjs/common';
+import { PasswordResetTokenRepository } from '../../infrastructure/repositories/password-reset-token.repository';
+import { PASSWORD_RESET_TOKEN_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 
 export class RefreshTokenDto {
   @ApiProperty({
@@ -45,6 +48,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly commandBus: CommandBus,
+    @Inject(PASSWORD_RESET_TOKEN_REPOSITORY) private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
   ) {}
 
   @Post('login')
@@ -257,6 +261,34 @@ export class AuthController {
     return result;
   }
 
+
+  @Get('reset-password/validate')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Validate whether a password reset token is still usable' })
+  @ApiQuery({ name: 'token', required: true, type: String })
+  @ApiResponse({ status: 200, description: 'Token validation result' })
+  async validateResetPasswordToken(@Query('token') token: string) {
+    if (!token || token.trim().length === 0) {
+      return { valid: false, reason: 'invalid' };
+    }
+
+    const resetToken = await this.passwordResetTokenRepository.findByRawToken(token.trim());
+
+    if (!resetToken) {
+      return { valid: false, reason: 'invalid' };
+    }
+
+    if (resetToken.usedAt !== null) {
+      return { valid: false, reason: 'used' };
+    }
+
+if (resetToken.expiresAt.getTime() <= Date.now()) {
+      return { valid: false, reason: 'expired' };
+    }
+
+    return { valid: true };
+  }
   @Post('reset-password')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -269,3 +301,4 @@ export class AuthController {
     return result;
   }
 }
+

@@ -7,6 +7,9 @@ export class AddTaxRateForeignKeys1800000000016 implements MigrationInterface {
   name = 'AddTaxRateForeignKeys1800000000016';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const dbType = queryRunner.connection.options.type;
+    const activeTaxValue = dbType === 'oracle' ? 1 : true;
+
     // Ensure default tax rates exist before creating FKs
     const iva15Id = uuidv5('IVA 15%', UUID_NAMESPACE);
     const iva0Id = uuidv5('IVA 0%', UUID_NAMESPACE);
@@ -18,12 +21,12 @@ export class AddTaxRateForeignKeys1800000000016 implements MigrationInterface {
 
     if (!existingIds.includes(iva15Id)) {
       await queryRunner.query(
-        `INSERT INTO "TAX_RATES" ("id","NAM_TAX","PCT_TAX","ACT_TAX","CRE_AT","UPD_AT") VALUES ('${iva15Id}','IVA 15%',15,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
+        `INSERT INTO "TAX_RATES" ("id","NAM_TAX","PCT_TAX","ACT_TAX","CRE_AT","UPD_AT") VALUES ('${iva15Id}','IVA 15%',15,${activeTaxValue},CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
       );
     }
     if (!existingIds.includes(iva0Id)) {
       await queryRunner.query(
-        `INSERT INTO "TAX_RATES" ("id","NAM_TAX","PCT_TAX","ACT_TAX","CRE_AT","UPD_AT") VALUES ('${iva0Id}','IVA 0%',0,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
+        `INSERT INTO "TAX_RATES" ("id","NAM_TAX","PCT_TAX","ACT_TAX","CRE_AT","UPD_AT") VALUES ('${iva0Id}','IVA 0%',0,${activeTaxValue},CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
       );
     }
 
