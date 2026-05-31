@@ -6,6 +6,7 @@ export class Category {
   readonly description?: string;
   readonly taxRateId!: string;
   readonly createdAt!: Date;
+  deletedAt?: Date;
 
   private _isActive!: boolean;
   private _updatedAt!: Date;
@@ -18,6 +19,7 @@ export class Category {
     isActive: boolean;
     createdAt?: Date;
     updatedAt?: Date;
+    deletedAt?: Date;
   }) {
     this.id = properties.id;
     this.name = properties.name;
@@ -26,6 +28,7 @@ export class Category {
     this._isActive = properties.isActive;
     this.createdAt = properties.createdAt || new Date();
     this._updatedAt = properties.updatedAt || new Date();
+    this.deletedAt = properties.deletedAt;
   }
 
   get isActive(): boolean {

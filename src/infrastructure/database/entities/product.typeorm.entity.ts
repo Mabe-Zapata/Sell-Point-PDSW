@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   Index,
   ManyToOne,
   JoinColumn,
@@ -55,4 +56,8 @@ export class ProductTypeOrmEntity {
 
   @UpdateDateColumn({ name: 'UPD_AT' })
   updatedAt!: Date;
+
+  @Index('IDX_PRO_DEL_AT')
+  @DeleteDateColumn({ name: 'DEL_AT', nullable: true })
+  deletedAt?: Date;
 }

@@ -26,6 +26,7 @@ export class CustomerRepository implements ICustomerRepository {
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      deletedAt: entity.deletedAt,
     });
   }
 
@@ -60,9 +61,10 @@ export class CustomerRepository implements ICustomerRepository {
     const { q } = filters;
 
     const queryBuilder = this.repo.createQueryBuilder('customer');
+    queryBuilder.andWhere('customer.deletedAt IS NULL');
 
     if (q) {
-      queryBuilder.where('LOWER(customer.firstName) LIKE LOWER(:q) OR LOWER(customer.lastName) LIKE LOWER(:q) OR LOWER(customer.cedula) LIKE LOWER(:q)', { q: `%${q}%` });
+      queryBuilder.andWhere('LOWER(customer.firstName) LIKE LOWER(:q) OR LOWER(customer.lastName) LIKE LOWER(:q) OR LOWER(customer.cedula) LIKE LOWER(:q)', { q: `%${q}%` });
     }
 
     const total = await queryBuilder.getCount();
@@ -93,6 +95,6 @@ export class CustomerRepository implements ICustomerRepository {
   }
 
   async softDelete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 }

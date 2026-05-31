@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
+  Index,
   OneToOne,
 } from 'typeorm';
 import { dbBooleanColumn } from './db-column.helper';
@@ -74,4 +76,8 @@ export class UserTypeOrmEntity {
 
   @UpdateDateColumn({ name: 'UPD_AT' })
   updatedAt!: Date;
+
+  @Index('IDX_USR_DEL_AT')
+  @DeleteDateColumn({ name: 'DEL_AT', nullable: true })
+  deletedAt?: Date;
 }

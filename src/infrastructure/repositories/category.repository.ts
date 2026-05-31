@@ -23,6 +23,7 @@ export class CategoryRepository implements ICategoryRepository {
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      deletedAt: entity.deletedAt,
     });
   }
 
@@ -54,9 +55,10 @@ export class CategoryRepository implements ICategoryRepository {
     const { q, isActive } = filters;
 
     const queryBuilder = this.repo.createQueryBuilder('category');
+    queryBuilder.andWhere('category.deletedAt IS NULL');
 
     if (q) {
-      queryBuilder.where('LOWER(category.name) LIKE LOWER(:q)', { q: `%${q}%` });
+      queryBuilder.andWhere('LOWER(category.name) LIKE LOWER(:q)', { q: `%${q}%` });
     }
     if (isActive !== undefined) {
       queryBuilder.andWhere('category.isActive = :isActive', { isActive });
@@ -90,6 +92,6 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   async softDelete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 }
