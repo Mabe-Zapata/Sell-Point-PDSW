@@ -9,6 +9,8 @@ export interface UserFilters {
   email?: string;
   employeeId?: string;
   isActive?: boolean;
+  createdFrom?: Date;
+  createdTo?: Date;
 }
 
 export interface IUserRepository {

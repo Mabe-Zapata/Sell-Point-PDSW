@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
+  Index,
 } from 'typeorm';
 import { dbBooleanColumn } from './db-column.helper';
 
@@ -41,4 +43,8 @@ export class CustomerTypeOrmEntity {
 
   @UpdateDateColumn({ name: 'UPD_AT' })
   updatedAt!: Date;
+
+  @Index('IDX_CUS_DEL_AT')
+  @DeleteDateColumn({ name: 'DEL_AT', nullable: true })
+  deletedAt?: Date;
 }

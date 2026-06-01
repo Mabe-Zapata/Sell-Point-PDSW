@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Inject } from '@nestjs/common';
+import { Inject, Optional } from '@nestjs/common';
+import type { IErrorLogRepository } from '../../domain/repositories';
+import { ERROR_LOG_REPOSITORY } from '../common/injection-tokens';
+import { ErrorLog } from '../../domain/entities';
+import { ExceptionType } from '../../domain/entities/enums';
 import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import type { IEmailService } from '../../application/ports/IEmailService';
 import { EMAIL_SERVICE } from '../../application/ports/email-service.token';
@@ -21,6 +25,9 @@ export class InvoiceEmailListener implements IEventHandler<InvoiceIssuedEvent> {
     @Inject(PDF_SERVICE) private readonly pdfService: IPdfService,
     @Inject(INVOICE_QUERY_SERVICE) private readonly invoiceQueryService: IInvoiceQueryService,
     @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
+    @Optional()
+    @Inject(ERROR_LOG_REPOSITORY)
+    private readonly errorLogRepository?: IErrorLogRepository,
   ) {}
 
   async handle(event: InvoiceIssuedEvent): Promise<void> {
@@ -83,10 +90,21 @@ export class InvoiceEmailListener implements IEventHandler<InvoiceIssuedEvent> {
         );
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
       console.error(
         `[InvoiceEmailListener] Failed to send invoice email for sale ${event.saleId}:`,
         error,
       );
+      if (this.errorLogRepository) {
+        const errorLog = new ErrorLog({
+          exceptionType: ExceptionType.EXTERNAL_SERVICE_ERROR,
+          message,
+          stackTrace,
+          source: 'InvoiceEmailListener',
+        });
+        this.errorLogRepository.create(errorLog).catch(() => undefined);
+      }
     }
   }
 }

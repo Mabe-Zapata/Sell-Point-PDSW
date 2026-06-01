@@ -13,6 +13,9 @@ export class ListCustomersWithStockHandler {
       q: query.q,
       // identificationType replaced by cedula (simplify-schema-uta SDD)
       cedula: query.cedula,
+      isActive: query.isActive,
+      createdFrom: query.createdFrom,
+      createdTo: query.createdTo,
     });
   }
 }

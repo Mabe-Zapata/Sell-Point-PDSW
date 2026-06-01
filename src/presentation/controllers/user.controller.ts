@@ -51,6 +51,8 @@ export class UserController {
   @ApiQuery({ name: 'q', required: false, type: String })
   @ApiQuery({ name: 'role', required: false, type: String })
   @ApiQuery({ name: 'status', required: false, type: String })
+  @ApiQuery({ name: 'createdFrom', description: 'Filter by creation date from (ISO 8601)', required: false, type: String })
+  @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Lista de usuarios', type: UserResponseDto, isArray: true })
   async findAll(
     @Query('page') page?: string,
@@ -58,13 +60,21 @@ export class UserController {
     @Query('q') q?: string,
     @Query('role') role?: string,
     @Query('status') status?: string,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
   ): Promise<{ data: UserResponseDto[]; total: number; page: number; limit: number }> {
     const pagination: PaginationParams = {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const filters: UserFilters = { q, role, status };
+    const filters: UserFilters = {
+      q,
+      role,
+      status,
+      createdFrom: createdFrom ? new Date(createdFrom) : undefined,
+      createdTo: createdTo ? new Date(createdTo) : undefined,
+    };
 
     const result = await this.queryBus.execute<ListUsersQuery, PaginatedResult<User>>(
       new ListUsersQuery(pagination, filters),

@@ -29,6 +29,7 @@ export class ProductRepository implements IProductRepository {
       currentStock: entity.currentStock ?? 0,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      deletedAt: entity.deletedAt,
     });
   }
 
@@ -65,18 +66,25 @@ export class ProductRepository implements IProductRepository {
     filters: ProductFilters = {},
   ): Promise<PaginatedResult<Product>> {
     const { page, limit } = pagination;
-    const { q, categoryId, isActive } = filters;
+    const { q, categoryId, isActive, createdFrom, createdTo } = filters;
 
     const queryBuilder = this.repo.createQueryBuilder('product');
+    queryBuilder.andWhere('product.deletedAt IS NULL');
 
     if (q) {
-      queryBuilder.where('LOWER(product.name) LIKE LOWER(:q) OR LOWER(product.code) LIKE LOWER(:q)', { q: `%${q}%` });
+      queryBuilder.andWhere('LOWER(product.name) LIKE LOWER(:q) OR LOWER(product.code) LIKE LOWER(:q)', { q: `%${q}%` });
     }
     if (categoryId) {
       queryBuilder.andWhere('product.categoryId = :categoryId', { categoryId });
     }
     if (isActive !== undefined) {
       queryBuilder.andWhere('product.isActive = :isActive', { isActive });
+    }
+    if (createdFrom) {
+      queryBuilder.andWhere('product.createdAt >= :createdFrom', { createdFrom });
+    }
+    if (createdTo) {
+      queryBuilder.andWhere('product.createdAt <= :createdTo', { createdTo });
     }
 
     const total = await queryBuilder.getCount();
@@ -107,7 +115,7 @@ export class ProductRepository implements IProductRepository {
   }
 
   async softDelete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 
   async findByIdForUpdate(id: string): Promise<Product | null> {

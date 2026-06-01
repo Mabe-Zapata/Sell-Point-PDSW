@@ -6,5 +6,7 @@ export class ListProductsWithStockQuery {
     public readonly q?: string,
     public readonly categoryId?: string,
     public readonly isActive?: boolean,
+    public readonly createdFrom?: Date,
+    public readonly createdTo?: Date,
   ) {}
 }

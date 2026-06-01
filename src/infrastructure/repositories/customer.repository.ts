@@ -26,6 +26,7 @@ export class CustomerRepository implements ICustomerRepository {
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      deletedAt: entity.deletedAt,
     });
   }
 
@@ -57,12 +58,22 @@ export class CustomerRepository implements ICustomerRepository {
     filters: CustomerFilters = {},
   ): Promise<PaginatedResult<Customer>> {
     const { page, limit } = pagination;
-    const { q } = filters;
+    const { q, isActive, createdFrom, createdTo } = filters;
 
     const queryBuilder = this.repo.createQueryBuilder('customer');
+    queryBuilder.andWhere('customer.deletedAt IS NULL');
 
     if (q) {
-      queryBuilder.where('LOWER(customer.firstName) LIKE LOWER(:q) OR LOWER(customer.lastName) LIKE LOWER(:q) OR LOWER(customer.cedula) LIKE LOWER(:q)', { q: `%${q}%` });
+      queryBuilder.andWhere('LOWER(customer.firstName) LIKE LOWER(:q) OR LOWER(customer.lastName) LIKE LOWER(:q) OR LOWER(customer.cedula) LIKE LOWER(:q)', { q: `%${q}%` });
+    }
+    if (isActive !== undefined) {
+      queryBuilder.andWhere('customer.isActive = :isActive', { isActive });
+    }
+    if (createdFrom) {
+      queryBuilder.andWhere('customer.createdAt >= :createdFrom', { createdFrom });
+    }
+    if (createdTo) {
+      queryBuilder.andWhere('customer.createdAt <= :createdTo', { createdTo });
     }
 
     const total = await queryBuilder.getCount();
@@ -93,6 +104,6 @@ export class CustomerRepository implements ICustomerRepository {
   }
 
   async softDelete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 }

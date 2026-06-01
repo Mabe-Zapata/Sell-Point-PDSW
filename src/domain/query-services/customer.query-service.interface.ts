@@ -18,6 +18,9 @@ export interface ICustomerQueryService {
     limit: number;
     q?: string;
     cedula?: string;
+    isActive?: boolean;
+    createdFrom?: Date;
+    createdTo?: Date;
   }): Promise<{ data: CustomerListItem[]; total: number; page: number; limit: number }>;
   getCustomerByIdentification(cedula: string): Promise<Customer | null>;
 }

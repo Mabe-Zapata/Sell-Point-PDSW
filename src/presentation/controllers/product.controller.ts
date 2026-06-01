@@ -107,6 +107,8 @@ export class ProductController {
   @ApiQuery({ name: 'q', description: 'Search query (searches in code, name)', required: false, type: String })
   @ApiQuery({ name: 'categoryId', description: 'Filter by category UUID', required: false, type: String })
   @ApiQuery({ name: 'isActive', description: 'Filter by active status', required: false, type: Boolean })
+  @ApiQuery({ name: 'createdFrom', description: 'Filter by creation date from (ISO 8601)', required: false, type: String })
+  @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'List of products retrieved successfully',
@@ -117,6 +119,8 @@ export class ProductController {
     @Query('q') searchQuery?: string,
     @Query('categoryId') categoryId?: string,
     @Query('isActive') isActive?: string,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
   ): Promise<{
     data: ProductWithStockResponseDto[];
     total: number;
@@ -128,9 +132,15 @@ export class ProductController {
       limit: limit ? parseInt(limit, 10) : 20,
     };
 
-    const isAct = isActive === undefined ? undefined : isActive === 'true';
     const result = await this.queryBus.execute(
-      new ListProductsWithStockQuery(pagination, searchQuery, categoryId, isAct),
+      new ListProductsWithStockQuery(
+        pagination,
+        searchQuery,
+        categoryId,
+        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+        createdFrom ? new Date(createdFrom) : undefined,
+        createdTo ? new Date(createdTo) : undefined,
+      ),
     );
 
     return {

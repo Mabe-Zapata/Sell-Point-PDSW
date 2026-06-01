@@ -23,8 +23,11 @@ export class CustomerQueryService implements ICustomerQueryService {
     limit: number;
     q?: string;
     cedula?: string;
+    isActive?: boolean;
+    createdFrom?: Date;
+    createdTo?: Date;
   }): Promise<{ data: CustomerListItem[]; total: number; page: number; limit: number }> {
-    const { page, limit, q, cedula } = params;
+    const { page, limit, q, cedula, isActive, createdFrom, createdTo } = params;
     const offset = (page - 1) * limit;
     const searchPattern = q ? `%${q}%` : null;
 
@@ -37,6 +40,9 @@ export class CustomerQueryService implements ICustomerQueryService {
         { search: searchPattern },
       )
       .andWhere(cedula ? 'customer.cedula = :cedula' : '1=1', { cedula })
+      .andWhere(isActive !== undefined ? 'customer.isActive = :isActive' : '1=1', { isActive })
+      .andWhere(createdFrom ? 'customer.createdAt >= :createdFrom' : '1=1', { createdFrom })
+      .andWhere(createdTo ? 'customer.createdAt <= :createdTo' : '1=1', { createdTo })
       .orderBy('customer.createdAt', 'DESC')
       .skip(offset)
       .take(limit);

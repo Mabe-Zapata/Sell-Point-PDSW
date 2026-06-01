@@ -19,6 +19,8 @@ export interface IProductQueryService {
     q?: string;
     categoryId?: string;
     isActive?: boolean;
+    createdFrom?: Date;
+    createdTo?: Date;
   }): Promise<{ data: ProductListItem[]; total: number; page: number; limit: number }>;
   getProductWithStock(id: string): Promise<(ProductListItem & { warehouseStock: { warehouseId: string; warehouseName: string; currentStock: number }[] }) | null>;
 }

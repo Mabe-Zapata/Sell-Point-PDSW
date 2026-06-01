@@ -95,6 +95,9 @@ export class CustomerController {
   @ApiQuery({ name: 'limit', description: 'Number of items per page (default: 20)', required: false, type: Number })
   @ApiQuery({ name: 'q', description: 'Search query (searches in names, cedula)', required: false, type: String })
   @ApiQuery({ name: 'cedula', description: 'Filter by cedula', required: false, type: String })
+  @ApiQuery({ name: 'isActive', description: 'Filter by active status', required: false, type: Boolean })
+  @ApiQuery({ name: 'createdFrom', description: 'Filter by creation date from (ISO 8601)', required: false, type: String })
+  @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'List of customers retrieved successfully',
@@ -104,6 +107,9 @@ export class CustomerController {
     @Query('limit') limit?: string,
     @Query('q') searchQuery?: string,
     @Query('cedula') cedula?: string,
+    @Query('isActive') isActive?: string,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
   ): Promise<{
     data: CustomerListResponseDto[];
     total: number;
@@ -116,8 +122,14 @@ export class CustomerController {
     };
 
     const result = await this.queryBus.execute(
-      // identificationType replaced by cedula (simplify-schema-uta SDD)
-      new ListCustomersWithStockQuery(pagination, searchQuery, cedula),
+      new ListCustomersWithStockQuery(
+        pagination,
+        searchQuery,
+        cedula,
+        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+        createdFrom ? new Date(createdFrom) : undefined,
+        createdTo ? new Date(createdTo) : undefined,
+      ),
     );
 
     return {

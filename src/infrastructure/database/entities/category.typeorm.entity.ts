@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
+  Index,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
@@ -36,4 +38,8 @@ export class CategoryTypeOrmEntity {
 
   @UpdateDateColumn({ name: 'UPD_AT' })
   updatedAt!: Date;
+
+  @Index('IDX_CAT_DEL_AT')
+  @DeleteDateColumn({ name: 'DEL_AT', nullable: true })
+  deletedAt?: Date;
 }

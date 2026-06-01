@@ -66,12 +66,13 @@ export class UserRepository implements IUserRepository {
     return this.repo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.userRole', 'userRole')
-      .leftJoinAndSelect('userRole.role', 'role');
+      .leftJoinAndSelect('userRole.role', 'role')
+      .andWhere('user.deletedAt IS NULL');
   }
 
   private async findOneBy(field: 'id' | 'employeeId' | 'username' | 'email', value: string): Promise<User | null> {
     const entity = await this.createBaseQueryBuilder()
-      .where(`user.${field} = :value`, { value })
+      .andWhere(`user.${field} = :value`, { value })
       .getOne();
 
     return entity ? this.mapToDomain(entity) : null;
@@ -115,7 +116,7 @@ export class UserRepository implements IUserRepository {
 
   async findByGoogleId(googleId: string): Promise<User | null> {
     const entity = await this.createBaseQueryBuilder()
-      .where('user.googleId = :googleId', { googleId })
+      .andWhere('user.googleId = :googleId', { googleId })
       .getOne();
 
     return entity ? this.mapToDomain(entity) : null;
@@ -126,12 +127,12 @@ export class UserRepository implements IUserRepository {
     filters: UserFilters = {},
   ): Promise<PaginatedResult<User>> {
     const { page, limit } = pagination;
-    const { q, status, role, username, email, employeeId, isActive } = filters;
+    const { q, status, role, username, email, employeeId, isActive, createdFrom, createdTo } = filters;
 
     const queryBuilder = this.createBaseQueryBuilder().where('1=1');
 
     if (q) {
-      queryBuilder.where(
+      queryBuilder.andWhere(
         '(LOWER(user.employeeId) LIKE LOWER(:q) OR LOWER(user.email) LIKE LOWER(:q) OR LOWER(user.username) LIKE LOWER(:q))',
         {
           q: `%${q}%`,
@@ -161,6 +162,12 @@ export class UserRepository implements IUserRepository {
       queryBuilder.andWhere(isActive ? 'user.status = :activeStatus' : 'user.status <> :activeStatus', {
         activeStatus: 'ACTIVE',
       });
+    }
+    if (createdFrom) {
+      queryBuilder.andWhere('user.createdAt >= :createdFrom', { createdFrom });
+    }
+    if (createdTo) {
+      queryBuilder.andWhere('user.createdAt <= :createdTo', { createdTo });
     }
 
     const total = await queryBuilder.getCount();
@@ -229,8 +236,7 @@ export class UserRepository implements IUserRepository {
   }
 
   async softDelete(id: string): Promise<void> {
-    await this.userRoleRepo.delete({ userId: id });
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 
   async updateFailedLoginAttempts(id: string, attempts: number): Promise<void> {
