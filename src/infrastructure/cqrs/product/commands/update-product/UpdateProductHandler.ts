@@ -3,7 +3,8 @@ import { Inject } from '@nestjs/common';
 import { UpdateProductCommand } from '../../../../../application/cqrs/product/commands/update-product/update-product.command';
 import { UpdateProductHandler as ApplicationUpdateProductHandler } from '../../../../../application/cqrs/product/commands/update-product/update-product.handler';
 import { ProductRepository } from '../../../../repositories/product.repository';
-import { PRODUCT_REPOSITORY } from '../../../../common/injection-tokens';
+import { LotRepository } from '../../../../repositories/lot.repository';
+import { LOT_REPOSITORY, PRODUCT_REPOSITORY } from '../../../../common/injection-tokens';
 
 @CommandHandler(UpdateProductCommand)
 export class UpdateProductHandler implements ICommandHandler<UpdateProductCommand> {
@@ -11,8 +12,9 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
 
   constructor(
     @Inject(PRODUCT_REPOSITORY) productRepository: ProductRepository,
+    @Inject(LOT_REPOSITORY) lotRepository: LotRepository,
   ) {
-    this.appHandler = new ApplicationUpdateProductHandler(productRepository);
+    this.appHandler = new ApplicationUpdateProductHandler(productRepository, lotRepository);
   }
 
   async execute(command: UpdateProductCommand) {

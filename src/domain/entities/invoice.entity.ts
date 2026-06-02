@@ -15,6 +15,7 @@ export class Invoice {
   total?: number;
   subtotal?: number;
   iva?: number;
+  profitTotal?: number;
   saleNumber?: string;
   customerName?: string;
   customerId?: string;

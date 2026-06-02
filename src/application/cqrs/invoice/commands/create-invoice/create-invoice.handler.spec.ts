@@ -6,6 +6,7 @@ import { InvoiceStatus } from '../../../../../domain/entities';
 describe('CreateInvoiceHandler', () => {
   const mockInvoiceRepository = {
     create: jest.fn(),
+    update: jest.fn(),
     findBySaleId: jest.fn().mockResolvedValue(null),
   };
 
@@ -65,6 +66,7 @@ describe('CreateInvoiceHandler', () => {
       ...invoice,
       createdAt: new Date('2026-05-27T00:00:00.000Z'),
     }));
+    mockInvoiceRepository.update.mockImplementation(async (invoice) => invoice);
     mockInvoiceItemRepository.createMany.mockImplementation(async (items) => items);
 
     const result = await handler.execute(
@@ -97,6 +99,7 @@ describe('CreateInvoiceHandler', () => {
     expect(result.subtotal).toBe(40);
     expect(result.iva).toBe(6);
     expect(result.total).toBe(46);
+    expect(result.profitTotal).toBe(0);
   });
 
   it('should throw DuplicateInvoiceForSaleException when invoice already exists', async () => {

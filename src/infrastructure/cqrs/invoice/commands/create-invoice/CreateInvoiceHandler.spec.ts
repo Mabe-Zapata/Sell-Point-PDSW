@@ -26,6 +26,7 @@ describe('Infrastructure CreateInvoiceHandler', () => {
       findOne: jest.fn(),
       create: jest.fn((_target: unknown, entity: unknown) => entity),
       save: jest.fn(),
+      update: jest.fn(),
       createQueryBuilder: jest.fn(),
     },
   };
@@ -48,6 +49,18 @@ describe('Infrastructure CreateInvoiceHandler', () => {
       if (target === 'InvoiceTypeOrmEntity' && options.where?.saleId) {
         return null;
       }
+      if (target === 'InvoiceTypeOrmEntity' && options.where?.id) {
+        return {
+          id: options.where.id,
+          saleId: 'sale-1',
+          seriesId: 'series-1',
+          invoiceNumber: '001-001-000000001',
+          issueDate: new Date('2026-05-28T00:00:00.000Z'),
+          status: 'ISSUED',
+          profitTotal: 5,
+          createdAt: new Date('2026-05-28T00:00:00.000Z'),
+        };
+      }
       if (target === 'InvoiceSeriesTypeOrmEntity' && options.where?.branchId) {
         return invoiceSeries;
       }
@@ -57,10 +70,55 @@ describe('Infrastructure CreateInvoiceHandler', () => {
       return null;
     });
 
-    queryRunner.manager.createQueryBuilder.mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([
+    queryRunner.manager.update.mockResolvedValue({ affected: 1 });
+
+    queryRunner.manager.createQueryBuilder.mockImplementation((target?: unknown) => {
+      const builder: any = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        setLock: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 1 }),
+      };
+
+      if (target === 'ProductTypeOrmEntity') {
+        builder.getOne = jest.fn().mockResolvedValue({
+          id: 'prod-1',
+          categoryId: 'cat-1',
+          code: 'P001',
+          name: 'Prod 1',
+          salePrice: 10,
+          costPrice: 5,
+          isActive: true,
+          currentStock: 10,
+          createdAt: new Date('2026-05-28T00:00:00.000Z'),
+          updatedAt: new Date('2026-05-28T00:00:00.000Z'),
+        });
+        return builder;
+      }
+
+      if (target === 'LotTypeOrmEntity') {
+        builder.getMany = jest.fn().mockResolvedValue([
+          {
+            id: 'lot-1',
+            productId: 'prod-1',
+            lotCode: 'LOT-001',
+            quantityReceived: 10,
+            quantityAvailable: 10,
+            unitCost: 5,
+            estimatedUnitProfit: 5,
+            receivedAt: new Date('2026-05-01T00:00:00.000Z'),
+            createdAt: new Date('2026-05-01T00:00:00.000Z'),
+            updatedAt: new Date('2026-05-01T00:00:00.000Z'),
+          },
+        ]);
+        return builder;
+      }
+
+      builder.getMany = jest.fn().mockResolvedValue([
         {
           productId: 'prod-1',
           productNameSnapshot: 'Prod 1',
@@ -72,7 +130,8 @@ describe('Infrastructure CreateInvoiceHandler', () => {
           taxAmount: 1.5,
           createdAt: new Date('2026-05-28T00:00:00.000Z'),
         },
-      ]),
+      ]);
+      return builder;
     });
 
     queryRunner.manager.save.mockImplementation(async (targetOrEntity: unknown, entity?: unknown) => {
@@ -90,6 +149,18 @@ describe('Infrastructure CreateInvoiceHandler', () => {
           id: `item-${index + 1}`,
           ...item,
         }));
+      }
+      if (targetOrEntity === 'InvoiceItemLotTypeOrmEntity') {
+        return (entity as Record<string, unknown>[]).map((item, index) => ({
+          id: `item-lot-${index + 1}`,
+          ...item,
+        }));
+      }
+      if (targetOrEntity === 'StockMovementTypeOrmEntity') {
+        return {
+          id: 1,
+          ...(entity as Record<string, unknown>),
+        };
       }
       return entity ?? targetOrEntity;
     });
