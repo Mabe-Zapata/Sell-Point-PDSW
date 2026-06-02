@@ -36,6 +36,26 @@ export class InvoiceItemLotRepositoryImpl implements IInvoiceItemLotRepository {
     return entities.map((entity: any) => this.mapToDomain(entity));
   }
 
+  async deleteByInvoiceId(invoiceId: string): Promise<void> {
+    // Get invoice item IDs for this invoice
+    const invoiceItems = await this.qr.manager
+      .createQueryBuilder()
+      .select('item.id', 'id')
+      .from('InvoiceItemTypeOrmEntity', 'item')
+      .where('item.invoiceId = :invoiceId', { invoiceId })
+      .getRawMany();
+
+    const invoiceItemIds = invoiceItems.map((row: any) => row.id);
+    if (invoiceItemIds.length === 0) return;
+
+    await this.qr.manager
+      .createQueryBuilder()
+      .delete()
+      .from('InvoiceItemLotTypeOrmEntity')
+      .where('invoiceItemId IN (:...invoiceItemIds)', { invoiceItemIds })
+      .execute();
+  }
+
   private mapToDomain(entity: any): InvoiceItemLot {
     return new InvoiceItemLot({
       id: String(entity.id),
