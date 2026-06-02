@@ -10,6 +10,7 @@ import { AdjustStockDto } from '../../application/dto/stock/adjust-stock.dto';
 import { StockMovementType } from '../../domain/entities/enums/stock-movement-type.enum';
 import { StockMovement } from '../../domain/entities/stock-movement.entity';
 import { StockMovementResponseDto } from '../../application/dto/stock/stock-movement-response.dto';
+import { DASHBOARD_REPOSITORY, PRODUCT_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 
 describe('ProductController', () => {
   let controller: ProductController;
@@ -30,6 +31,8 @@ describe('ProductController', () => {
       providers: [
         { provide: QueryBus, useValue: mockQueryBus },
         { provide: CommandBus, useValue: mockCommandBus },
+        { provide: PRODUCT_REPOSITORY, useValue: { findAll: jest.fn() } },
+        { provide: DASHBOARD_REPOSITORY, useValue: {} },
       ],
     }).compile();
 

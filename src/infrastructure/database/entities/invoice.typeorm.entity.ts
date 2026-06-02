@@ -41,6 +41,9 @@ export class InvoiceTypeOrmEntity {
   @Column({ name: 'CAN_DAT', type: 'timestamp', nullable: true })
   cancelledAt?: Date;
 
+  @Column({ name: 'PRO_TOT_INV', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  profitTotal?: number;
+
   @OneToMany(() => InvoiceItemTypeOrmEntity, (item) => item.invoice)
   items!: InvoiceItemTypeOrmEntity[];
 

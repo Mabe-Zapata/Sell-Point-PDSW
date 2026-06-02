@@ -43,6 +43,32 @@ export class CancelSaleUseCase {
         }
       }
 
+      // Restore lot stock consumed in this sale
+      const invoice = await this.uow.invoices.findBySaleId(saleId);
+      if (invoice) {
+        const consumedLots = await this.uow.invoiceItemLots.findByInvoiceId(invoice.id);
+        if (consumedLots.length > 0) {
+          // Group by lotId and sum quantities to restore
+          const lotRestoreMap = new Map<string, number>();
+          for (const cl of consumedLots) {
+            const current = lotRestoreMap.get(cl.lotId) ?? 0;
+            lotRestoreMap.set(cl.lotId, current + cl.quantityUsed);
+          }
+
+          // Restore each lot's quantityAvailable
+          for (const [lotId, quantity] of lotRestoreMap) {
+            const lot = await this.uow.lots.findById(lotId);
+            if (lot) {
+              const restored = Number((lot.quantityAvailable + quantity).toFixed(3));
+              await this.uow.lots.setQuantityAvailable(lotId, restored);
+            }
+          }
+
+          // Remove the lot consumption records
+          await this.uow.invoiceItemLots.deleteByInvoiceId(invoice.id);
+        }
+      }
+
       // Cancel the sale (validates it's in CONFIRMED status)
       sale.cancel();
 

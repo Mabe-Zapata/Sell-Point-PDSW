@@ -13,6 +13,8 @@ import type {
   IInvoiceRepository,
   IInvoiceItemRepository,
   IInvoiceSeriesRepository,
+  IInvoiceItemLotRepository,
+  ILotRepository,
 } from '../../../../domain/repositories';
 import { SaleRepositoryImpl } from '../repositories/sale.repository.impl';
 import { SaleDetailRepositoryImpl } from '../repositories/sale-detail.repository.impl';
@@ -21,6 +23,8 @@ import { StockMovementRepositoryImpl } from '../repositories/stock-movement.repo
 import { InvoiceRepositoryImpl } from '../repositories/invoice.repository.impl';
 import { InvoiceItemRepositoryImpl } from '../repositories/invoice-item.repository.impl';
 import { InvoiceSeriesRepositoryImpl } from '../repositories/invoice-series.repository.impl';
+import { InvoiceItemLotRepositoryImpl } from '../repositories/invoice-item-lot.repository.impl';
+import { LotRepositoryImpl } from '../repositories/lot.repository.impl';
 
 @Injectable()
 export class TypeOrmUnitOfWork implements IUnitOfWork {
@@ -50,6 +54,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
       }
       this.pendingEvents = [];
       this.started = false;
+      await this.queryRunner.release();
     }
   }
 
@@ -58,6 +63,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
     await this.queryRunner.rollbackTransaction();
     this.pendingEvents = [];
     this.started = false;
+    await this.queryRunner.release();
   }
 
   dispatchEvent(event: any): void {
@@ -108,10 +114,24 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
     return new InvoiceItemRepositoryImpl(this.queryRunner);
   }
 
+  get invoiceItemLots(): IInvoiceItemLotRepository {
+    if (!this.started) {
+      throw new Error('UnitOfWork not started. Call start() first.');
+    }
+    return new InvoiceItemLotRepositoryImpl(this.queryRunner);
+  }
+
   get invoiceSeries(): IInvoiceSeriesRepository {
     if (!this.started) {
       throw new Error('UnitOfWork not started. Call start() first.');
     }
     return new InvoiceSeriesRepositoryImpl(this.queryRunner);
+  }
+
+  get lots(): ILotRepository {
+    if (!this.started) {
+      throw new Error('UnitOfWork not started. Call start() first.');
+    }
+    return new LotRepositoryImpl(this.queryRunner);
   }
 }

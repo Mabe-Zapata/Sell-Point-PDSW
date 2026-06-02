@@ -4,6 +4,7 @@ export interface SaleConfirmedEventItem {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  lotCodes?: string[];
 }
 
 export class SaleConfirmedEvent {
