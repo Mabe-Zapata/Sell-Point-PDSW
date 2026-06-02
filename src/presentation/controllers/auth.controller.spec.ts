@@ -3,6 +3,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../../infrastructure/services/auth.service';
+import { PASSWORD_RESET_TOKEN_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -22,12 +23,15 @@ describe('AuthController', () => {
     execute: jest.fn(),
   };
 
+  const mockPasswordResetTokenRepository = {};
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: CommandBus, useValue: mockCommandBus },
+        { provide: PASSWORD_RESET_TOKEN_REPOSITORY, useValue: mockPasswordResetTokenRepository },
       ],
     }).compile();
 
