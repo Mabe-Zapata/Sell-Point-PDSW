@@ -9,6 +9,15 @@ export type InvoiceItemData = {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  taxPercentage?: number;
+  taxAmount?: number;
+  total?: number;
+};
+
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  mimetype: string;
 };
 
 export type InvoiceData = {
@@ -17,8 +26,12 @@ export type InvoiceData = {
   customerName: string;
   customerCedula?: string;
   items: InvoiceItemData[];
+  subtotal?: number;
+  iva?: number;
   total: number;
   seriesNumber?: string;
+  includeTaxBreakdown?: boolean;
+  attachments?: EmailAttachment[];
 };
 
 export type EmployeeCredentialsData = {

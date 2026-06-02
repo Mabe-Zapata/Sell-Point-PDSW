@@ -83,6 +83,7 @@ export class InvoiceRepositoryImpl implements IInvoiceRepository {
       status: InvoiceStatusMapper.toDomain(entity.status),
       cancelledAt: entity.cancelledAt,
       createdAt: entity.createdAt,
+      profitTotal: Number(entity.profitTotal ?? 0),
     });
   }
 
@@ -96,6 +97,7 @@ export class InvoiceRepositoryImpl implements IInvoiceRepository {
       issueDate: invoice.issueDate,
       status: InvoiceStatusMapper.toDb(invoice.status),
       cancelledAt: invoice.cancelledAt,
+      profitTotal: invoice.profitTotal,
     };
   }
 }

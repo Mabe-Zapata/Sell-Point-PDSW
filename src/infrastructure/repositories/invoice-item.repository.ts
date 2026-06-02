@@ -53,6 +53,30 @@ export class InvoiceItemRepository implements IInvoiceItemRepository {
       order: { id: 'ASC' },
     });
 
-    return entities.map((entity) => this.mapToDomain(entity));
+    const items = entities.map((entity) => this.mapToDomain(entity));
+    await this.attachLotCodes(items);
+    return items;
+  }
+
+  private async attachLotCodes(items: InvoiceItem[]): Promise<void> {
+    if (items.length === 0) return;
+
+    const itemIds = items.map((item) => item.id);
+    const rows = await this.invoiceItemRepository.manager
+      .createQueryBuilder('InvoiceItemLotTypeOrmEntity', 'record')
+      .leftJoinAndSelect('record.lot', 'lot')
+      .where('record.invoiceItemId IN (:...itemIds)', { itemIds })
+      .getMany();
+
+    const lotCodesByItemId = new Map<string, string[]>();
+    for (const row of rows as any[]) {
+      const codes = lotCodesByItemId.get(row.invoiceItemId) ?? [];
+      if (row.lot?.lotCode) codes.push(row.lot.lotCode);
+      lotCodesByItemId.set(row.invoiceItemId, codes);
+    }
+
+    for (const item of items) {
+      item.lotCodes = lotCodesByItemId.get(item.id) ?? [];
+    }
   }
 }

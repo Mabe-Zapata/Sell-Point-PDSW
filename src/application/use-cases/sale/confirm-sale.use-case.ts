@@ -1,5 +1,4 @@
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
-import { StockMovement, StockMovementType } from '../../../domain/entities';
 import { SaleConfirmedEvent } from '../../../domain/events/sale-confirmed.event';
 import { BusinessRuleException } from '../../../domain/exceptions';
 
@@ -20,32 +19,19 @@ export class ConfirmSaleUseCase {
       // Confirm the sale (validates it's in DRAFT status)
       sale.confirm();
 
-      // Process each sale detail
+      // Validate each sale detail. Stock and lot consumption happen atomically when the invoice is issued.
       for (const detail of sale.details) {
-        // Find product with pessimistic lock to capture previousStock
         const product = await this.uow.products.findByIdForUpdate(detail.productId);
 
         if (!product) {
           throw new BusinessRuleException(`Product ${detail.productId} not found`);
         }
 
-        // Deduct stock atomically (decrementStock validates CUR_STO_PRO >= qty)
-        const previousStock = product.currentStock;
-        await this.uow.products.decrementStock(detail.productId, detail.quantity);
-        const newStock = previousStock - detail.quantity;
-
-        // Create stock movement record
-        const movement = new StockMovement({
-          productId: detail.productId,
-          type: StockMovementType.SALE,
-          quantity: detail.quantity,
-          previousStock,
-          newStock,
-          referenceType: 'SALE',
-          referenceId: sale.id,
-          description: `Sale ${sale.saleNumber}`,
-        });
-        await this.uow.stockMovements.create(movement);
+        if ((product.currentStock ?? 0) < detail.quantity) {
+          throw new BusinessRuleException(
+            `Insufficient stock for product ${product.name}. Available: ${product.currentStock ?? 0}, Requested: ${detail.quantity}`,
+          );
+        }
       }
 
       // Update sale status

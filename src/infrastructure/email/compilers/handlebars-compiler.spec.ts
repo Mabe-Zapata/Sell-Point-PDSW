@@ -35,11 +35,14 @@ describe('HandlebarsCompiler', () => {
         date: '2024-01-15',
         customerName: 'Juan Pérez',
         customerCedula: '1723456789',
+        includeTaxBreakdown: true,
+        subtotal: 35.00,
+        iva: 4.20,
         items: [
-          { description: 'Product A', quantity: 2, unitPrice: 10.00, subtotal: 20.00 },
-          { description: 'Product B', quantity: 1, unitPrice: 15.00, subtotal: 15.00 },
+          { description: 'Product A', quantity: 2, unitPrice: 10.00, subtotal: 20.00, taxPercentage: 12, taxAmount: 2.40, total: 22.40 },
+          { description: 'Product B', quantity: 1, unitPrice: 15.00, subtotal: 15.00, taxPercentage: 12, taxAmount: 1.80, total: 16.80 },
         ],
-        total: 35.00,
+        total: 39.20,
       };
 
       const result = await compiler.compile('invoice', invoiceData);
@@ -47,7 +50,9 @@ describe('HandlebarsCompiler', () => {
       expect(result).toContain('INV-001');
       expect(result).toContain('Juan Pérez');
       expect(result).toContain('Product A');
-      expect(result).toContain('35');
+      expect(result).toContain('IVA');
+      expect(result).toContain('Factura en PDF adjunta');
+      expect(result).toContain('39.2');
     });
 
     it('should compile new-employee-credentials template', async () => {

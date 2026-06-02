@@ -75,7 +75,7 @@ describe('BrevoRestTransporter', () => {
       expect(mockClient.post).toHaveBeenCalledWith('/v3/smtp/email', expect.objectContaining({
         attachment: expect.arrayContaining([
           expect.objectContaining({
-            filename: 'invoice.pdf',
+            name: 'invoice.pdf',
             content: pdfBuffer.toString('base64'),
             mimetype: 'application/pdf',
           }),

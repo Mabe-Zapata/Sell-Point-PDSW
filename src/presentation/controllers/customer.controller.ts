@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -27,6 +28,8 @@ import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/que
 import { UpdateCustomerCommand } from '../../application/cqrs/customer/commands/update-customer/update-customer.command';
 import { ActivateCustomerCommand } from '../../application/cqrs/customer/commands/activate-customer/activate-customer.command';
 import { DeactivateCustomerCommand } from '../../application/cqrs/customer/commands/deactivate-customer/deactivate-customer.command';
+import { CUSTOMER_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import type { ICustomerRepository } from '../../domain/repositories';
 
 import { CreateCustomerDto } from '../../application/dto/customer/create-customer.dto';
 import { UpdateCustomerDto } from '../../application/dto/customer/update-customer.dto';
@@ -41,6 +44,7 @@ export class CustomerController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
   ) {}
 
   @Post()
@@ -66,23 +70,6 @@ export class CustomerController {
     const customer = await this.commandBus.execute(
       new CreateCustomerCommand(createCustomerDto),
     );
-    return CustomerResponseDto.fromEntity(customer);
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get a customer by ID',
-    description: 'Retrieves a customer by their unique identifier',
-  })
-  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Customer found',
-    type: CustomerResponseDto,
-  })
-  @ApiResponse({ status: 404, description: 'Customer not found' })
-  async findOne(@Param('id') id: string): Promise<CustomerResponseDto> {
-    const customer = await this.queryBus.execute(new GetCustomerQuery(id));
     return CustomerResponseDto.fromEntity(customer);
   }
 
@@ -138,6 +125,43 @@ export class CustomerController {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  @Get('kpis')
+  @ApiOperation({
+    summary: 'Get customer KPI counts',
+    description: 'Returns dashboard-friendly customer counts: total, active, and inactive.',
+  })
+  @ApiResponse({ status: 200, description: 'Customer KPI counts retrieved successfully' })
+  async getKpis(): Promise<{ totalCustomers: number; activeCustomers: number; inactiveCustomers: number }> {
+    const [total, active, inactive] = await Promise.all([
+      this.customerRepository.findAll({ page: 1, limit: 1 }),
+      this.customerRepository.findAll({ page: 1, limit: 1 }, { isActive: true }),
+      this.customerRepository.findAll({ page: 1, limit: 1 }, { isActive: false }),
+    ]);
+
+    return {
+      totalCustomers: total.total,
+      activeCustomers: active.total,
+      inactiveCustomers: inactive.total,
+    };
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get a customer by ID',
+    description: 'Retrieves a customer by their unique identifier',
+  })
+  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer found',
+    type: CustomerResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async findOne(@Param('id') id: string): Promise<CustomerResponseDto> {
+    const customer = await this.queryBus.execute(new GetCustomerQuery(id));
+    return CustomerResponseDto.fromEntity(customer);
   }
 
   @Put(':id')

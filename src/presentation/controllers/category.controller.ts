@@ -11,6 +11,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -27,6 +28,8 @@ import { ListCategoriesQuery } from '../../application/cqrs/category/queries/lis
 import { UpdateCategoryCommand } from '../../application/cqrs/category/commands/update-category/update-category.command';
 import { ActivateCategoryCommand } from '../../application/cqrs/category/commands/activate-category/activate-category.command';
 import { DeactivateCategoryCommand } from '../../application/cqrs/category/commands/deactivate-category/deactivate-category.command';
+import { CATEGORY_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import type { ICategoryRepository } from '../../domain/repositories';
 
 import { CreateCategoryDto } from '../../application/dto/category/create-category.dto';
 import { UpdateCategoryDto } from '../../application/dto/category/update-category.dto';
@@ -40,6 +43,7 @@ export class CategoryController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    @Inject(CATEGORY_REPOSITORY) private readonly categoryRepository: ICategoryRepository,
   ) {}
 
   @Post()
@@ -61,23 +65,6 @@ export class CategoryController {
     const category = await this.commandBus.execute(
       new CreateCategoryCommand(createCategoryDto),
     );
-    return CategoryResponseDto.fromEntity(category);
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get a category by ID',
-    description: 'Retrieves a category by their unique identifier',
-  })
-  @ApiParam({ name: 'id', description: 'Category UUID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Category found',
-    type: CategoryResponseDto,
-  })
-  @ApiResponse({ status: 404, description: 'Category not found' })
-  async findOne(@Param('id') id: string): Promise<CategoryResponseDto> {
-    const category = await this.queryBus.execute(new GetCategoryQuery(id));
     return CategoryResponseDto.fromEntity(category);
   }
 
@@ -122,6 +109,41 @@ export class CategoryController {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  @Get('kpis')
+  @ApiOperation({
+    summary: 'Get category KPI counts',
+    description: 'Returns dashboard-friendly category counts: total and active.',
+  })
+  @ApiResponse({ status: 200, description: 'Category KPI counts retrieved successfully' })
+  async getKpis(): Promise<{ totalCategories: number; activeCount: number }> {
+    const [total, active] = await Promise.all([
+      this.categoryRepository.findAll({ page: 1, limit: 1 }),
+      this.categoryRepository.findAll({ page: 1, limit: 1 }, { isActive: true }),
+    ]);
+
+    return {
+      totalCategories: total.total,
+      activeCount: active.total,
+    };
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get a category by ID',
+    description: 'Retrieves a category by their unique identifier',
+  })
+  @ApiParam({ name: 'id', description: 'Category UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Category found',
+    type: CategoryResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Category not found' })
+  async findOne(@Param('id') id: string): Promise<CategoryResponseDto> {
+    const category = await this.queryBus.execute(new GetCategoryQuery(id));
+    return CategoryResponseDto.fromEntity(category);
   }
 
   @Put(':id')

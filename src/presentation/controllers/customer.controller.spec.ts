@@ -4,6 +4,7 @@ import { CustomerController } from './customer.controller';
 import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/queries/list-customers-with-stock/list-customers-with-stock.query';
 import { GetCustomerQuery } from '../../application/cqrs/customer/queries/get-customer/get-customer.query';
 import { CreateCustomerCommand } from '../../application/cqrs/customer/commands/create-customer/create-customer.command';
+import { CUSTOMER_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 
 describe('CustomerController', () => {
   let controller: CustomerController;
@@ -24,6 +25,7 @@ describe('CustomerController', () => {
       providers: [
         { provide: QueryBus, useValue: mockQueryBus },
         { provide: CommandBus, useValue: mockCommandBus },
+        { provide: CUSTOMER_REPOSITORY, useValue: { findAll: jest.fn() } },
       ],
     }).compile();
 

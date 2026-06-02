@@ -8,6 +8,7 @@ export class InvoiceItem {
   taxRateId?: string;
   taxPercentage?: number;
   taxAmount?: number;
+  lotCodes?: string[];
 
   get subtotal(): number {
     return this.quantity * this.unitPrice;

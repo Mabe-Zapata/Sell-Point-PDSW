@@ -134,18 +134,51 @@ export class InvoiceController {
     }
 
     const items = await this.invoiceItemRepository.findByInvoiceId(id);
+    const invoice = new Invoice({
+      id: invoiceData.id,
+      saleId: invoiceData.saleId,
+      seriesId: invoiceData.seriesId,
+      invoiceNumber: invoiceData.invoiceNumber,
+      authorizationNumber: invoiceData.authorizationNumber ?? undefined,
+      issueDate: invoiceData.issueDate,
+      status: invoiceData.status as InvoiceStatus,
+      cancelledAt: invoiceData.cancelledAt ?? undefined,
+      createdAt: invoiceData.createdAt,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
+      total: invoiceData.total,
+      saleNumber: invoiceData.saleNumber,
+      customerName: invoiceData.customerName,
+      customerCedula: invoiceData.customerCedula,
+      establishmentCode: invoiceData.establishmentCode,
+      emissionPointCode: invoiceData.emissionPointCode,
+    });
+    const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
     const result = await this.emailService.sendInvoice(email, id, {
       invoiceNumber: invoiceData.invoiceNumber,
       date: invoiceData.issueDate.toLocaleDateString('es-EC'),
       customerName: invoiceData.customerName || 'Consumidor Final',
       customerCedula: invoiceData.customerCedula || undefined,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
       items: items.map((item) => ({
         description: item.productName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         subtotal: item.subtotal,
+        taxPercentage: item.taxPercentage,
+        taxAmount: item.taxAmount,
+        total: item.total,
       })),
       total: invoiceData.total,
+      includeTaxBreakdown: true,
+      attachments: [
+        {
+          filename: `factura-${invoiceData.invoiceNumber}.pdf`,
+          content: pdfBuffer,
+          mimetype: 'application/pdf',
+        },
+      ],
     });
 
     if (!result.success) {

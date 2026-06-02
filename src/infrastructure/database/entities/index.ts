@@ -4,6 +4,8 @@ export { ErrorLogTypeOrmEntity } from './error-log.typeorm.entity';
 export { InvoiceTypeOrmEntity } from './invoice.typeorm.entity';
 export { InvoiceSeriesTypeOrmEntity } from './invoice-series.typeorm.entity';
 export { InvoiceItemTypeOrmEntity } from './invoice-item.typeorm.entity';
+export { InvoiceItemLotTypeOrmEntity } from './invoice-item-lot.typeorm.entity';
+export { LotTypeOrmEntity } from './lot.typeorm.entity';
 export { ProductTypeOrmEntity } from './product.typeorm.entity';
 export { RoleTypeOrmEntity } from './role.typeorm.entity';
 export { SaleTypeOrmEntity } from './sale.typeorm.entity';

@@ -11,6 +11,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -30,6 +31,8 @@ import { ActivateProductCommand } from '../../application/cqrs/product/commands/
 import { DeactivateProductCommand } from '../../application/cqrs/product/commands/deactivate-product/deactivate-product.command';
 import { AdjustStockCommand } from '../../application/cqrs/inventory/commands/adjust-stock/adjust-stock.command';
 import { GetMovementsHistoryQuery } from '../../application/cqrs/inventory/queries/get-movements-history/get-movements-history.query';
+import { PRODUCT_REPOSITORY, DASHBOARD_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import type { IProductRepository, IDashboardRepository } from '../../domain/repositories';
 
 import { CreateProductDto } from '../../application/dto/product/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/product/update-product.dto';
@@ -46,6 +49,8 @@ export class ProductController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepository: IProductRepository,
+    @Inject(DASHBOARD_REPOSITORY) private readonly dashboardRepository: IDashboardRepository,
   ) {}
 
   @Post()
@@ -78,23 +83,6 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Next product code retrieved successfully' })
   async nextCode(): Promise<{ code: string }> {
     return this.queryBus.execute(new GetNextProductCodeQuery());
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get a product by ID',
-    description: 'Retrieves a product by their unique identifier',
-  })
-  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Product found',
-    type: ProductResponseDto,
-  })
-  @ApiResponse({ status: 404, description: 'Product not found' })
-  async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
-    const product = await this.queryBus.execute(new GetProductQuery(id));
-    return ProductResponseDto.fromEntity(product);
   }
 
   @Get()
@@ -149,6 +137,43 @@ export class ProductController {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  @Get('kpis')
+  @ApiOperation({
+    summary: 'Get product KPI counts',
+    description: 'Returns dashboard-friendly product counts: total, active, and low stock.',
+  })
+  @ApiResponse({ status: 200, description: 'Product KPI counts retrieved successfully' })
+  async getKpis(): Promise<{ totalProducts: number; activeCount: number; lowStockCount: number }> {
+    const [total, active, lowStockCount] = await Promise.all([
+      this.productRepository.findAll({ page: 1, limit: 1 }),
+      this.productRepository.findAll({ page: 1, limit: 1 }, { isActive: true }),
+      this.dashboardRepository.countProductsWithLowStock(),
+    ]);
+
+    return {
+      totalProducts: total.total,
+      activeCount: active.total,
+      lowStockCount,
+    };
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get a product by ID',
+    description: 'Retrieves a product by their unique identifier',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Product found',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
+    const product = await this.queryBus.execute(new GetProductQuery(id));
+    return ProductResponseDto.fromEntity(product);
   }
 
   @Put(':id')

@@ -8,6 +8,7 @@ import { Invoice, InvoiceItem, InvoiceStatus } from '../../../../../domain/entit
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { DuplicateInvoiceForSaleException } from '../../../../../domain/exceptions';
 import { randomUUID } from 'crypto';
+import { LotConsumptionService } from '../../../../services/lot-consumption.service';
 
 export interface CreateInvoiceResult {
   id: string;
@@ -20,6 +21,7 @@ export interface CreateInvoiceResult {
   subtotal: number;
   iva: number;
   total: number;
+  profitTotal: number;
   items: InvoiceItem[];
 }
 
@@ -29,6 +31,7 @@ export class CreateInvoiceHandler {
     private readonly invoiceItemRepository: IInvoiceItemRepository,
     private readonly invoiceSeriesRepository: IInvoiceSeriesRepository,
     private readonly saleDetailRepository: ISaleDetailRepository,
+    private readonly lotConsumptionService?: LotConsumptionService,
   ) {}
 
   private roundCurrency(value: number): number {
@@ -118,6 +121,13 @@ export class CreateInvoiceHandler {
         }),
     );
     const savedItems = await this.invoiceItemRepository.createMany(items);
+    const consumption = this.lotConsumptionService
+      ? await this.lotConsumptionService.consumeInvoiceItems(savedItems, command.saleId)
+      : { profitTotal: 0, lotCodesByInvoiceItemId: new Map<string, string[]>() };
+
+    for (const item of savedItems) {
+      item.lotCodes = consumption.lotCodesByInvoiceItemId.get(item.id) ?? [];
+    }
 
     const subtotal = this.roundCurrency(
       saleDetails.reduce((sum, detail) => sum + (detail.quantity * detail.unitPrice), 0),
@@ -126,6 +136,8 @@ export class CreateInvoiceHandler {
       saleDetails.reduce((sum, detail) => sum + detail.taxAmount, 0),
     );
     const total = this.roundCurrency(subtotal + iva);
+    savedInvoice.profitTotal = consumption.profitTotal;
+    await this.invoiceRepository.update(savedInvoice);
 
     return {
       id: savedInvoice.id,
@@ -138,6 +150,7 @@ export class CreateInvoiceHandler {
       subtotal,
       iva,
       total,
+      profitTotal: consumption.profitTotal,
       items: savedItems,
     };
   }

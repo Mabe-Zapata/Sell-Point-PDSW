@@ -33,6 +33,7 @@ import { UserFilters } from '../../domain/repositories/user.repository.interface
 import { User } from '../../domain/entities/user.entity';
 import { PaginatedResult } from '../../domain/repositories/pagination.types';
 import { Roles } from '../decorators/roles.decorator';
+import { AuthService } from '../../infrastructure/services/auth.service';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
@@ -42,6 +43,7 @@ export class UserController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly authService: AuthService,
   ) {}
 
   @Get()
@@ -85,6 +87,30 @@ export class UserController {
       total: result.total,
       page: result.page,
       limit: result.limit,
+    };
+  }
+
+  @Get('kpis')
+  @ApiOperation({ summary: 'Obtener KPIs de usuarios (solo ADMIN)' })
+  @ApiResponse({ status: 200, description: 'KPIs de usuarios', schema: { type: 'object' } })
+  async getKpis(): Promise<{
+    totalEmployees: number;
+    activeEmployees: number;
+    inactiveEmployees: number;
+    blockedEmployees: number;
+  }> {
+    const [total, active, inactive, blocked] = await Promise.all([
+      this.authService.listUsers({ page: 1, limit: 1 }, {}),
+      this.authService.listUsers({ page: 1, limit: 1 }, { status: 'ACTIVE' }),
+      this.authService.listUsers({ page: 1, limit: 1 }, { status: 'INACTIVE' }),
+      this.authService.listUsers({ page: 1, limit: 1 }, { status: 'BLOCKED' }),
+    ]);
+
+    return {
+      totalEmployees: total.total,
+      activeEmployees: active.total,
+      inactiveEmployees: inactive.total,
+      blockedEmployees: blocked.total,
     };
   }
 
