@@ -6,6 +6,8 @@ import type {
   IInvoiceRepository,
   IInvoiceItemRepository,
   IInvoiceSeriesRepository,
+  IInvoiceItemLotRepository,
+  ILotRepository,
 } from '../../domain/repositories';
 
 export interface IUnitOfWork {
@@ -19,5 +21,7 @@ export interface IUnitOfWork {
   stockMovements: IStockMovementRepository;
   invoices: IInvoiceRepository;
   invoiceItems: IInvoiceItemRepository;
+  invoiceItemLots: IInvoiceItemLotRepository;
   invoiceSeries: IInvoiceSeriesRepository;
+  lots: ILotRepository;
 }

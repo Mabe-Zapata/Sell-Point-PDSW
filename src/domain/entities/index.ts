@@ -10,7 +10,9 @@ export { Sale } from './sale.entity';
 export { SaleDetail } from './sale-detail.entity';
 export { Invoice } from './invoice.entity';
 export { InvoiceItem } from './invoice-item.entity';
+export { InvoiceItemLot } from './invoice-item-lot.entity';
 export { InvoiceSeries } from './invoice-series.entity';
 export { Customer } from './customer.entity';
+export { Lot } from './lot.entity';
 
 export * from './enums';

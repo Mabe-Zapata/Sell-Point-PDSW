@@ -171,6 +171,7 @@ import { PDF_SERVICE } from './application/services/pdf-service.interface';
 import { TaxCalculator } from './domain/services';
 import {
   CustomerRepository, ProductRepository, InvoiceRepository, InvoiceItemRepository,
+  InvoiceItemLotRepository, LotRepository,
   DashboardRepository, UserRepository, CategoryRepository,
   ErrorLogRepository, TaxRateRepository,
   StockMovementRepository, SaleRepository, SaleDetailRepository,
@@ -182,6 +183,7 @@ import {
   ErrorLogQueryService,
 } from './infrastructure/queries';
 import { PdfService, AuthService } from './infrastructure/services';
+import { LotManagementService } from './infrastructure/services/lot-management.service';
 import { IdempotencyService } from './infrastructure/services/idempotency.service';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { EmailModule } from './infrastructure/email/email.module';
@@ -190,6 +192,7 @@ import {
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
   ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
   InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
+  InvoiceItemLotTypeOrmEntity, LotTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
@@ -202,6 +205,7 @@ import {
   CustomerController, ProductController, InvoiceController, DashboardController,
   AuthController, CategoryController, UserController, RoleController,
   ErrorLogController, SaleController, TaxRateController, InvoiceSeriesController,
+  LotController,
 } from './presentation/controllers';
 import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
@@ -222,6 +226,7 @@ const entities = [
   ErrorLogTypeOrmEntity, IdempotencyEntryTypeOrmEntity,
   InvoiceTypeOrmEntity, InvoiceSeriesTypeOrmEntity,
   InvoiceItemTypeOrmEntity,
+  InvoiceItemLotTypeOrmEntity, LotTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
@@ -256,7 +261,7 @@ const entities = [
     AppController, CustomerController, ProductController, InvoiceController,
     DashboardController, AuthController, CategoryController, UserController,
     RoleController,   ErrorLogController, SaleController, TaxRateController,
-    InvoiceSeriesController,
+    InvoiceSeriesController, LotController,
   ],
   providers: [
     AppService,
@@ -265,6 +270,8 @@ const entities = [
     // Infrastructure - Repositories (token-mapped)
     { provide: 'INVOICE_REPOSITORY', useClass: InvoiceRepository },
     { provide: 'INVOICE_ITEM_REPOSITORY', useClass: InvoiceItemRepository },
+    { provide: 'INVOICE_ITEM_LOT_REPOSITORY', useClass: InvoiceItemLotRepository },
+    { provide: 'LOT_REPOSITORY', useClass: LotRepository },
     { provide: 'CUSTOMER_REPOSITORY', useClass: CustomerRepository },
     { provide: 'PRODUCT_REPOSITORY', useClass: ProductRepository },
     { provide: 'DASHBOARD_REPOSITORY', useClass: DashboardRepository },
@@ -289,6 +296,7 @@ const entities = [
     // Infrastructure - Services
     { provide: PDF_SERVICE, useClass: PdfService },
     AuthService,
+    LotManagementService,
     // Unit of Work
     { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
     TypeOrmUnitOfWork,
