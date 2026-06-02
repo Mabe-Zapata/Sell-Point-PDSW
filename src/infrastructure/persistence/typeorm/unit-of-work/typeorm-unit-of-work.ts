@@ -54,6 +54,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
       }
       this.pendingEvents = [];
       this.started = false;
+      await this.queryRunner.release();
     }
   }
 
@@ -62,6 +63,7 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
     await this.queryRunner.rollbackTransaction();
     this.pendingEvents = [];
     this.started = false;
+    await this.queryRunner.release();
   }
 
   dispatchEvent(event: any): void {
