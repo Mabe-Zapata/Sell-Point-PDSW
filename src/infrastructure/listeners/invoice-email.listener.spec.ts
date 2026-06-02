@@ -120,10 +120,17 @@ describe('InvoiceEmailListener', () => {
           invoiceNumber: '001-002-000000015',
           customerName: 'John Doe',
           customerCedula: '1234567890',
+          includeTaxBreakdown: true,
           items: expect.arrayContaining([
             expect.objectContaining({ description: 'Product 1', quantity: 2 }),
           ]),
           total: 150.00,
+          attachments: expect.arrayContaining([
+            expect.objectContaining({
+              filename: 'factura-001-002-000000015.pdf',
+              mimetype: 'application/pdf',
+            }),
+          ]),
         }),
       );
     });

@@ -64,7 +64,7 @@ export class BrevoRestTransporter implements IEmailTransporter {
 
       if (attachments && attachments.length > 0) {
         emailPayload['attachment'] = attachments.map((att) => ({
-          filename: att.filename,
+          name: att.filename,
           content: att.content.toString('base64'),
           mimetype: att.mimetype,
         }));

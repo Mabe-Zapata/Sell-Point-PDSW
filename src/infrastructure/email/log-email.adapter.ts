@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IEmailService, SendResult, EmployeeCredentialsData } from '../../application/ports/IEmailService';
+import { IEmailService, SendResult, EmployeeCredentialsData, InvoiceData } from '../../application/ports/IEmailService';
 
 @Injectable()
 export class LogEmailAdapter implements IEmailService {
@@ -15,8 +15,8 @@ export class LogEmailAdapter implements IEmailService {
     });
   }
 
-  async sendInvoice(to: string, invoiceId: string, data: { invoiceNumber: string; date: string; customerName: string; items: Array<{ description: string; quantity: number; unitPrice: number; subtotal: number }>; total: number; seriesNumber?: string }): Promise<SendResult> {
-    this.logger.log(`[EMAIL] Invoice | To: ${to} | InvoiceId: ${invoiceId} | Data: ${JSON.stringify(data)}`);
+  async sendInvoice(to: string, invoiceId: string, data: InvoiceData): Promise<SendResult> {
+    this.logger.log(`[EMAIL] Invoice | To: ${to} | InvoiceId: ${invoiceId} | Attachments: ${data.attachments?.length ?? 0} | Data: ${JSON.stringify(data)}`);
     return await new Promise((resolve) => {
       resolve({
         success: true,

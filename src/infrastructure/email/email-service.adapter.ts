@@ -20,7 +20,7 @@ export class EmailServiceAdapter implements IEmailService {
       ...data,
       invoiceId,
     });
-    return this.emailTransporter.send(to, 'Confirmación de tu compra', htmlContent);
+    return this.emailTransporter.send(to, 'Confirmación de tu compra', htmlContent, data.attachments);
   }
 
   async sendEmployeeCredentials(to: string, data: EmployeeCredentialsData): Promise<SendResult> {

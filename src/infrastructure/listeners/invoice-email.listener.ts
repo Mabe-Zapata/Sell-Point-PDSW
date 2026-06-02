@@ -62,7 +62,7 @@ export class InvoiceEmailListener implements IEventHandler<InvoiceIssuedEvent> {
         invoiceDate: invoiceData.issueDate,
       });
 
-      await this.pdfService.generateInvoicePdf(invoice, items);
+      const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
 
       const result = await this.emailService.sendInvoice(
         event.customerEmail,
@@ -72,13 +72,26 @@ export class InvoiceEmailListener implements IEventHandler<InvoiceIssuedEvent> {
           date: invoiceData.issueDate.toLocaleDateString('es-EC'),
           customerName: invoiceData.customerName || event.customerName,
           customerCedula: invoiceData.customerCedula || undefined,
+          subtotal: invoiceData.subtotal,
+          iva: invoiceData.iva,
           items: items.map((item) => ({
             description: item.productName,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             subtotal: item.subtotal,
+            taxPercentage: item.taxPercentage,
+            taxAmount: item.taxAmount,
+            total: item.total,
           })),
           total: invoiceData.total,
+          includeTaxBreakdown: true,
+          attachments: [
+            {
+              filename: `factura-${invoiceData.invoiceNumber}.pdf`,
+              content: pdfBuffer,
+              mimetype: 'application/pdf',
+            },
+          ],
         },
       );
 
