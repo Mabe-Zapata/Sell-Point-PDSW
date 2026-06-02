@@ -13,6 +13,8 @@ import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
 import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.entity';
 import { InvoiceTypeOrmEntity } from './entities/invoice.typeorm.entity';
 import { InvoiceItemTypeOrmEntity } from './entities/invoice-item.typeorm.entity';
+import { LotTypeOrmEntity } from './entities/lot.typeorm.entity';
+import { InvoiceItemLotTypeOrmEntity } from './entities/invoice-item-lot.typeorm.entity';
 
 // ─────────────────────────────────────────────
 // CONFIGURACIÓN
@@ -21,6 +23,7 @@ const BATCH_SIZE = 500;
 const TOTAL_CUSTOMERS = 100000;
 const TOTAL_PRODUCTS = 100000;
 const TOTAL_SALES = 100000;
+const MASSIVE_LOT_STOCK = 1000;
 const DEFAULT_ESTABLISHMENT_CODE = '001';
 const DEFAULT_EMISSION_POINT_CODE = '001';
 const CUSTOMER_CEDULA_BASE = 8000000000;
@@ -186,7 +189,7 @@ async function seedProducts(
         description: fakerES.commerce.productDescription(),
         salePrice,
         costPrice: Math.round(salePrice * 0.6 * 100) / 100,
-        currentStock: randomInt(10, 500),
+        currentStock: MASSIVE_LOT_STOCK,
         isActive: true,
       });
     });
@@ -198,6 +201,72 @@ async function seedProducts(
 
   process.stdout.write(`\n  ✓ Productos completados: ${allIds.length}\n`);
   return allIds;
+}
+
+async function seedLotsForProducts(ds: DataSource): Promise<void> {
+  const productRepo = ds.getRepository(ProductTypeOrmEntity);
+  const lotRepo = ds.getRepository(LotTypeOrmEntity);
+
+  const productCount = await productRepo.count();
+  const existingLotProductIds = new Set(
+    (await lotRepo.find({ select: ['productId'] })).map((lot) => lot.productId),
+  );
+
+  if (existingLotProductIds.size >= productCount) {
+    process.stdout.write(`  Lotes ya existen para productos: ${existingLotProductIds.size} — omitiendo.\n`);
+    return;
+  }
+
+  process.stdout.write(`\nCreando lotes FIFO para productos en lotes de ${BATCH_SIZE}...\n`);
+  let processed = 0;
+  let created = 0;
+
+  while (processed < productCount) {
+    const products = await productRepo.find({
+      order: { code: 'ASC' },
+      skip: processed,
+      take: BATCH_SIZE,
+    });
+
+    if (products.length === 0) break;
+
+    const lots: LotTypeOrmEntity[] = [];
+    const productsToUpdate: ProductTypeOrmEntity[] = [];
+
+    for (const product of products) {
+      if (existingLotProductIds.has(product.id)) continue;
+
+      const stock = Math.max(Number(product.currentStock ?? 0), MASSIVE_LOT_STOCK);
+      if ((product.currentStock ?? 0) !== stock) {
+        product.currentStock = stock;
+        productsToUpdate.push(product);
+      }
+
+      lots.push(lotRepo.create({
+        id: randomUUID(),
+        productId: product.id,
+        lotCode: `LOT-${product.code}`,
+        quantityReceived: stock,
+        quantityAvailable: stock,
+        unitCost: product.costPrice,
+        estimatedUnitProfit: Number((Number(product.salePrice) - Number(product.costPrice)).toFixed(2)),
+        receivedAt: new Date('2026-01-01T00:00:00.000Z'),
+      }));
+    }
+
+    if (productsToUpdate.length > 0) {
+      await productRepo.save(productsToUpdate);
+    }
+    if (lots.length > 0) {
+      await lotRepo.save(lots);
+      created += lots.length;
+    }
+
+    processed += products.length;
+    process.stdout.write(`  Lotes creados: ${created} | Productos revisados: ${processed}/${productCount}\r`);
+  }
+
+  process.stdout.write(`\n  ✓ Lotes completados: ${created} nuevos\n`);
 }
 
 // ─────────────────────────────────────────────
@@ -363,6 +432,9 @@ async function seedInvoicesFromSales(
   const detailRepo = ds.getRepository(SaleDetailTypeOrmEntity);
   const invoiceRepo = ds.getRepository(InvoiceTypeOrmEntity);
   const invoiceItemRepo = ds.getRepository(InvoiceItemTypeOrmEntity);
+  const invoiceItemLotRepo = ds.getRepository(InvoiceItemLotTypeOrmEntity);
+  const lotRepo = ds.getRepository(LotTypeOrmEntity);
+  const productRepo = ds.getRepository(ProductTypeOrmEntity);
   const seriesRepo = ds.getRepository(InvoiceSeriesTypeOrmEntity);
 
   const salesCount = await saleRepo.count({ where: { status: 'CONFIRMED' } });
@@ -407,6 +479,7 @@ async function seedInvoicesFromSales(
 
     const saleIds = sales.map((sale) => sale.id);
     const details = await detailRepo.find({ where: { saleId: In(saleIds) } });
+    const productIds = [...new Set(details.map((detail) => detail.productId))];
     const detailsBySaleId = new Map<string, SaleDetailTypeOrmEntity[]>();
 
     for (const detail of details) {
@@ -415,8 +488,29 @@ async function seedInvoicesFromSales(
       detailsBySaleId.set(detail.saleId, saleDetails);
     }
 
+    const lots = productIds.length === 0
+      ? []
+      : await lotRepo
+        .createQueryBuilder('lot')
+        .where('lot.productId IN (:...productIds)', { productIds })
+        .andWhere('lot.deletedAt IS NULL')
+        .andWhere('lot.quantityAvailable > 0')
+        .orderBy('lot.receivedAt', 'ASC')
+        .addOrderBy('lot.createdAt', 'ASC')
+        .getMany();
+
+    const lotsByProductId = new Map<string, LotTypeOrmEntity[]>();
+    for (const lot of lots) {
+      const productLots = lotsByProductId.get(lot.productId) ?? [];
+      productLots.push(lot);
+      lotsByProductId.set(lot.productId, productLots);
+    }
+
     const invoices: InvoiceTypeOrmEntity[] = [];
     const invoiceItems: InvoiceItemTypeOrmEntity[] = [];
+    const invoiceItemLots: InvoiceItemLotTypeOrmEntity[] = [];
+    const changedLots = new Map<string, LotTypeOrmEntity>();
+    const consumedByProductId = new Map<string, number>();
 
     for (const sale of sales) {
       const saleDetails = detailsBySaleId.get(sale.id) ?? [];
@@ -426,6 +520,61 @@ async function seedInvoicesFromSales(
 
       nextSequence += 1;
       const invoiceId = randomUUID();
+      let invoiceProfitTotal = 0;
+
+      for (const detail of saleDetails) {
+        const invoiceItemId = randomUUID();
+        const quantity = Number(detail.quantity);
+        invoiceItems.push(
+          invoiceItemRepo.create({
+            id: invoiceItemId,
+            invoiceId,
+            productId: detail.productId,
+            productNameSnapshot: detail.productNameSnapshot,
+            quantity,
+            unitPrice: detail.unitPrice,
+            taxRateId: detail.taxRateId,
+            taxPercentage: detail.taxPercentage,
+            taxAmount: detail.taxAmount,
+          }),
+        );
+
+        let remaining = quantity;
+        const productLots = lotsByProductId.get(detail.productId) ?? [];
+
+        for (const lot of productLots) {
+          if (remaining <= 0) break;
+          const available = Number(lot.quantityAvailable ?? 0);
+          if (available <= 0) continue;
+
+          const quantityUsed = Math.min(available, remaining);
+          lot.quantityAvailable = Number((available - quantityUsed).toFixed(3));
+          remaining = Number((remaining - quantityUsed).toFixed(3));
+
+          const profitAmount = Math.round((Number(detail.unitPrice) - Number(lot.unitCost)) * quantityUsed * 100) / 100;
+          invoiceProfitTotal = Math.round((invoiceProfitTotal + profitAmount) * 100) / 100;
+          changedLots.set(lot.id, lot);
+          consumedByProductId.set(
+            detail.productId,
+            Number(((consumedByProductId.get(detail.productId) ?? 0) + quantityUsed).toFixed(3)),
+          );
+
+          invoiceItemLots.push(
+            invoiceItemLotRepo.create({
+              id: randomUUID(),
+              invoiceItemId,
+              lotId: lot.id,
+              quantityUsed,
+              unitCostSnapshot: lot.unitCost,
+              profitAmount,
+            }),
+          );
+        }
+
+        if (remaining > 0) {
+          throw new Error(`Stock por lotes insuficiente para producto ${detail.productId}. Faltante: ${remaining}`);
+        }
+      }
 
       invoices.push(
         invoiceRepo.create({
@@ -435,30 +584,31 @@ async function seedInvoicesFromSales(
           invoiceNumber: makeInvoiceNumber(nextSequence),
           issueDate: sale.createdAt,
           status: 'ISSUED',
+          profitTotal: invoiceProfitTotal,
         }),
       );
-
-      for (const detail of saleDetails) {
-        invoiceItems.push(
-          invoiceItemRepo.create({
-            id: randomUUID(),
-            invoiceId,
-            productId: detail.productId,
-            productNameSnapshot: detail.productNameSnapshot,
-            quantity: detail.quantity,
-            unitPrice: detail.unitPrice,
-            taxRateId: detail.taxRateId,
-            taxPercentage: detail.taxPercentage,
-            taxAmount: detail.taxAmount,
-          }),
-        );
-      }
     }
 
     if (invoices.length === 0) break;
 
     await invoiceRepo.save(invoices);
     await invoiceItemRepo.save(invoiceItems);
+    if (invoiceItemLots.length > 0) {
+      await invoiceItemLotRepo.save(invoiceItemLots);
+    }
+    if (changedLots.size > 0) {
+      await lotRepo.save([...changedLots.values()]);
+    }
+    if (consumedByProductId.size > 0) {
+      const consumedProducts = await productRepo.find({ where: { id: In([...consumedByProductId.keys()]) } });
+      for (const product of consumedProducts) {
+        product.currentStock = Math.max(
+          0,
+          Number((Number(product.currentStock ?? 0) - (consumedByProductId.get(product.id) ?? 0)).toFixed(3)),
+        );
+      }
+      await productRepo.save(consumedProducts);
+    }
 
     insertedInvoices += invoices.length;
     insertedInvoiceItems += invoiceItems.length;
@@ -507,6 +657,7 @@ async function main(): Promise<void> {
 
   const customerIds = await seedCustomers(customerRepo);
   const productIds = await seedProducts(productRepo, categories);
+  await seedLotsForProducts(dataSource);
 
   await seedSales(customerIds, productIds, cashier.id, branchId, taxRate, dataSource);
   const invoiceSeries = await seedInvoiceSeries(invoiceSeriesRepo, branchId);
