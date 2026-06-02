@@ -44,7 +44,6 @@ export class AddLotsAndInvoiceItemLots1800000000023 implements MigrationInterfac
         columnNames: ['PRO_ID'],
         referencedTableName: 'PRODUCTS',
         referencedColumnNames: ['id'],
-        onDelete: 'RESTRICT',
       }),
     );
     await queryRunner.createIndex('LOTS', new TableIndex({ name: 'IDX_LOTS_FIFO', columnNames: ['PRO_ID', 'ING_DAT', 'DEL_AT'] }));
@@ -86,7 +85,6 @@ export class AddLotsAndInvoiceItemLots1800000000023 implements MigrationInterfac
         columnNames: ['LOT_ID'],
         referencedTableName: 'LOTS',
         referencedColumnNames: ['id'],
-        onDelete: 'RESTRICT',
       }),
     );
     await queryRunner.createIndex('INVOICE_ITEM_LOTS', new TableIndex({ name: 'IDX_INV_ITEM_LOTS_ITEM', columnNames: ['INV_ITEM_ID'] }));

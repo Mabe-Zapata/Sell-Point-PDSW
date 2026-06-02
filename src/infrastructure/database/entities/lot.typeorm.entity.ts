@@ -20,7 +20,7 @@ export class LotTypeOrmEntity {
   @Column({ name: 'PRO_ID', type: 'uuid' })
   productId!: string;
 
-  @ManyToOne(() => ProductTypeOrmEntity, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => ProductTypeOrmEntity)
   @JoinColumn({ name: 'PRO_ID' })
   product!: ProductTypeOrmEntity;
 

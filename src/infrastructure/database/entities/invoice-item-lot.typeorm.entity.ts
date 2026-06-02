@@ -27,7 +27,7 @@ export class InvoiceItemLotTypeOrmEntity {
   @Column({ name: 'LOT_ID', type: 'uuid' })
   lotId!: string;
 
-  @ManyToOne(() => LotTypeOrmEntity, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => LotTypeOrmEntity)
   @JoinColumn({ name: 'LOT_ID' })
   lot!: LotTypeOrmEntity;
 
