@@ -22,6 +22,7 @@ export class UserTypeOrmEntity {
   @Column({ name: 'LAS_NAM_USR', length: 100, nullable: true })
   lastName?: string;
 
+  @Index('IDX_USR_CED_USR')
   @Column({ name: 'CED_USR', length: 20, nullable: true })
   cedula?: string;
 

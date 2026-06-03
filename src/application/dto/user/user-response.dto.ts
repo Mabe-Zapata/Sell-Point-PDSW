@@ -8,6 +8,7 @@ export class UserResponseDto {
   role?: string;
   firstName?: string;
   lastName?: string;
+  cedula?: string;
   status!: string;
   isActive!: boolean;
   createdAt!: Date;
@@ -21,6 +22,7 @@ export class UserResponseDto {
     dto.role = user.role;
     dto.firstName = user.firstName;
     dto.lastName = user.lastName;
+    dto.cedula = user.cedula;
     dto.status = user.status;
     dto.isActive = user.isActive;
     dto.createdAt = user.createdAt;

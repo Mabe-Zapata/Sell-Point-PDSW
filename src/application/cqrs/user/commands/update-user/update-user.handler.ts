@@ -1,8 +1,11 @@
-import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UpdateUserCommand } from './update-user.command';
 import type { IUserRepository } from '../../../../../domain/repositories/user.repository.interface';
 import type { IRoleRepository } from '../../../../../domain/repositories/role.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
+import { CedulaAlreadyExistsException } from '../../../../exceptions/cedula-already-exists.exception';
+import { EmailAlreadyExistsException } from '../../../../exceptions/email-already-exists.exception';
+import { DuplicateUserFieldsException } from '../../../../../domain/exceptions';
 
 export class UpdateUserHandler {
   constructor(
@@ -19,7 +22,25 @@ export class UpdateUserHandler {
     if (command.payload.email && command.payload.email !== user.email) {
       const existing = await this.userRepository.findByEmail(command.payload.email);
       if (existing) {
-        throw new ConflictException('Email already exists');
+        const duplicateErrors: { email?: string; cedula?: string } = {
+          email: new EmailAlreadyExistsException(command.payload.email).message,
+        };
+
+        if (command.payload.cedula && command.payload.cedula !== user.cedula) {
+          const existingCedula = await this.userRepository.findByCedula(command.payload.cedula);
+          if (existingCedula) {
+            duplicateErrors.cedula = new CedulaAlreadyExistsException(command.payload.cedula).message;
+          }
+        }
+
+        throw new DuplicateUserFieldsException(duplicateErrors);
+      }
+    }
+
+    if (command.payload.cedula && command.payload.cedula !== user.cedula) {
+      const existing = await this.userRepository.findByCedula(command.payload.cedula);
+      if (existing) {
+        throw new CedulaAlreadyExistsException(command.payload.cedula);
       }
     }
 

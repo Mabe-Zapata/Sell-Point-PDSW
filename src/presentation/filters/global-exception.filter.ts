@@ -13,11 +13,14 @@ import {
   DomainException,
   EntityNotFoundException,
   DuplicateCedulaException,
+  DuplicateUserFieldsException,
   DuplicateInvoiceForSaleException,
   InsufficientStockException,
   BusinessRuleException,
 } from '../../domain/exceptions';
 import { EmailAlreadyExistsException } from '../../application/exceptions/email-already-exists.exception';
+import { UsernameAlreadyExistsException } from '../../application/exceptions/username-already-exists.exception';
+import { CedulaAlreadyExistsException } from '../../application/exceptions/cedula-already-exists.exception';
 import { PasswordResetRateLimitException } from '../../application/cqrs/auth/handlers/request-password-reset/request-password-reset.handler';
 import type { IErrorLogRepository } from '../../domain/repositories';
 import { ERROR_LOG_REPOSITORY } from '../../infrastructure/common/injection-tokens';
@@ -51,10 +54,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else if (exception instanceof DuplicateCedulaException) {
         status = HttpStatus.CONFLICT;
         message = exception.message;
+      } else if (exception instanceof DuplicateUserFieldsException) {
+        status = HttpStatus.CONFLICT;
+        message = exception.message;
       } else if (exception instanceof DuplicateInvoiceForSaleException) {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof EmailAlreadyExistsException) {
+        status = HttpStatus.CONFLICT;
+        message = exception.message;
+      } else if (exception instanceof UsernameAlreadyExistsException) {
+        status = HttpStatus.CONFLICT;
+        message = exception.message;
+      } else if (exception instanceof CedulaAlreadyExistsException) {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof InsufficientStockException) {
@@ -102,12 +114,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.persistError(exception, path, status);
     }
 
-    response.status(status).json({
+    const payload: Record<string, unknown> = {
       statusCode: status,
       message,
       timestamp,
       path,
-    });
+    };
+
+    if (exception instanceof DuplicateUserFieldsException) {
+      payload.errors = exception.errors;
+    }
+
+    response.status(status).json(payload);
   }
 
   private persistError(exception: unknown, source: string, status: number): void {
