@@ -1,6 +1,5 @@
 import { UpdateProductCommand } from './update-product.command';
 import type { IProductRepository } from '../../../../../domain/repositories';
-import type { ILotRepository } from '../../../../../domain/repositories';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { Product } from '../../../../../domain/entities/product.entity';
 import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
@@ -8,7 +7,6 @@ import { BusinessRuleException } from '../../../../../domain/exceptions/business
 export class UpdateProductHandler {
   constructor(
     protected readonly productRepository: IProductRepository,
-    protected readonly lotRepository?: ILotRepository,
   ) {}
 
   async execute(command: UpdateProductCommand): Promise<Product> {
@@ -49,9 +47,6 @@ export class UpdateProductHandler {
     });
 
     const saved = await this.productRepository.update(updatedProduct);
-    if (this.lotRepository && nextSalePrice !== existingProduct.salePrice) {
-      await this.lotRepository.recalculateEstimatedProfit(saved.id, saved.salePrice);
-    }
     return saved;
   }
 }

@@ -8,11 +8,6 @@ import { InvoiceRepositoryImpl } from '../../../../persistence/typeorm/repositor
 import { InvoiceItemRepositoryImpl } from '../../../../persistence/typeorm/repositories/invoice-item.repository.impl';
 import { InvoiceSeriesRepositoryImpl } from '../../../../persistence/typeorm/repositories/invoice-series.repository.impl';
 import { SaleDetailRepositoryImpl } from '../../../../persistence/typeorm/repositories/sale-detail.repository.impl';
-import { InvoiceItemLotRepositoryImpl } from '../../../../persistence/typeorm/repositories/invoice-item-lot.repository.impl';
-import { LotRepositoryImpl } from '../../../../persistence/typeorm/repositories/lot.repository.impl';
-import { ProductRepositoryImpl } from '../../../../persistence/typeorm/repositories/product.repository.impl';
-import { StockMovementRepositoryImpl } from '../../../../persistence/typeorm/repositories/stock-movement.repository.impl';
-import { LotConsumptionService } from '../../../../../application/services/lot-consumption.service';
 
 @CommandHandler(CreateInvoiceCommand)
 export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceCommand> {
@@ -39,12 +34,6 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
         new InvoiceItemRepositoryImpl(queryRunner),
         new InvoiceSeriesRepositoryImpl(queryRunner),
         new SaleDetailRepositoryImpl(queryRunner) as unknown as ISaleDetailRepository,
-        new LotConsumptionService(
-          new LotRepositoryImpl(queryRunner),
-          new ProductRepositoryImpl(queryRunner),
-          new InvoiceItemLotRepositoryImpl(queryRunner),
-          new StockMovementRepositoryImpl(queryRunner),
-        ),
       );
 
       const result = await appHandler.execute(command);
@@ -68,7 +57,6 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
               quantity: item.quantity,
               unitPrice: item.unitPrice,
               subtotal: item.subtotal,
-              lotCodes: item.lotCodes,
             })),
           ),
         );

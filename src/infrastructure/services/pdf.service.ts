@@ -218,8 +218,7 @@ export class PdfService implements IPdfService {
         doc.rect(this.ML, rowY - 4, this.CW, rowH).fill('#f7f7f7');
       }
 
-      const lotSuffix = item.lotCodes?.length ? ` | Lotes: ${item.lotCodes.join(', ')}` : '';
-      const desc = `${item.productName ?? `Producto ${item.productId.slice(0, 8)}`}${lotSuffix}`;
+      const desc = item.productName ?? `Producto ${item.productId.slice(0, 8)}`;
       const lineTotal = item.unitPrice * item.quantity;
 
       doc.font('Helvetica').fontSize(9).fillColor('#111111');

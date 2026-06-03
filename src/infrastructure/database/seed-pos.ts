@@ -1,43 +1,16 @@
 import 'reflect-metadata';
 import { v5 as uuidv5 } from 'uuid';
-import { Repository } from 'typeorm';
 import { dataSource } from '../../config/typeorm.config';
 import { CategoryTypeOrmEntity } from './entities/category.typeorm.entity';
 import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
 import { CustomerTypeOrmEntity } from './entities/customer.typeorm.entity';
 import { TaxRateTypeOrmEntity } from './entities/tax-rate.typeorm.entity';
 import { InvoiceSeriesTypeOrmEntity } from './entities/invoice-series.typeorm.entity';
-import { LotTypeOrmEntity } from './entities/lot.typeorm.entity';
-//import { v4 as uuidv4 } from 'uuid';
 
 const UUID_NAMESPACE = 'f8d1f8a7-8b36-4a6f-9e9a-7d8e7a7f6c01';
 
 function makeProductCode(seed: string): string {
   return `PROD-${uuidv5(seed, UUID_NAMESPACE).replace(/-/g, '').slice(0, 16).toUpperCase()}`;
-}
-
-async function ensureLotForProduct(
-  lotRepo: Repository<LotTypeOrmEntity>,
-  product: ProductTypeOrmEntity,
-  stock: number,
-): Promise<void> {
-  const existingLots = await lotRepo.count({ where: { productId: product.id } });
-  if (existingLots > 0 || stock <= 0) {
-    return;
-  }
-
-  await lotRepo.save(
-    lotRepo.create({
-      productId: product.id,
-      lotCode: `LOT-${product.code}`,
-      quantityReceived: stock,
-      quantityAvailable: stock,
-      unitCost: product.costPrice,
-      estimatedUnitProfit: Number((Number(product.salePrice) - Number(product.costPrice)).toFixed(2)),
-      receivedAt: new Date(),
-    }),
-  );
-  console.log(`Lot created for "${product.name}" (available: ${stock}).`);
 }
 
 async function main() {
@@ -48,7 +21,6 @@ async function main() {
   const productRepo = dataSource.getRepository(ProductTypeOrmEntity);
   const customerRepo = dataSource.getRepository(CustomerTypeOrmEntity);
   const taxRateRepo = dataSource.getRepository(TaxRateTypeOrmEntity);
-  const lotRepo = dataSource.getRepository(LotTypeOrmEntity);
 
   // Look up tax rates (created by seed.ts with deterministic UUIDv5)
   const iva15Id = uuidv5('IVA 15%', UUID_NAMESPACE);
@@ -133,7 +105,6 @@ async function main() {
     const existing = await productRepo.findOne({ where: { code: prodData.code } });
     if (existing) {
       console.log(`Product "${prodData.name}" already exists, skipping.`);
-      await ensureLotForProduct(lotRepo, existing, existing.currentStock ?? prodData.stock);
     } else {
       const product = await productRepo.save(
         productRepo.create({
@@ -146,7 +117,6 @@ async function main() {
           isActive: true,
         }),
       );
-      await ensureLotForProduct(lotRepo, product, prodData.stock);
       console.log(`Product "${prodData.name}" created (stock: ${prodData.stock}).`);
     }
   }

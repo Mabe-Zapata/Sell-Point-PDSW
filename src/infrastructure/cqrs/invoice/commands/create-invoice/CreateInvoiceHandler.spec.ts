@@ -100,24 +100,6 @@ describe('Infrastructure CreateInvoiceHandler', () => {
         return builder;
       }
 
-      if (target === 'LotTypeOrmEntity') {
-        builder.getMany = jest.fn().mockResolvedValue([
-          {
-            id: 'lot-1',
-            productId: 'prod-1',
-            lotCode: 'LOT-001',
-            quantityReceived: 10,
-            quantityAvailable: 10,
-            unitCost: 5,
-            estimatedUnitProfit: 5,
-            receivedAt: new Date('2026-05-01T00:00:00.000Z'),
-            createdAt: new Date('2026-05-01T00:00:00.000Z'),
-            updatedAt: new Date('2026-05-01T00:00:00.000Z'),
-          },
-        ]);
-        return builder;
-      }
-
       builder.getMany = jest.fn().mockResolvedValue([
         {
           productId: 'prod-1',
@@ -147,12 +129,6 @@ describe('Infrastructure CreateInvoiceHandler', () => {
       if (targetOrEntity === 'InvoiceItemTypeOrmEntity') {
         return (entity as Record<string, unknown>[]).map((item, index) => ({
           id: `item-${index + 1}`,
-          ...item,
-        }));
-      }
-      if (targetOrEntity === 'InvoiceItemLotTypeOrmEntity') {
-        return (entity as Record<string, unknown>[]).map((item, index) => ({
-          id: `item-lot-${index + 1}`,
           ...item,
         }));
       }

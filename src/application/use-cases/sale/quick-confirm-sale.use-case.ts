@@ -11,7 +11,6 @@ import { BusinessRuleException } from '../../../domain/exceptions';
 import { InvoiceItem } from '../../../domain/entities';
 import { CreateInvoiceCommand } from '../../cqrs/invoice/commands/create-invoice/create-invoice.command';
 import { CreateInvoiceHandler } from '../../cqrs/invoice/commands/create-invoice/create-invoice.handler';
-import { LotConsumptionService } from '../../services/lot-consumption.service';
 
 interface SaleDetailData {
   productId: string;
@@ -54,7 +53,6 @@ export interface QuickConfirmSaleResult {
       taxPercentage: number;
       taxAmount: number;
       total: number;
-      lotCodes?: string[];
     }>;
   };
 }
@@ -80,7 +78,6 @@ export class QuickConfirmSaleUseCase {
       taxPercentage: item.taxPercentage ?? 0,
       taxAmount: item.taxAmount ?? 0,
       total: item.total,
-      lotCodes: item.lotCodes,
     }));
   }
 
@@ -217,12 +214,6 @@ export class QuickConfirmSaleUseCase {
         this.uow.invoiceItems,
         this.uow.invoiceSeries,
         this.uow.saleDetails,
-        new LotConsumptionService(
-          this.uow.lots,
-          this.uow.products,
-          this.uow.invoiceItemLots,
-          this.uow.stockMovements,
-        ),
       );
       const invoice = await invoiceHandler.execute(
         new CreateInvoiceCommand(
@@ -274,7 +265,6 @@ export class QuickConfirmSaleUseCase {
               quantity: item.quantity,
               unitPrice: item.unitPrice,
               subtotal: item.subtotal,
-              lotCodes: item.lotCodes,
             })),
           ),
         );
