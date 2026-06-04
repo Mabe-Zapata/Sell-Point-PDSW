@@ -10,15 +10,11 @@ export class GetDashboardStatsUseCase {
     const month = today.getMonth() + 1; // getMonth() returns 0-11
 
     const [
-      totalClientes,
-      totalProductos,
       totalFacturas,
       ventasDelDia,
       ventasDelMes,
       productosConStockBajo,
     ] = await Promise.all([
-      this.dashboardRepository.countActiveCustomers(),
-      this.dashboardRepository.countActiveProducts(),
       this.dashboardRepository.countActiveInvoices(),
       this.dashboardRepository.sumSalesByDate(today),
       this.dashboardRepository.sumSalesByMonth(year, month),
@@ -26,11 +22,9 @@ export class GetDashboardStatsUseCase {
     ]);
 
     return new DashboardStatsDto({
-      totalClientes,
-      totalProductos,
-      totalFacturas,
       ventasDelDia,
       ventasDelMes,
+      totalFacturas,
       productosConStockBajo,
     });
   }
