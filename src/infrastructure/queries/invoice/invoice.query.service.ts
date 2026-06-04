@@ -76,9 +76,9 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       'COALESCE("totals"."SUBTOTAL", 0) AS "subtotal"',
       'COALESCE("totals"."IVA", 0) AS "iva"',
       '(COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0)) AS "total"',
-      'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
-      'cus.cedula AS "customerCedula"',
-      'cus.email AS "customerEmail"',
+      'TRIM(COALESCE(sal.customerName, COALESCE(cus.firstName, \'\')) || \' \' || COALESCE(sal.customerLastName, COALESCE(cus.lastName, \'\'))) AS "customerName"',
+      'COALESCE(sal.customerCedula, cus.cedula) AS "customerCedula"',
+      'COALESCE(sal.customerEmail, cus.email) AS "customerEmail"',
     ];
   }
 
@@ -113,6 +113,26 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     return this.normalizeRow(row);
   }
 
+
+
+
+
+  async getInvoiceBySaleNumber(saleNumber: string): Promise<InvoiceListItem | null> {
+    const row = await this.buildInvoiceQuery()
+      .where('sal.saleNumber = :saleNumber', { saleNumber })
+      .select(this.invoiceSelect())
+      .getRawOne<InvoiceListItem>();
+
+    if (!row) {
+      return null;
+    }
+
+    return this.normalizeRow(row);
+  }
+
+
+
+  
   async getInvoiceById(id: string): Promise<InvoiceListItem | null> {
     const row = await this.buildInvoiceQuery()
       .where('i.id = :id', { id })
@@ -210,7 +230,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         'i.invoiceNumber AS "invoiceNumber"',
         'sal.total AS "totalAmount"',
         'i.createdAt AS "createdAt"',
-        'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
+        'TRIM(COALESCE(sal.customerName, COALESCE(cus.firstName, \'\')) || \' \' || COALESCE(sal.customerLastName, COALESCE(cus.lastName, \'\'))) AS "customerName"',
       ])
       .where('i.id IN (:...ids)', { ids })
       .getRawMany<InvoiceHeaderResult>();

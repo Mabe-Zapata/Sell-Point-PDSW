@@ -29,10 +29,18 @@ export class Sale {
 
   updatedAt!: Date;
 
-  // denormalized for event emission (not persisted directly)
-  customerEmail?: string;
+
 
   customerName?: string;
+
+  customerLastName?: string;
+
+  customerCedula?: string;
+
+  customerEmail?: string;
+
+
+  
 
   details: SaleDetail[] = [];
 

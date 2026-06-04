@@ -68,6 +68,24 @@ export class SaleTypeOrmEntity {
   @Column({ name: 'TOT_SAL', type: 'decimal', precision: 12, scale: 2 })
   total!: number;
 
+
+
+  @Column({ name: 'CUS_NAM_SAL', type: 'varchar', length: 255, nullable: true })
+  customerName?: string | null;
+
+  @Column({ name: 'CUS_APE_SAL', type: 'varchar', length: 255, nullable: true })
+  customerLastName?: string | null;
+
+  @Column({ name: 'CUS_CED_SAL', type: 'varchar', length: 20, nullable: true })
+  customerCedula?: string | null;
+
+  @Column({ name: 'CUS_EMA_SAL', type: 'varchar', length: 255, nullable: true })
+  customerEmail?: string | null;
+
+
+
+  
+
   @Index('IDX_SAL_CREATED_AT')
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;

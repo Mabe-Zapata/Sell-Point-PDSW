@@ -191,6 +191,19 @@ export class QuickConfirmSaleUseCase {
         total,
       });
 
+
+
+      if (customer) {
+        sale.customerName = customer.firstName;
+        sale.customerLastName = customer.lastName;
+        sale.customerCedula = customer.cedula;
+        sale.customerEmail = customer.email;
+      }
+
+
+
+      
+
       await this.uow.sales.create(sale);
 
       // Create sale details with tax snapshot

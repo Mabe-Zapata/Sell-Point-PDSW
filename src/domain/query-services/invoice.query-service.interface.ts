@@ -54,6 +54,10 @@ export interface InvoiceTotalResult {
 export interface IInvoiceQueryService {
   getInvoiceById(id: string): Promise<InvoiceListItem | null>;
   getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null>;
+
+  getInvoiceBySaleNumber(saleNumber: string): Promise<InvoiceListItem | null>;
+
+  
   getInvoiceKpis(params?: { branchId?: string }): Promise<InvoiceKpis>;
 
   // Split query methods for performance

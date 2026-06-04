@@ -112,6 +112,14 @@ export class SaleRepositoryImpl implements ISaleRepository {
       total: Number(entity.total),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+
+
+      customerName: entity.customerName ?? undefined,
+      customerLastName: entity.customerLastName ?? undefined,
+      customerCedula: entity.customerCedula ?? undefined,
+      customerEmail: entity.customerEmail ?? undefined,
+
+      
     });
   }
 
@@ -127,6 +135,15 @@ export class SaleRepositoryImpl implements ISaleRepository {
       taxAmount: sale.taxAmount,
       discountAmount: sale.discountAmount,
       total: sale.total,
+
+
+      customerName: sale.customerName ?? null,
+      customerLastName: sale.customerLastName ?? null,
+      customerCedula: sale.customerCedula ?? null,
+      customerEmail: sale.customerEmail ?? null,
+
+
+
     };
   }
 

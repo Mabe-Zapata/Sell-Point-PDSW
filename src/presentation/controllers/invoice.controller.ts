@@ -193,6 +193,113 @@ export class InvoiceController {
     return this.invoiceQueryService.getInvoiceKpis({ branchId });
   }
 
+
+
+
+
+  @Get('by-sale-number/:saleNumber')
+  @ApiOperation({
+    summary: 'Get an invoice by sale number',
+    description: 'Retrieves an invoice by the associated sale number',
+  })
+  @ApiParam({ name: 'saleNumber', description: 'Sale number', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice found',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  async findBySaleNumber(@Param('saleNumber') saleNumber: string): Promise<InvoiceResponseDto> {
+    const invoiceData = await this.invoiceQueryService.getInvoiceBySaleNumber(saleNumber);
+    if (!invoiceData) {
+      throw new EntityNotFoundException('Invoice', saleNumber);
+    }
+
+    const invoice = new Invoice({
+      id: invoiceData.id,
+      saleId: invoiceData.saleId,
+      seriesId: invoiceData.seriesId,
+      invoiceNumber: invoiceData.invoiceNumber,
+      authorizationNumber: invoiceData.authorizationNumber ?? undefined,
+      issueDate: invoiceData.issueDate,
+      status: invoiceData.status as InvoiceStatus,
+      cancelledAt: invoiceData.cancelledAt ?? undefined,
+      createdAt: invoiceData.createdAt,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
+      total: invoiceData.total,
+      saleNumber: invoiceData.saleNumber,
+      customerName: invoiceData.customerName,
+      customerCedula: invoiceData.customerCedula,
+      establishmentCode: invoiceData.establishmentCode,
+      emissionPointCode: invoiceData.emissionPointCode,
+    });
+
+    const items = await this.invoiceItemRepository.findByInvoiceId(invoiceData.id);
+
+    return InvoiceResponseDto.fromEntity(
+      invoice,
+      InvoiceItemResponseDto.fromEntities(items),
+    );
+  }
+
+  @Get('by-sale-number/:saleNumber/pdf')
+  @ApiOperation({
+    summary: 'Generate PDF for an invoice by sale number',
+    description: 'Generates a PDF document for the invoice associated with the given sale number',
+  })
+  @ApiParam({ name: 'saleNumber', description: 'Sale number', type: String })
+  @ApiProduces('application/pdf')
+  @ApiResponse({
+    status: 200,
+    description: 'PDF generated successfully',
+    schema: { type: 'file' },
+  })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  async getPdfBySaleNumber(@Param('saleNumber') saleNumber: string, @Res() res: Response): Promise<void> {
+    const invoiceData = await this.invoiceQueryService.getInvoiceBySaleNumber(saleNumber);
+    if (!invoiceData) {
+      res.status(404).send('Invoice not found');
+      return;
+    }
+
+    const invoice = new Invoice({
+      id: invoiceData.id,
+      saleId: invoiceData.saleId,
+      seriesId: invoiceData.seriesId,
+      invoiceNumber: invoiceData.invoiceNumber,
+      authorizationNumber: invoiceData.authorizationNumber ?? undefined,
+      issueDate: invoiceData.issueDate,
+      status: invoiceData.status as InvoiceStatus,
+      cancelledAt: invoiceData.cancelledAt ?? undefined,
+      createdAt: invoiceData.createdAt,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
+      total: invoiceData.total,
+      saleNumber: invoiceData.saleNumber,
+      customerName: invoiceData.customerName,
+      customerId: invoiceData.customerCedula,
+      customerCedula: invoiceData.customerCedula,
+      establishmentCode: invoiceData.establishmentCode,
+      emissionPointCode: invoiceData.emissionPointCode,
+      invoiceDate: invoiceData.issueDate,
+    });
+
+    const items = await this.invoiceItemRepository.findByInvoiceId(invoiceData.id);
+    const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="factura-${invoiceData.invoiceNumber}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+
+    res.end(pdfBuffer);
+  }
+
+
+  
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get an invoice by ID',
