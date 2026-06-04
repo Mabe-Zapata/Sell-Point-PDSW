@@ -84,6 +84,8 @@ export class SaleTypeOrmEntity {
 
 
 
+
+  
   
 
   @Index('IDX_SAL_CREATED_AT')
