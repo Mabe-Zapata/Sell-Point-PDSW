@@ -50,22 +50,32 @@ export class ListInvoicesHandler {
 
       return {
         id: header.id,
-        saleId: '', // Not needed for list view
-        seriesId: '', // Not needed for list view
+        saleId: header.saleId,
+        seriesId: header.seriesId,
         invoiceNumber: header.invoiceNumber,
-        authorizationNumber: null,
-        issueDate: header.createdAt,
-        status: '', // Not needed for list view
-        cancelledAt: null,
+        authorizationNumber: header.authorizationNumber,
+        issueDate: header.issueDate,
+        status: header.status,
+        cancelledAt: header.cancelledAt,
         createdAt: header.createdAt,
-        saleNumber: '', // Not needed for list view
+        saleNumber: header.saleNumber,
         customerName: header.customerName,
-        customerCedula: '',
+        customerCedula: header.customerCedula,
+        customerEmail: header.customerEmail,
         subtotal: totalResult?.subtotal ?? 0,
         iva: totalResult?.iva ?? 0,
         total: header.totalAmount,
-        establishmentCode: '',
-        emissionPointCode: '',
+        establishmentCode: header.establishmentCode,
+        emissionPointCode: header.emissionPointCode,
+        cashierName: header.cashierName,
+        cashierUsername: header.cashierUsername,
+        cashierEmployeeId: header.cashierEmployeeId,
+        customerNameSnapshot: header.customerNameSnapshot,
+        customerCedulaSnapshot: header.customerCedulaSnapshot,
+        customerEmailSnapshot: header.customerEmailSnapshot,
+        cashierNameSnapshot: header.cashierNameSnapshot,
+        cashierUsernameSnapshot: header.cashierUsernameSnapshot,
+        cashierEmployeeIdSnapshot: header.cashierEmployeeIdSnapshot,
       };
     });
 

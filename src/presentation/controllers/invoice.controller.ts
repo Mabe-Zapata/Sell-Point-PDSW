@@ -152,6 +152,13 @@ export class InvoiceController {
       customerCedula: invoiceData.customerCedula,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
+      // Audit snapshots (if available)
+      customerNameSnapshot: invoiceData.customerNameSnapshot,
+      customerCedulaSnapshot: invoiceData.customerCedulaSnapshot,
+      customerEmailSnapshot: invoiceData.customerEmailSnapshot,
+      cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+      cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
     });
     const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
     const result = await this.emailService.sendInvoice(email, id, {
@@ -226,6 +233,13 @@ export class InvoiceController {
       customerCedula: invoiceData.customerCedula,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
+      // Audit snapshots (if available)
+      customerNameSnapshot: invoiceData.customerNameSnapshot,
+      customerCedulaSnapshot: invoiceData.customerCedulaSnapshot,
+      customerEmailSnapshot: invoiceData.customerEmailSnapshot,
+      cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+      cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
     });
 
     // Fetch items
@@ -277,6 +291,13 @@ export class InvoiceController {
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
       invoiceDate: invoiceData.issueDate,
+      // Audit snapshots (if available) — PDF service uses these for historical accuracy
+      customerNameSnapshot: invoiceData.customerNameSnapshot,
+      customerCedulaSnapshot: invoiceData.customerCedulaSnapshot,
+      customerEmailSnapshot: invoiceData.customerEmailSnapshot,
+      cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+      cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
     });
 
     const items = await this.invoiceItemRepository.findByInvoiceId(id);

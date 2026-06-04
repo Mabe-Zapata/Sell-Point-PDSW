@@ -44,6 +44,26 @@ export class InvoiceTypeOrmEntity {
   @OneToMany(() => InvoiceItemTypeOrmEntity, (item) => item.invoice)
   items!: InvoiceItemTypeOrmEntity[];
 
+  // === Audit Snapshot Columns ===
+
+  @Column({ name: 'CUS_NAM_SNA', length: 255, nullable: true })
+  customerNameSnapshot?: string;
+
+  @Column({ name: 'CUS_CED_SNA', length: 20, nullable: true })
+  customerCedulaSnapshot?: string;
+
+  @Column({ name: 'CUS_EMA_SNA', length: 255, nullable: true })
+  customerEmailSnapshot?: string;
+
+  @Column({ name: 'CAS_NAM_SNA', length: 255, nullable: true })
+  cashierNameSnapshot?: string;
+
+  @Column({ name: 'CAS_USR_SNA', length: 100, nullable: true })
+  cashierUsernameSnapshot?: string;
+
+  @Column({ name: 'CAS_EMP_SNA', length: 50, nullable: true })
+  cashierEmployeeIdSnapshot?: string;
+
   @CreateDateColumn({ name: 'CRE_AT' })
   createdAt!: Date;
 }

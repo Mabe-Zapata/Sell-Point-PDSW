@@ -221,6 +221,12 @@ export class QuickConfirmSaleUseCase {
           user.defaultBranchId,
           customerEmail,
           customerName,
+          customer?.cedula,
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`.trim()
+            : user.username,
+          user.username,
+          user.employeeId,
         ),
       );
 

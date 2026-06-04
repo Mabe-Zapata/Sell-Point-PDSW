@@ -22,6 +22,14 @@ export class Invoice {
   establishmentCode?: string;
   emissionPointCode?: string;
 
+  // Audit snapshots (persisted in INVOICES table)
+  customerNameSnapshot?: string;
+  customerCedulaSnapshot?: string;
+  customerEmailSnapshot?: string;
+  cashierNameSnapshot?: string;
+  cashierUsernameSnapshot?: string;
+  cashierEmployeeIdSnapshot?: string;
+
   // Alias for PDF display (maps to issueDate)
   invoiceDate?: Date;
 

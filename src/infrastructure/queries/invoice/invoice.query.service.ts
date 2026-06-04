@@ -14,6 +14,7 @@ import { InvoiceItemTypeOrmEntity } from '../../database/entities/invoice-item.t
 import { InvoiceSeriesTypeOrmEntity } from '../../database/entities/invoice-series.typeorm.entity';
 import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
 import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
+import { UserTypeOrmEntity } from '../../database/entities/user.typeorm.entity';
 import { ProductTypeOrmEntity } from '../../database/entities/product.typeorm.entity';
 
 @Injectable()
@@ -56,7 +57,8 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         'totals',
         '"totals"."INVOICE_ID" = i.id',
       )
-      .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId');
+      .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId')
+      .leftJoin(UserTypeOrmEntity, 'usr', 'usr.id = sal.cashierUserId');
   }
 
   private invoiceSelect() {
@@ -76,9 +78,21 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       'COALESCE("totals"."SUBTOTAL", 0) AS "subtotal"',
       'COALESCE("totals"."IVA", 0) AS "iva"',
       '(COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0)) AS "total"',
-      'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
-      'cus.cedula AS "customerCedula"',
-      'cus.email AS "customerEmail"',
+      // Prefer audit snapshot over live JOIN for historical accuracy
+      'COALESCE(i.customerNameSnapshot, TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\'))) AS "customerName"',
+      'COALESCE(i.customerCedulaSnapshot, cus.cedula) AS "customerCedula"',
+      'COALESCE(i.customerEmailSnapshot, cus.email) AS "customerEmail"',
+      // Resolved cashier values (COALESCE: snapshot > live JOIN)
+      `COALESCE(i.cashierNameSnapshot, TRIM(COALESCE(usr.firstName, '') || ' ' || COALESCE(usr.lastName, ''))) AS "cashierName"`,
+      `COALESCE(i.cashierUsernameSnapshot, usr.username) AS "cashierUsername"`,
+      `COALESCE(i.cashierEmployeeIdSnapshot, usr.employeeId) AS "cashierEmployeeId"`,
+      // Raw snapshot columns (nullable — old invoices won't have them)
+      'i.customerNameSnapshot AS "customerNameSnapshot"',
+      'i.customerCedulaSnapshot AS "customerCedulaSnapshot"',
+      'i.customerEmailSnapshot AS "customerEmailSnapshot"',
+      'i.cashierNameSnapshot AS "cashierNameSnapshot"',
+      'i.cashierUsernameSnapshot AS "cashierUsernameSnapshot"',
+      'i.cashierEmployeeIdSnapshot AS "cashierEmployeeIdSnapshot"',
     ];
   }
 
@@ -91,6 +105,15 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       customerName: row.customerName ?? '',
       customerCedula: row.customerCedula ?? '',
       customerEmail: row.customerEmail ?? undefined,
+      cashierName: row.cashierName ?? undefined,
+      cashierUsername: row.cashierUsername ?? undefined,
+      cashierEmployeeId: row.cashierEmployeeId ?? undefined,
+      customerNameSnapshot: row.customerNameSnapshot ?? undefined,
+      customerCedulaSnapshot: row.customerCedulaSnapshot ?? undefined,
+      customerEmailSnapshot: row.customerEmailSnapshot ?? undefined,
+      cashierNameSnapshot: row.cashierNameSnapshot ?? undefined,
+      cashierUsernameSnapshot: row.cashierUsernameSnapshot ?? undefined,
+      cashierEmployeeIdSnapshot: row.cashierEmployeeIdSnapshot ?? undefined,
     };
   }
 
@@ -204,13 +227,34 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     const rows = await this.invoiceRepository
       .createQueryBuilder('i')
       .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
+      .innerJoin(InvoiceSeriesTypeOrmEntity, 'ser', 'ser.id = i.seriesId')
       .leftJoin(CustomerTypeOrmEntity, 'cus', 'cus.id = sal.customerId')
+      .leftJoin(UserTypeOrmEntity, 'usr', 'usr.id = sal.cashierUserId')
       .select([
         'i.id AS "id"',
+        'i.saleId AS "saleId"',
+        'i.seriesId AS "seriesId"',
         'i.invoiceNumber AS "invoiceNumber"',
-        'sal.total AS "totalAmount"',
+        'i.authorizationNumber AS "authorizationNumber"',
+        'i.issueDate AS "issueDate"',
+        'i.status AS "status"',
+        'i.cancelledAt AS "cancelledAt"',
         'i.createdAt AS "createdAt"',
-        'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
+        'sal.saleNumber AS "saleNumber"',
+        'sal.total AS "totalAmount"',
+        'ser.establishmentCode AS "establishmentCode"',
+        'ser.emissionPointCode AS "emissionPointCode"',
+        // Customer snapshots (COALESCE: prefer snapshot, fallback to live JOIN)
+        `COALESCE(i.customerNameSnapshot, TRIM(COALESCE(cus.firstName, '') || ' ' || COALESCE(cus.lastName, ''))) AS "customerName"`,
+        `COALESCE(i.customerCedulaSnapshot, cus.cedula) AS "customerCedula"`,
+        `COALESCE(i.customerEmailSnapshot, cus.email) AS "customerEmail"`,
+        // Cashier snapshots (resolved + raw, same pattern as customer fields)
+        `COALESCE(i.cashierNameSnapshot, TRIM(COALESCE(usr.firstName, '') || ' ' || COALESCE(usr.lastName, ''))) AS "cashierName"`,
+        `COALESCE(i.cashierUsernameSnapshot, usr.username) AS "cashierUsername"`,
+        `COALESCE(i.cashierEmployeeIdSnapshot, usr.employeeId) AS "cashierEmployeeId"`,
+        'i.cashierNameSnapshot AS "cashierNameSnapshot"',
+        'i.cashierUsernameSnapshot AS "cashierUsernameSnapshot"',
+        'i.cashierEmployeeIdSnapshot AS "cashierEmployeeIdSnapshot"',
       ])
       .where('i.id IN (:...ids)', { ids })
       .getRawMany<InvoiceHeaderResult>();

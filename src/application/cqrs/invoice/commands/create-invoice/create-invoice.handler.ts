@@ -89,6 +89,13 @@ export class CreateInvoiceHandler {
       status: InvoiceStatus.ISSUED,
       establishmentCode: invoiceSeries.establishmentCode,
       emissionPointCode: invoiceSeries.emissionPointCode,
+      // Audit snapshots
+      customerNameSnapshot: command.customerName,
+      customerCedulaSnapshot: command.customerCedula,
+      customerEmailSnapshot: command.customerEmail,
+      cashierNameSnapshot: command.cashierName,
+      cashierUsernameSnapshot: command.cashierUsername,
+      cashierEmployeeIdSnapshot: command.cashierEmployeeId,
     });
 
     // Persist invoice

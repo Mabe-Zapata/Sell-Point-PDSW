@@ -75,6 +75,13 @@ export class SaleController {
         customerCedula: invoiceData.customerCedula,
         establishmentCode: invoiceData.establishmentCode,
         emissionPointCode: invoiceData.emissionPointCode,
+        // Audit snapshots (if available)
+        customerNameSnapshot: invoiceData.customerNameSnapshot,
+        customerCedulaSnapshot: invoiceData.customerCedulaSnapshot,
+        customerEmailSnapshot: invoiceData.customerEmailSnapshot,
+        cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+        cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+        cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
       }),
       InvoiceItemResponseDto.fromEntities(items),
     );
@@ -151,6 +158,7 @@ export class SaleController {
         sale.branchId,
         customer?.email,
         customerName,
+        customer?.cedula,
       ),
     );
 
