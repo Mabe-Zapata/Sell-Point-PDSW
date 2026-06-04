@@ -13,6 +13,7 @@ export interface CustomerFilters {
 export interface ICustomerRepository {
   findById(id: string): Promise<Customer | null>;
   findByIdentificationNumber(cedula: string): Promise<Customer | null>;
+  findByEmail(email: string): Promise<Customer | null>;
   findAll(
     pagination?: PaginationParams,
     filters?: CustomerFilters,

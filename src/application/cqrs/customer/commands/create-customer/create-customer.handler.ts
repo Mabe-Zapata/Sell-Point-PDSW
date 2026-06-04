@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { CreateCustomerCommand } from './create-customer.command';
 import type { ICustomerRepository } from '../../../../../domain/repositories';
 import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
+import { DuplicateCustomerFieldsException } from '../../../../../domain/exceptions';
 import { Customer } from '../../../../../domain/entities/customer.entity';
 
 export class CreateCustomerHandler {
@@ -16,6 +17,15 @@ export class CreateCustomerHandler {
       );
       if (existing) {
         throw new DuplicateCedulaException(command.payload.cedula);
+      }
+    }
+
+    if (command.payload.email) {
+      const existingByEmail = await this.customerRepository.findByEmail(command.payload.email);
+      if (existingByEmail) {
+        throw new DuplicateCustomerFieldsException({
+          email: `Customer with email ${command.payload.email} already exists`,
+        });
       }
     }
 

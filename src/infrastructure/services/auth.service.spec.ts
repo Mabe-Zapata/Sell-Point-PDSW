@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UnauthorizedException, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthService, TokenPayload } from './auth.service';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService } from '../redis/redis.service';
@@ -18,6 +19,7 @@ describe('AuthService', () => {
   let redisService: RedisService;
 
   const mockUserRepository = {
+    findById: jest.fn(),
     findByEmployeeId: jest.fn(),
     findByEmail: jest.fn(),
     findByGoogleId: jest.fn(),
@@ -35,6 +37,13 @@ describe('AuthService', () => {
     deleteRefreshToken: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      if (key === 'auth.maxFailedAttempts') return 5;
+      return undefined;
+    }),
+  };
+
   const mockFirebaseAuth = {
     verifyIdToken: jest.fn(),
   };
@@ -46,6 +55,7 @@ describe('AuthService', () => {
         { provide: UserRepository, useValue: mockUserRepository },
         { provide: JwtService, useValue: mockJwtService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: ConfigService, useValue: mockConfigService },
         { provide: FIREBASE_AUTH_TOKEN, useValue: mockFirebaseAuth },
       ],
     }).compile();
@@ -175,6 +185,49 @@ describe('AuthService', () => {
       await authService.revokeRefreshToken('test-uuid-123');
 
       expect(mockRedisService.deleteRefreshToken).toHaveBeenCalledWith('test-uuid-123');
+    });
+  });
+
+  describe('unlockUser', () => {
+    it('should reset failedLoginAttempts to 0 when unlocking a blocked user', async () => {
+      const mockUser = {
+        id: 'user-uuid-locked',
+        unlock: jest.fn(),
+      };
+
+      mockUserRepository.findById.mockResolvedValue(mockUser);
+
+      await authService.unlockUser('user-uuid-locked');
+
+      expect(mockUser.unlock).toHaveBeenCalledTimes(1);
+      expect(mockUserRepository.updateFailedLoginAttempts).toHaveBeenCalledWith('user-uuid-locked', 0);
+      expect(mockUserRepository.update).toHaveBeenCalledWith(mockUser);
+    });
+  });
+
+  describe('auth.maxFailedAttempts configuration', () => {
+    it('should read AUTH_MAX_FAILED_ATTEMPTS=10 when the service is instantiated', async () => {
+      const localConfigService = {
+        get: jest.fn((key: string) => {
+          if (key === 'auth.maxFailedAttempts') return 10;
+          return undefined;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          { provide: UserRepository, useValue: mockUserRepository },
+          { provide: JwtService, useValue: mockJwtService },
+          { provide: RedisService, useValue: mockRedisService },
+          { provide: ConfigService, useValue: localConfigService },
+          { provide: FIREBASE_AUTH_TOKEN, useValue: mockFirebaseAuth },
+        ],
+      }).compile();
+
+      const configuredAuthService = module.get<AuthService>(AuthService);
+
+      expect((configuredAuthService as unknown as { maxFailedAttempts: number }).maxFailedAttempts).toBe(10);
     });
   });
 

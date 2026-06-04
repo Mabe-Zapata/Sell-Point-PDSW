@@ -15,5 +15,6 @@ export class UnlockUserHandler {
 
     user.unlock();
     await this.userRepository.update(user);
+    await this.userRepository.updateFailedLoginAttempts(user.id, 0);
   }
 }

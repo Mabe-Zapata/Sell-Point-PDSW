@@ -9,6 +9,7 @@ export class UserResponseDto {
   firstName?: string;
   lastName?: string;
   cedula?: string;
+  failedLoginAttempts!: number;
   status!: string;
   isActive!: boolean;
   createdAt!: Date;
@@ -23,6 +24,7 @@ export class UserResponseDto {
     dto.firstName = user.firstName;
     dto.lastName = user.lastName;
     dto.cedula = user.cedula;
+    dto.failedLoginAttempts = user.failedLoginAttempts;
     dto.status = user.status;
     dto.isActive = user.isActive;
     dto.createdAt = user.createdAt;

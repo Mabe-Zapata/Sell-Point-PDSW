@@ -101,6 +101,9 @@ export const configuration = () => {
     jwt: {
       secret: process.env.JWT_SECRET || 'change-me-min-32-chars',
     },
+    auth: {
+      maxFailedAttempts: parseInt(process.env.AUTH_MAX_FAILED_ATTEMPTS || '5', 10),
+    },
     brevo: {
       apiKey: process.env.BREVO_API_KEY || '',
       senderEmail: process.env.BREVO_SENDER_EMAIL || 'noreply@sellpoint.com',
