@@ -57,7 +57,6 @@ describe('Infrastructure CreateInvoiceHandler', () => {
           invoiceNumber: '001-001-000000001',
           issueDate: new Date('2026-05-28T00:00:00.000Z'),
           status: 'ISSUED',
-          profitTotal: 5,
           createdAt: new Date('2026-05-28T00:00:00.000Z'),
         };
       }

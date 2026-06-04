@@ -461,7 +461,6 @@ async function seedInvoicesFromSales(
           invoiceNumber: makeInvoiceNumber(nextSequence),
           issueDate: sale.createdAt,
           status: 'ISSUED',
-          profitTotal: 0,
         }),
       );
     }

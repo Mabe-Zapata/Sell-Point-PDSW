@@ -20,7 +20,6 @@ export interface CreateInvoiceResult {
   subtotal: number;
   iva: number;
   total: number;
-  profitTotal: number;
   items: InvoiceItem[];
 }
 
@@ -127,9 +126,6 @@ export class CreateInvoiceHandler {
       saleDetails.reduce((sum, detail) => sum + detail.taxAmount, 0),
     );
     const total = this.roundCurrency(subtotal + iva);
-    const profitTotal = 0;
-    savedInvoice.profitTotal = profitTotal;
-    await this.invoiceRepository.update(savedInvoice);
 
     return {
       id: savedInvoice.id,
@@ -142,7 +138,6 @@ export class CreateInvoiceHandler {
       subtotal,
       iva,
       total,
-      profitTotal,
       items: savedItems,
     };
   }
