@@ -15,6 +15,7 @@ import { InvoiceSeriesTypeOrmEntity } from '../../database/entities/invoice-seri
 import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
 import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
 import { ProductTypeOrmEntity } from '../../database/entities/product.typeorm.entity';
+import { UserTypeOrmEntity } from '../../database/entities/user.typeorm.entity';
 
 @Injectable()
 export class InvoiceQueryService implements IInvoiceQueryService {
@@ -45,6 +46,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       .createQueryBuilder('i')
       .innerJoin(SaleTypeOrmEntity, 'sal', 'sal.id = i.saleId')
       .innerJoin(InvoiceSeriesTypeOrmEntity, 'ser', 'ser.id = i.seriesId')
+      .innerJoin(UserTypeOrmEntity, 'usr', 'usr.id = sal.cashierUserId')
       .leftJoin(
         (qb) =>
           qb
@@ -71,6 +73,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       'i.cancelledAt AS "cancelledAt"',
       'i.createdAt AS "createdAt"',
       'sal.saleNumber AS "saleNumber"',
+      'sal.cashierUserId AS "cashierUserId"',
       'ser.establishmentCode AS "establishmentCode"',
       'ser.emissionPointCode AS "emissionPointCode"',
       'COALESCE("totals"."SUBTOTAL", 0) AS "subtotal"',
@@ -78,11 +81,15 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       '(COALESCE("totals"."SUBTOTAL", 0) + COALESCE("totals"."IVA", 0)) AS "total"',
       'TRIM(COALESCE(cus.firstName, \'\') || \' \' || COALESCE(cus.lastName, \'\')) AS "customerName"',
       'cus.cedula AS "customerCedula"',
+      'cus.address AS "customerAddress"',
       'cus.email AS "customerEmail"',
+      'COALESCE(NULLIF(TRIM(COALESCE(usr.firstName, \'\') || \' \' || COALESCE(usr.lastName, \'\')), \'\'), usr.username) AS "cashierName"',
+      'usr.email AS "cashierEmail"',
+      'usr.username AS "cashierUsername"',
     ];
   }
 
-  private normalizeRow(row: InvoiceListItem): InvoiceListItem {
+  private normalizeRow(row: InvoiceListItem & { customerAddress?: string; cashierEmail?: string; cashierUsername?: string }): InvoiceListItem {
     return {
       ...row,
       subtotal: Number(row.subtotal),
@@ -90,7 +97,10 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       total: Number(row.total),
       customerName: row.customerName ?? '',
       customerCedula: row.customerCedula ?? '',
+      customerAddress: row.customerAddress ?? undefined,
       customerEmail: row.customerEmail ?? undefined,
+      cashierEmail: row.cashierEmail ?? undefined,
+      cashierUsername: row.cashierUsername ?? undefined,
     };
   }
 
@@ -103,6 +113,19 @@ export class InvoiceQueryService implements IInvoiceQueryService {
   async getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null> {
     const row = await this.buildInvoiceQuery()
       .where('i.saleId = :saleId', { saleId })
+      .select(this.invoiceSelect())
+      .getRawOne<InvoiceListItem>();
+
+    if (!row) {
+      return null;
+    }
+
+    return this.normalizeRow(row);
+  }
+
+  async getInvoiceBySaleNumber(saleNumber: string): Promise<InvoiceListItem | null> {
+    const row = await this.buildInvoiceQuery()
+      .where('sal.saleNumber = :saleNumber', { saleNumber })
       .select(this.invoiceSelect())
       .getRawOne<InvoiceListItem>();
 

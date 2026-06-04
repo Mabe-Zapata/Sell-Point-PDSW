@@ -11,13 +11,17 @@ export interface InvoiceListItem {
   saleNumber: string;
   customerName: string;
   customerCedula: string;
+  customerAddress?: string;
   customerEmail?: string;
   subtotal: number;
   iva: number;
-  // branchName removed — branch entity deleted (simplify-schema-uta SDD)
   total: number;
   establishmentCode: string;
   emissionPointCode: string;
+  cashierUserId?: string;
+  cashierName?: string;
+  cashierEmail?: string;
+  cashierUsername?: string;
 }
 
 export interface InvoiceKpis {
@@ -54,9 +58,9 @@ export interface InvoiceTotalResult {
 export interface IInvoiceQueryService {
   getInvoiceById(id: string): Promise<InvoiceListItem | null>;
   getInvoiceBySaleId(saleId: string): Promise<InvoiceListItem | null>;
+  getInvoiceBySaleNumber(saleNumber: string): Promise<InvoiceListItem | null>;
   getInvoiceKpis(params?: { branchId?: string }): Promise<InvoiceKpis>;
 
-  // Split query methods for performance
   listInvoiceHeaders(params: {
     branchId?: string | null;
     customerId?: string | null;

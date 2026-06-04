@@ -17,6 +17,11 @@ export class InvoiceResponseDto {
   saleNumber?: string;
   customerName?: string;
   customerCedula?: string;
+  customerAddress?: string;
+  cashierUserId?: string;
+  cashierName?: string;
+  cashierEmail?: string;
+  cashierUsername?: string;
   items?: InvoiceItemResponseDto[];
 
   constructor(invoice: Invoice, items?: InvoiceItemResponseDto[]) {
@@ -35,6 +40,11 @@ export class InvoiceResponseDto {
     this.saleNumber = invoice.saleNumber;
     this.customerName = invoice.customerName;
     this.customerCedula = invoice.customerCedula;
+    this.customerAddress = invoice.customerAddress;
+    this.cashierUserId = invoice.cashierUserId;
+    this.cashierName = invoice.cashierName;
+    this.cashierEmail = invoice.cashierEmail;
+    this.cashierUsername = invoice.cashierUsername;
     this.items = items;
   }
 

@@ -105,6 +105,11 @@ export class InvoiceController {
         saleNumber: invoiceData.saleNumber,
         customerName: invoiceData.customerName,
         customerCedula: invoiceData.customerCedula,
+        cashierUserId: invoiceData.cashierUserId,
+        cashierName: invoiceData.cashierName,
+        cashierEmail: invoiceData.cashierEmail,
+        cashierUsername: invoiceData.cashierUsername,
+        customerAddress: invoiceData.customerAddress,
       }),
       InvoiceItemResponseDto.fromEntities(items),
     );
@@ -150,15 +155,21 @@ export class InvoiceController {
       saleNumber: invoiceData.saleNumber,
       customerName: invoiceData.customerName,
       customerCedula: invoiceData.customerCedula,
+      cashierUserId: invoiceData.cashierUserId,
+      cashierName: invoiceData.cashierName,
+      cashierEmail: invoiceData.cashierEmail,
+      cashierUsername: invoiceData.cashierUsername,
+      customerAddress: invoiceData.customerAddress,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
-    });
+      });
     const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
     const result = await this.emailService.sendInvoice(email, id, {
       invoiceNumber: invoiceData.invoiceNumber,
       date: invoiceData.issueDate.toLocaleDateString('es-EC'),
       customerName: invoiceData.customerName || 'Consumidor Final',
       customerCedula: invoiceData.customerCedula || undefined,
+      cashierName: invoiceData.cashierName || undefined,
       subtotal: invoiceData.subtotal,
       iva: invoiceData.iva,
       items: items.map((item) => ({
@@ -224,6 +235,11 @@ export class InvoiceController {
       saleNumber: invoiceData.saleNumber,
       customerName: invoiceData.customerName,
       customerCedula: invoiceData.customerCedula,
+      cashierUserId: invoiceData.cashierUserId,
+      cashierName: invoiceData.cashierName,
+      cashierEmail: invoiceData.cashierEmail,
+      cashierUsername: invoiceData.cashierUsername,
+      customerAddress: invoiceData.customerAddress,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
     });
@@ -274,6 +290,11 @@ export class InvoiceController {
       customerName: invoiceData.customerName,
       customerId: invoiceData.customerCedula,
       customerCedula: invoiceData.customerCedula,
+      cashierUserId: invoiceData.cashierUserId,
+      cashierName: invoiceData.cashierName,
+      cashierEmail: invoiceData.cashierEmail,
+      cashierUsername: invoiceData.cashierUsername,
+      customerAddress: invoiceData.customerAddress,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
       invoiceDate: invoiceData.issueDate,
@@ -285,6 +306,122 @@ export class InvoiceController {
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="factura-${id}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+
+    res.end(pdfBuffer);
+  }
+
+  @Get('by-sale-number/:saleNumber')
+  @ApiOperation({
+    summary: 'Reconstruct a sale by its sale number',
+    description:
+      'Returns the full invoice (customer, seller, items, totals) for a confirmed sale, looked up by its human-readable saleNumber. Used for audit and reprinting.',
+  })
+  @ApiParam({ name: 'saleNumber', description: 'Sale number (SAL_NUM)', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice reconstructed successfully',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Sale or invoice not found' })
+  async findBySaleNumber(
+    @Param('saleNumber') saleNumber: string,
+  ): Promise<InvoiceResponseDto> {
+    const invoiceData = await this.invoiceQueryService.getInvoiceBySaleNumber(saleNumber);
+    if (!invoiceData) {
+      throw new EntityNotFoundException('Invoice', saleNumber);
+    }
+
+    const invoice = new Invoice({
+      id: invoiceData.id,
+      saleId: invoiceData.saleId,
+      seriesId: invoiceData.seriesId,
+      invoiceNumber: invoiceData.invoiceNumber,
+      authorizationNumber: invoiceData.authorizationNumber ?? undefined,
+      issueDate: invoiceData.issueDate,
+      status: invoiceData.status as InvoiceStatus,
+      cancelledAt: invoiceData.cancelledAt ?? undefined,
+      createdAt: invoiceData.createdAt,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
+      total: invoiceData.total,
+      saleNumber: invoiceData.saleNumber,
+      customerName: invoiceData.customerName,
+      customerCedula: invoiceData.customerCedula,
+      cashierUserId: invoiceData.cashierUserId,
+      cashierName: invoiceData.cashierName,
+      cashierEmail: invoiceData.cashierEmail,
+      cashierUsername: invoiceData.cashierUsername,
+      customerAddress: invoiceData.customerAddress,
+      establishmentCode: invoiceData.establishmentCode,
+      emissionPointCode: invoiceData.emissionPointCode,
+    });
+
+    const items = await this.invoiceItemRepository.findByInvoiceId(invoiceData.id);
+
+    return InvoiceResponseDto.fromEntity(
+      invoice,
+      InvoiceItemResponseDto.fromEntities(items),
+    );
+  }
+
+  @Get('by-sale-number/:saleNumber/pdf')
+  @ApiOperation({
+    summary: 'Generate PDF for a sale by its sale number',
+    description: 'Reconstructs the invoice for a sale number and streams its PDF representation.',
+  })
+  @ApiParam({ name: 'saleNumber', description: 'Sale number (SAL_NUM)', type: String })
+  @ApiProduces('application/pdf')
+  @ApiResponse({
+    status: 200,
+    description: 'PDF generated successfully',
+    schema: { type: 'file' },
+  })
+  @ApiResponse({ status: 404, description: 'Sale or invoice not found' })
+  async getPdfBySaleNumber(
+    @Param('saleNumber') saleNumber: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const invoiceData = await this.invoiceQueryService.getInvoiceBySaleNumber(saleNumber);
+    if (!invoiceData) {
+      res.status(404).send('Invoice not found');
+      return;
+    }
+
+    const invoice = new Invoice({
+      id: invoiceData.id,
+      saleId: invoiceData.saleId,
+      seriesId: invoiceData.seriesId,
+      invoiceNumber: invoiceData.invoiceNumber,
+      authorizationNumber: invoiceData.authorizationNumber ?? undefined,
+      issueDate: invoiceData.issueDate,
+      status: invoiceData.status as InvoiceStatus,
+      cancelledAt: invoiceData.cancelledAt ?? undefined,
+      createdAt: invoiceData.createdAt,
+      subtotal: invoiceData.subtotal,
+      iva: invoiceData.iva,
+      total: invoiceData.total,
+      saleNumber: invoiceData.saleNumber,
+      customerName: invoiceData.customerName,
+      customerId: invoiceData.customerCedula,
+      customerCedula: invoiceData.customerCedula,
+      cashierUserId: invoiceData.cashierUserId,
+      cashierName: invoiceData.cashierName,
+      cashierEmail: invoiceData.cashierEmail,
+      cashierUsername: invoiceData.cashierUsername,
+      customerAddress: invoiceData.customerAddress,
+      establishmentCode: invoiceData.establishmentCode,
+      emissionPointCode: invoiceData.emissionPointCode,
+      invoiceDate: invoiceData.issueDate,
+    });
+
+    const items = await this.invoiceItemRepository.findByInvoiceId(invoiceData.id);
+    const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="factura-${saleNumber}.pdf"`,
       'Content-Length': pdfBuffer.length,
     });
 
