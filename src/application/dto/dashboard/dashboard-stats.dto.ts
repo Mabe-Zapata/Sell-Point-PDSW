@@ -1,10 +1,7 @@
-
 export class DashboardStatsDto {
-  totalClientes: number;
-  totalProductos: number;
-  totalFacturas: number;
   ventasDelDia: number;
   ventasDelMes: number;
+  totalFacturas: number;
   productosConStockBajo: number;
 
   constructor(partial: Partial<DashboardStatsDto>) {

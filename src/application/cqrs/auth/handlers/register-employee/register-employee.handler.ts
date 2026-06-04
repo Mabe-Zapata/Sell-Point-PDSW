@@ -11,6 +11,9 @@ import type { IUnitOfWork } from '../../../../unit-of-work/unit-of-work.interfac
 import { User } from '../../../../../domain/entities/user.entity';
 import { EmployeeCredentialsCreatedEvent } from '../../../../../domain/events/employee-credentials-created.event';
 import { EmailAlreadyExistsException } from '../../../../exceptions/email-already-exists.exception';
+import { UsernameAlreadyExistsException } from '../../../../exceptions/username-already-exists.exception';
+import { CedulaAlreadyExistsException } from '../../../../exceptions/cedula-already-exists.exception';
+import { DuplicateUserFieldsException } from '../../../../../domain/exceptions';
 
 export class RegisterEmployeeHandler {
   constructor(
@@ -31,8 +34,21 @@ export class RegisterEmployeeHandler {
     }
 
     const existingByEmail = await this.userRepository.findByEmail(command.email);
-    if (existingByEmail) {
-      throw new EmailAlreadyExistsException(command.email);
+    const duplicateErrors: { email?: string; username?: string; cedula?: string } = {};
+    if (existingByEmail) duplicateErrors.email = new EmailAlreadyExistsException(command.email).message;
+
+    if (command.username) {
+      const existingByUsername = await this.userRepository.findByUsername(command.username);
+      if (existingByUsername) duplicateErrors.username = new UsernameAlreadyExistsException(command.username).message;
+    }
+
+    if (command.cedula) {
+      const existingByCedula = await this.userRepository.findByCedula(command.cedula);
+      if (existingByCedula) duplicateErrors.cedula = new CedulaAlreadyExistsException(command.cedula).message;
+    }
+
+    if (Object.keys(duplicateErrors).length > 0) {
+      throw new DuplicateUserFieldsException(duplicateErrors);
     }
 
     // TODO: inject IPasswordHasher/IUuidGenerator once ports are wired.

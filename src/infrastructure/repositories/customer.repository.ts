@@ -53,6 +53,11 @@ export class CustomerRepository implements ICustomerRepository {
     return entity ? this.mapToDomain(entity) : null;
   }
 
+  async findByEmail(email: string): Promise<Customer | null> {
+    const entity = await this.repo.findOne({ where: { email } });
+    return entity ? this.mapToDomain(entity) : null;
+  }
+
   async findAll(
     pagination: PaginationParams = { page: 1, limit: 20 },
     filters: CustomerFilters = {},

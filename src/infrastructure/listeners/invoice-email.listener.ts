@@ -75,9 +75,7 @@ export class InvoiceEmailListener implements IEventHandler<InvoiceIssuedEvent> {
           subtotal: invoiceData.subtotal,
           iva: invoiceData.iva,
           items: items.map((item) => ({
-            description: item.lotCodes?.length
-              ? `${item.productName} | Lotes: ${item.lotCodes.join(', ')}`
-              : item.productName,
+            description: item.productName,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             subtotal: item.subtotal,

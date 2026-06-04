@@ -2,6 +2,7 @@ import { UpdateCustomerCommand } from './update-customer.command';
 import type { ICustomerRepository } from '../../../../../domain/repositories';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
 import { DuplicateCedulaException } from '../../../../../domain/exceptions/duplicate-cedula.exception';
+import { DuplicateCustomerFieldsException } from '../../../../../domain/exceptions';
 import { Customer } from '../../../../../domain/entities/customer.entity';
 
 export class UpdateCustomerHandler {
@@ -21,6 +22,15 @@ export class UpdateCustomerHandler {
       );
       if (customerWithCedula) {
         throw new DuplicateCedulaException(command.payload.cedula);
+      }
+    }
+
+    if (command.payload.email && command.payload.email !== existingCustomer.email) {
+      const customerWithEmail = await this.customerRepository.findByEmail(command.payload.email);
+      if (customerWithEmail && customerWithEmail.id !== existingCustomer.id) {
+        throw new DuplicateCustomerFieldsException({
+          email: `Customer with email ${command.payload.email} already exists`,
+        });
       }
     }
 

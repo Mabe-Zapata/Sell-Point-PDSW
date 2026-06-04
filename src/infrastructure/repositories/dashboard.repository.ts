@@ -8,6 +8,7 @@ import { CustomerTypeOrmEntity } from '../database/entities/customer.typeorm.ent
 import { ProductTypeOrmEntity } from '../database/entities/product.typeorm.entity';
 import { InvoiceTypeOrmEntity } from '../database/entities/invoice.typeorm.entity';
 import { IDashboardRepository } from '../../domain/repositories/dashboard.repository.interface';
+import { LOW_STOCK_THRESHOLD } from '../../domain/constants/inventory.constants';
 
 @Injectable()
 export class DashboardRepository implements IDashboardRepository {
@@ -81,7 +82,7 @@ export class DashboardRepository implements IDashboardRepository {
     const result = await this.productRepository
       .createQueryBuilder('product')
       .where('product.deletedAt IS NULL')
-      .andWhere('product.currentStock < 10')
+      .andWhere('product.currentStock < :threshold', { threshold: LOW_STOCK_THRESHOLD })
       .getCount();
 
     return result;

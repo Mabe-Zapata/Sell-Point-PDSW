@@ -6,6 +6,10 @@ import type { IUserRepository } from '../../../../../domain/repositories/user.re
 import type { IRoleRepository } from '../../../../../domain/repositories/role.repository.interface';
 import { User } from '../../../../../domain/entities/user.entity';
 import { UserStatus } from '../../../../../domain/entities/enums';
+import { CedulaAlreadyExistsException } from '../../../../exceptions/cedula-already-exists.exception';
+import { UsernameAlreadyExistsException } from '../../../../exceptions/username-already-exists.exception';
+import { EmailAlreadyExistsException } from '../../../../exceptions/email-already-exists.exception';
+import { DuplicateUserFieldsException } from '../../../../../domain/exceptions';
 
 export class CreateUserHandler {
   constructor(
@@ -31,13 +35,19 @@ export class CreateUserHandler {
     }
 
     const existingByEmail = await this.userRepository.findByEmail(command.payload.email);
-    if (existingByEmail) {
-      throw new ConflictException('Email already exists');
-    }
+    const duplicateErrors: { email?: string; username?: string; cedula?: string } = {};
+    if (existingByEmail) duplicateErrors.email = new EmailAlreadyExistsException(command.payload.email).message;
 
     const existingByUsername = await this.userRepository.findByUsername(command.payload.username);
-    if (existingByUsername) {
-      throw new ConflictException('Username already exists');
+    if (existingByUsername) duplicateErrors.username = new UsernameAlreadyExistsException(command.payload.username).message;
+
+    if (command.payload.cedula) {
+      const existingByCedula = await this.userRepository.findByCedula(command.payload.cedula);
+      if (existingByCedula) duplicateErrors.cedula = new CedulaAlreadyExistsException(command.payload.cedula).message;
+    }
+
+    if (Object.keys(duplicateErrors).length > 0) {
+      throw new DuplicateUserFieldsException(duplicateErrors);
     }
 
     const passwordHash = await this.authService.hashPassword(command.payload.password);

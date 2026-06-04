@@ -114,6 +114,14 @@ export class UserRepository implements IUserRepository {
     return this.findOneBy('email', email);
   }
 
+  async findByCedula(cedula: string): Promise<User | null> {
+    const entity = await this.createBaseQueryBuilder()
+      .andWhere('user.cedula = :cedula', { cedula })
+      .getOne();
+
+    return entity ? this.mapToDomain(entity) : null;
+  }
+
   async findByGoogleId(googleId: string): Promise<User | null> {
     const entity = await this.createBaseQueryBuilder()
       .andWhere('user.googleId = :googleId', { googleId })

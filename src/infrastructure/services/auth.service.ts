@@ -1,5 +1,6 @@
 import { Inject, Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,14 +37,18 @@ export class AuthService {
   private static readonly ACCESS_TOKEN_TTL = 900;
   private static readonly REFRESH_TOKEN_TTL_DEFAULT = 604800;
   private static readonly REFRESH_TOKEN_TTL_REMEMBER = 2592000;
-  private static readonly MAX_FAILED_ATTEMPTS = 3;
+
+  private readonly maxFailedAttempts: number;
 
   constructor(
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+    private readonly configService: ConfigService,
     @Inject(FIREBASE_AUTH_TOKEN) private readonly firebaseAuth: IFirebaseAuth,
-  ) {}
+  ) {
+    this.maxFailedAttempts = this.configService.get<number>('auth.maxFailedAttempts') ?? 5;
+  }
 
   async hashPassword(plain: string): Promise<string> {
     return bcrypt.hash(plain, AuthService.SALT_ROUNDS);
@@ -74,7 +79,7 @@ export class AuthService {
       const newAttempts = user.failedLoginAttempts + 1;
       await this.userRepository.updateFailedLoginAttempts(user.id, newAttempts);
 
-      if (newAttempts >= AuthService.MAX_FAILED_ATTEMPTS) {
+      if (newAttempts >= this.maxFailedAttempts) {
         user.block();
         await this.userRepository.update(user);
         throw new UnauthorizedException({
@@ -158,6 +163,7 @@ export class AuthService {
     if (!user) return;
     user.unlock();
     await this.userRepository.update(user);
+    await this.userRepository.updateFailedLoginAttempts(user.id, 0);
   }
 
   async listUsers(

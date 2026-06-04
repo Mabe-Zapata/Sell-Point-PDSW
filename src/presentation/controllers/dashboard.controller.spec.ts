@@ -23,13 +23,10 @@ describe('DashboardController', () => {
   describe('getEstadisticas', () => {
     it('should call queryBus.execute with GetDashboardStatsQuery without branchId', async () => {
       const mockStats = {
-        totalSales: 100,
-        totalRevenue: 50000,
-        totalCustomers: 50,
-        totalProducts: 200,
-        salesByBranch: [],
-        topProducts: [],
-        recentSales: [],
+        ventasDelDia: 100,
+        ventasDelMes: 500,
+        totalFacturas: 12,
+        productosConStockBajo: 3,
       };
       mockQueryBus.execute.mockResolvedValue(mockStats);
 
@@ -41,13 +38,10 @@ describe('DashboardController', () => {
 
     it('should call queryBus.execute with GetDashboardStatsQuery with branchId', async () => {
       const mockStats = {
-        totalSales: 50,
-        totalRevenue: 25000,
-        totalCustomers: 25,
-        totalProducts: 100,
-        salesByBranch: [],
-        topProducts: [],
-        recentSales: [],
+        ventasDelDia: 50,
+        ventasDelMes: 250,
+        totalFacturas: 6,
+        productosConStockBajo: 1,
       };
       mockQueryBus.execute.mockResolvedValue(mockStats);
 

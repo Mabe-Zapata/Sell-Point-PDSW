@@ -4,7 +4,6 @@ export interface InvoiceIssuedEventItem {
   quantity: number;
   unitPrice: number;
   subtotal: number;
-  lotCodes?: string[];
 }
 
 export class InvoiceIssuedEvent {

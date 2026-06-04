@@ -11,6 +11,7 @@ describe('CreateCustomerHandler (application layer)', () => {
     mockRepository = {
       findById: jest.fn(),
       findByIdentificationNumber: jest.fn(),
+      findByEmail: jest.fn(),
       findAll: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
@@ -68,6 +69,26 @@ describe('CreateCustomerHandler (application layer)', () => {
 
       // The handler throws before calling create
       await expect(handler.execute({ payload: dto } as any)).rejects.toThrow(DuplicateCedulaException);
+      expect(mockRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject duplicate email', async () => {
+      mockRepository.findByIdentificationNumber.mockResolvedValue(null);
+      mockRepository.findByEmail.mockResolvedValue({ id: 'cust-existing', email: 'foo@bar.com' } as Customer);
+
+      const dto = {
+        cedula: '0901234567',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'foo@bar.com',
+      };
+
+      await expect(handler.execute({ payload: dto } as any)).rejects.toMatchObject({
+        name: 'DuplicateCustomerFieldsException',
+        errors: { email: expect.any(String) },
+      });
+
+      expect(mockRepository.findByEmail).toHaveBeenCalledWith('foo@bar.com');
       expect(mockRepository.create).not.toHaveBeenCalled();
     });
   });

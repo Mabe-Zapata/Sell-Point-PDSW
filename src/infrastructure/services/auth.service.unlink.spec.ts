@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthService, TokenPayload } from './auth.service';
 import { UserRepository } from '../repositories/user.repository';
 import { RedisService } from '../redis/redis.service';
@@ -79,12 +80,17 @@ describe('AuthService - Google OAuth Account Management', () => {
       verifyIdToken: jest.fn(),
     };
 
+    const mockConfigService = {
+      get: jest.fn().mockReturnValue(5),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: UserRepository, useValue: mockUserRepository },
         { provide: JwtService, useValue: mockJwtService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: ConfigService, useValue: mockConfigService },
         { provide: FIREBASE_AUTH_TOKEN, useValue: mockFirebaseAuth },
       ],
     }).compile();

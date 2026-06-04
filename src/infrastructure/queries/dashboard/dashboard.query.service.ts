@@ -3,65 +3,89 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { LOW_STOCK_THRESHOLD } from '../../../domain/constants/inventory.constants';
 import {
-  IDashboardQueryService,
   DashboardStats,
+  IDashboardQueryService,
 } from '../../../domain/query-services/dashboard.query-service.interface';
-import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
-import { CustomerTypeOrmEntity } from '../../database/entities/customer.typeorm.entity';
+import { InvoiceTypeOrmEntity } from '../../database/entities/invoice.typeorm.entity';
 import { ProductTypeOrmEntity } from '../../database/entities/product.typeorm.entity';
+import { SaleTypeOrmEntity } from '../../database/entities/sale.typeorm.entity';
 
 @Injectable()
 export class DashboardQueryService implements IDashboardQueryService {
   constructor(
     @InjectRepository(SaleTypeOrmEntity)
     private readonly saleRepository: Repository<SaleTypeOrmEntity>,
-    @InjectRepository(CustomerTypeOrmEntity)
-    private readonly customerRepository: Repository<CustomerTypeOrmEntity>,
+    @InjectRepository(InvoiceTypeOrmEntity)
+    private readonly invoiceRepository: Repository<InvoiceTypeOrmEntity>,
     @InjectRepository(ProductTypeOrmEntity)
     private readonly productRepository: Repository<ProductTypeOrmEntity>,
   ) {}
 
   async getStats(branchId?: string): Promise<DashboardStats> {
-    const startOfToday = new Date();
+    const now = new Date();
+    const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
     const startOfTomorrow = new Date(startOfToday);
     startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    const totalsQuery = this.saleRepository
-      .createQueryBuilder('sal')
-      .select('COALESCE(SUM(sal.total), 0)', 'totalRevenue')
-      .addSelect('COUNT(sal.id)', 'totalSales')
-      .addSelect(
-        'COALESCE(SUM(CASE WHEN sal.createdAt >= :startOfToday AND sal.createdAt < :startOfTomorrow THEN sal.total ELSE 0 END), 0)',
-        'todayRevenue',
-      )
-      .addSelect(
-        'SUM(CASE WHEN sal.createdAt >= :startOfToday AND sal.createdAt < :startOfTomorrow THEN 1 ELSE 0 END)',
-        'todaySales',
-      )
-      .where(branchId ? 'sal.branchId = :branchId' : '1=1', { branchId })
-      .andWhere('sal.status = :status', { status: 'CONFIRMED' })
-      .setParameters({ startOfToday, startOfTomorrow });
-
-    const [salesTotals, customerCountResult, productCountResult] = await Promise.all([
-      totalsQuery.getRawOne(),
-      this.customerRepository.createQueryBuilder('customer').select('COUNT(customer.id)', 'total').getRawOne(),
-      this.productRepository
-        .createQueryBuilder('product')
-        .select('COUNT(product.id)', 'total')
-        .where('product.isActive = :isActive', { isActive: true })
-        .getRawOne(),
+    const [ventasDelDia, ventasDelMes, totalFacturas, productosConStockBajo] = await Promise.all([
+      this.sumSalesBetween(startOfToday, startOfTomorrow, branchId),
+      this.sumSalesBetween(startOfMonth, startOfNextMonth, branchId),
+      this.countInvoices(branchId),
+      this.countLowStockProducts(),
     ]);
 
     return {
-      totalSales: Number(salesTotals?.totalSales) || 0,
-      totalRevenue: Number(salesTotals?.totalRevenue) || 0,
-      totalCustomers: Number(customerCountResult?.total) || 0,
-      totalProducts: Number(productCountResult?.total) || 0,
-      salesByBranch: [],
-      topProducts: [],
-      recentSales: [],
+      ventasDelDia,
+      ventasDelMes,
+      totalFacturas,
+      productosConStockBajo,
     };
+  }
+
+  private async sumSalesBetween(start: Date, end: Date, branchId?: string): Promise<number> {
+    const query = this.saleRepository
+      .createQueryBuilder('sale')
+      .select('COALESCE(SUM(sale.total), 0)', 'total')
+      .where('sale.status = :status', { status: 'CONFIRMED' })
+      .andWhere('sale.createdAt >= :start', { start })
+      .andWhere('sale.createdAt < :end', { end });
+
+    if (branchId) {
+      query.andWhere('sale.branchId = :branchId', { branchId });
+    }
+
+    const result = await query.getRawOne();
+    return Number(result?.total) || 0;
+  }
+
+  private async countInvoices(branchId?: string): Promise<number> {
+    const query = this.invoiceRepository
+      .createQueryBuilder('invoice')
+      .innerJoin(SaleTypeOrmEntity, 'sale', 'sale.id = invoice.saleId')
+      .select('COUNT(invoice.id)', 'total');
+
+    if (branchId) {
+      query.where('sale.branchId = :branchId', { branchId });
+    }
+
+    const result = await query.getRawOne();
+    return Number(result?.total) || 0;
+  }
+
+  private async countLowStockProducts(): Promise<number> {
+    const result = await this.productRepository
+      .createQueryBuilder('product')
+      .select('COUNT(product.id)', 'total')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.currentStock < :threshold', { threshold: LOW_STOCK_THRESHOLD })
+      .getRawOne();
+
+    return Number(result?.total) || 0;
   }
 }

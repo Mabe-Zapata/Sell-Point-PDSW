@@ -99,7 +99,7 @@ describe('CreateInvoiceHandler', () => {
     expect(result.subtotal).toBe(40);
     expect(result.iva).toBe(6);
     expect(result.total).toBe(46);
-    expect(result.profitTotal).toBe(0);
+    expect(result).not.toHaveProperty('profitTotal');
   });
 
   it('should throw DuplicateInvoiceForSaleException when invoice already exists', async () => {

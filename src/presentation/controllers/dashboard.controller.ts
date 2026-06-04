@@ -13,9 +13,9 @@ export class DashboardController {
 
   @Get('estadisticas')
   @ApiOperation({
-    summary: 'Get dashboard statistics (pg query service)',
+    summary: 'Get dashboard KPI cards',
     description:
-      'Retrieves real-time statistics for the dashboard using pg raw SQL for optimal read performance. Includes total customers, products, sales, and revenue.',
+      'Returns the canonical Spanish KPI payload for the dashboard cards: ventasDelDia, ventasDelMes, totalFacturas, and productosConStockBajo.',
   })
   @ApiQuery({ name: 'branchId', description: 'Filter by branch UUID', required: false, type: String })
   @ApiResponse({
