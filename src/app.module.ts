@@ -175,6 +175,7 @@ import {
   ErrorLogRepository, TaxRateRepository,
   StockMovementRepository, SaleRepository, SaleDetailRepository,
   InvoiceSeriesRepository, RoleRepository, PasswordResetTokenRepository,
+  InvoiceAuditLogRepository,
 } from './infrastructure/repositories';
 import {
   DashboardQueryService, InvoiceQueryService, CustomerQueryService,
@@ -190,6 +191,7 @@ import {
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
   ErrorLogTypeOrmEntity, InvoiceTypeOrmEntity,
   InvoiceSeriesTypeOrmEntity, InvoiceItemTypeOrmEntity,
+  InvoiceAuditLogTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
@@ -221,7 +223,7 @@ const entities = [
   CategoryTypeOrmEntity, CustomerTypeOrmEntity,
   ErrorLogTypeOrmEntity, IdempotencyEntryTypeOrmEntity,
   InvoiceTypeOrmEntity, InvoiceSeriesTypeOrmEntity,
-  InvoiceItemTypeOrmEntity,
+  InvoiceItemTypeOrmEntity, InvoiceAuditLogTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
@@ -279,6 +281,7 @@ const entities = [
     { provide: 'SALE_DETAIL_REPOSITORY', useClass: SaleDetailRepository },
     { provide: 'INVOICE_SERIES_REPOSITORY', useClass: InvoiceSeriesRepository },
     { provide: 'PASSWORD_RESET_TOKEN_REPOSITORY', useClass: PasswordResetTokenRepository },
+    { provide: 'INVOICE_AUDIT_LOG_REPOSITORY', useClass: InvoiceAuditLogRepository },
     // Infrastructure - pg Query Services (token-mapped)
     { provide: PRODUCT_QUERY_SERVICE, useClass: ProductQueryService },
     { provide: CUSTOMER_QUERY_SERVICE, useClass: CustomerQueryService },

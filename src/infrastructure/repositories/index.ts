@@ -5,6 +5,7 @@ export { ErrorLogRepository } from './error-log.repository';
 export { InvoiceRepository } from './invoice.repository';
 export { InvoiceSeriesRepository } from './invoice-series.repository';
 export { InvoiceItemRepository } from './invoice-item.repository';
+export { InvoiceAuditLogRepository } from './invoice-audit-log.repository';
 export { ProductRepository } from './product.repository';
 export { RoleRepository } from './role.repository';
 export { SaleRepository } from './sale.repository';
