@@ -359,6 +359,7 @@ async function seedInvoiceSeries(
 async function seedInvoicesFromSales(
   ds: DataSource,
   series: InvoiceSeriesTypeOrmEntity,
+  cashierUser: UserTypeOrmEntity,
 ): Promise<void> {
   const saleRepo = ds.getRepository(SaleTypeOrmEntity);
   const detailRepo = ds.getRepository(SaleDetailTypeOrmEntity);
@@ -366,6 +367,13 @@ async function seedInvoicesFromSales(
   const invoiceItemRepo = ds.getRepository(InvoiceItemTypeOrmEntity);
   const productRepo = ds.getRepository(ProductTypeOrmEntity);
   const seriesRepo = ds.getRepository(InvoiceSeriesTypeOrmEntity);
+  const customerRepo = ds.getRepository(CustomerTypeOrmEntity);
+
+  const cashierName = cashierUser.firstName && cashierUser.lastName
+    ? `${cashierUser.firstName} ${cashierUser.lastName}`.trim()
+    : cashierUser.username;
+  const cashierUsername = cashierUser.username;
+  const cashierEmployeeId = cashierUser.employeeId;
 
   const salesCount = await saleRepo.count({ where: { status: 'CONFIRMED' } });
   const existingInvoiceCount = await invoiceRepo.count({ where: { seriesId: series.id } });
@@ -417,6 +425,16 @@ async function seedInvoicesFromSales(
       detailsBySaleId.set(detail.saleId, saleDetails);
     }
 
+    // Load customer snapshot data for this batch
+    const customerIds = [...new Set(sales.map((s) => s.customerId).filter((id): id is string => !!id))];
+    const customerMap = new Map<string, CustomerTypeOrmEntity>();
+    if (customerIds.length > 0) {
+      const customers = await customerRepo.find({ where: { id: In(customerIds) } });
+      for (const c of customers) {
+        customerMap.set(c.id, c);
+      }
+    }
+
     const invoices: InvoiceTypeOrmEntity[] = [];
     const invoiceItems: InvoiceItemTypeOrmEntity[] = [];
     const consumedByProductId = new Map<string, number>();
@@ -429,6 +447,14 @@ async function seedInvoicesFromSales(
 
       nextSequence += 1;
       const invoiceId = randomUUID();
+
+      // Resolve customer snapshot
+      const customer = sale.customerId ? customerMap.get(sale.customerId) : undefined;
+      const customerNameSnapshot = customer
+        ? [customer.firstName, customer.lastName].filter(Boolean).join(' ').trim()
+        : undefined;
+      const customerCedulaSnapshot = customer?.cedula;
+      const customerEmailSnapshot = customer?.email;
 
       for (const detail of saleDetails) {
         const invoiceItemId = randomUUID();
@@ -461,6 +487,13 @@ async function seedInvoicesFromSales(
           invoiceNumber: makeInvoiceNumber(nextSequence),
           issueDate: sale.createdAt,
           status: 'ISSUED',
+          // Audit snapshots
+          customerNameSnapshot,
+          customerCedulaSnapshot,
+          customerEmailSnapshot,
+          cashierNameSnapshot: cashierName,
+          cashierUsernameSnapshot: cashierUsername,
+          cashierEmployeeIdSnapshot: cashierEmployeeId,
         }),
       );
     }
@@ -534,7 +567,7 @@ async function main(): Promise<void> {
 
   await seedSales(customerIds, productIds, cashier.id, branchId, taxRate, dataSource);
   const invoiceSeries = await seedInvoiceSeries(invoiceSeriesRepo, branchId);
-  await seedInvoicesFromSales(dataSource, invoiceSeries);
+  await seedInvoicesFromSales(dataSource, invoiceSeries, cashier);
 
   process.stdout.write('\n✓ Seed masivo completado.\n');
   process.stdout.write(`  Clientes  : ${TOTAL_CUSTOMERS.toLocaleString()}\n`);

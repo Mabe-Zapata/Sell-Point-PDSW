@@ -231,6 +231,12 @@ export class UserRepository implements IUserRepository {
       entity.googleId = user.googleId ?? null;
       entity.googleEmail = user.googleEmail ?? null;
 
+      // Update personal info fields
+      entity.email = user.email;
+      entity.firstName = user.firstName;
+      entity.lastName = user.lastName;
+      entity.cedula = user.cedula;
+
       await userRepo.save(entity);
 
       await userRoleRepo.delete({ userId: user.id });

@@ -24,6 +24,13 @@ export class InvoiceRepository implements IInvoiceRepository {
       status: InvoiceStatusMapper.toDomain(entity.status),
       cancelledAt: entity.cancelledAt,
       createdAt: entity.createdAt,
+      // Audit snapshots
+      customerNameSnapshot: entity.customerNameSnapshot,
+      customerCedulaSnapshot: entity.customerCedulaSnapshot,
+      customerEmailSnapshot: entity.customerEmailSnapshot,
+      cashierNameSnapshot: entity.cashierNameSnapshot,
+      cashierUsernameSnapshot: entity.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: entity.cashierEmployeeIdSnapshot,
     });
   }
 
@@ -37,6 +44,13 @@ export class InvoiceRepository implements IInvoiceRepository {
       issueDate: invoice.issueDate,
       status: InvoiceStatusMapper.toDb(invoice.status),
       cancelledAt: invoice.cancelledAt,
+      // Audit snapshots
+      customerNameSnapshot: invoice.customerNameSnapshot,
+      customerCedulaSnapshot: invoice.customerCedulaSnapshot,
+      customerEmailSnapshot: invoice.customerEmailSnapshot,
+      cashierNameSnapshot: invoice.cashierNameSnapshot,
+      cashierUsernameSnapshot: invoice.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: invoice.cashierEmployeeIdSnapshot,
     };
   }
 

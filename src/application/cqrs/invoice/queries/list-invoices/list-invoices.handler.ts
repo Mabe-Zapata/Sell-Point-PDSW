@@ -47,25 +47,49 @@ export class ListInvoicesHandler {
 
     const data: InvoiceListItem[] = headers.map(header => {
       const totalResult = totalsByInvoice.get(header.id);
+      const subtotal = Number(totalResult?.subtotal ?? 0);
+      const iva = Number(totalResult?.iva ?? 0);
+      const total = subtotal + iva;
+      const issueDate = header.issueDate instanceof Date
+        ? header.issueDate
+        : new Date(header.issueDate);
+      const createdAt = header.createdAt instanceof Date
+        ? header.createdAt
+        : new Date(header.createdAt);
+      const cancelledAt = header.cancelledAt
+        ? (header.cancelledAt instanceof Date ? header.cancelledAt : new Date(header.cancelledAt))
+        : null;
 
       return {
         id: header.id,
-        saleId: '', // Not needed for list view
-        seriesId: '', // Not needed for list view
+        saleId: header.saleId,
+        seriesId: header.seriesId,
         invoiceNumber: header.invoiceNumber,
-        authorizationNumber: null,
-        issueDate: header.createdAt,
-        status: '', // Not needed for list view
-        cancelledAt: null,
-        createdAt: header.createdAt,
-        saleNumber: '', // Not needed for list view
+        authorizationNumber: header.authorizationNumber,
+        issueDate,
+        status: header.status,
+        cancelledAt,
+        createdAt,
+        saleNumber: header.saleNumber,
+        customerId: header.customerId,
         customerName: header.customerName,
-        customerCedula: '',
-        subtotal: totalResult?.subtotal ?? 0,
-        iva: totalResult?.iva ?? 0,
-        total: header.totalAmount,
-        establishmentCode: '',
-        emissionPointCode: '',
+        customerCedula: header.customerCedula,
+        customerEmail: header.customerEmail,
+        subtotal,
+        iva,
+        total,
+        establishmentCode: header.establishmentCode,
+        emissionPointCode: header.emissionPointCode,
+        cashierName: header.cashierName,
+        cashierUsername: header.cashierUsername,
+        cashierEmployeeId: header.cashierEmployeeId,
+        cashierUserId: header.cashierUserId,
+        customerNameSnapshot: header.customerNameSnapshot,
+        customerCedulaSnapshot: header.customerCedulaSnapshot,
+        customerEmailSnapshot: header.customerEmailSnapshot,
+        cashierNameSnapshot: header.cashierNameSnapshot,
+        cashierUsernameSnapshot: header.cashierUsernameSnapshot,
+        cashierEmployeeIdSnapshot: header.cashierEmployeeIdSnapshot,
       };
     });
 

@@ -36,8 +36,8 @@ import { InvoiceItemResponseDto } from '../../application/dto/invoice/invoice-it
 import { Invoice, InvoiceStatus } from '../../domain/entities';
 import { INVOICE_QUERY_SERVICE } from '../../application/query-tokens';
 import type { IInvoiceQueryService, InvoiceListItem } from '../../domain/query-services/invoice.query-service.interface';
-import { CUSTOMER_REPOSITORY, INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
-import type { IInvoiceItemRepository, ICustomerRepository } from '../../domain/repositories';
+import { CUSTOMER_REPOSITORY, INVOICE_ITEM_REPOSITORY, USER_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import type { IInvoiceItemRepository, ICustomerRepository, IUserRepository } from '../../domain/repositories';
 import { CreateInvoiceCommand } from '../../application/cqrs/invoice/commands/create-invoice/create-invoice.command';
 import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
 import type { QuickConfirmSaleResult } from '../../application/use-cases/sale/quick-confirm-sale.use-case';
@@ -52,6 +52,7 @@ export class SaleController {
     @Inject(INVOICE_QUERY_SERVICE) private readonly invoiceQueryService: IInvoiceQueryService,
     @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
     @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
+    @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
   ) {}
 
   private async toInvoiceResponse(invoiceData: InvoiceListItem): Promise<InvoiceResponseDto> {
@@ -72,9 +73,15 @@ export class SaleController {
         total: invoiceData.total,
         saleNumber: invoiceData.saleNumber,
         customerName: invoiceData.customerName,
+        customerId: invoiceData.customerId,
         customerCedula: invoiceData.customerCedula,
+cashierUserId: invoiceData.cashierUserId,
         establishmentCode: invoiceData.establishmentCode,
         emissionPointCode: invoiceData.emissionPointCode,
+        // Audit snapshots (if available)
+        cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+        cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+        cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
       }),
       InvoiceItemResponseDto.fromEntities(items),
     );
@@ -145,12 +152,24 @@ export class SaleController {
       ? [customer.firstName, customer.lastName].filter(Boolean).join(' ')
       : 'Consumidor Final';
 
+    // Look up cashier for audit snapshot
+    const cashier = await this.userRepository.findById(sale.cashierUserId);
+    const cashierName = cashier && cashier.firstName && cashier.lastName
+      ? `${cashier.firstName} ${cashier.lastName}`.trim()
+      : cashier?.username ?? 'Cajero';
+    const cashierUsername = cashier?.username;
+    const cashierEmployeeId = cashier?.employeeId;
+
     const created = await this.commandBus.execute(
       new CreateInvoiceCommand(
         saleId,
         sale.branchId,
         customer?.email,
         customerName,
+        customer?.cedula,
+        cashierName,
+        cashierUsername,
+        cashierEmployeeId,
       ),
     );
 

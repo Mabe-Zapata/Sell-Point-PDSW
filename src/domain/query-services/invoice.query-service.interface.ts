@@ -9,6 +9,7 @@ export interface InvoiceListItem {
   cancelledAt: Date | null;
   createdAt: Date;
   saleNumber: string;
+  customerId?: string;
   customerName: string;
   customerCedula: string;
   customerEmail?: string;
@@ -18,6 +19,19 @@ export interface InvoiceListItem {
   total: number;
   establishmentCode: string;
   emissionPointCode: string;
+  // Audit snapshots (nullable — old invoices won't have them)
+  // Resolved values (COALESCE: snapshot > live JOIN)
+  cashierUserId?: string;
+  cashierName?: string;
+  cashierUsername?: string;
+  cashierEmployeeId?: string;
+  // Raw snapshot values
+  customerNameSnapshot?: string;
+  customerCedulaSnapshot?: string;
+  customerEmailSnapshot?: string;
+  cashierNameSnapshot?: string;
+  cashierUsernameSnapshot?: string;
+  cashierEmployeeIdSnapshot?: string;
 }
 
 export interface InvoiceKpis {
@@ -31,10 +45,32 @@ export interface InvoiceKpis {
 
 export interface InvoiceHeaderResult {
   id: string;
+  saleId: string;
+  seriesId: string;
   invoiceNumber: string;
-  totalAmount: number;
+  authorizationNumber: string | null;
+  issueDate: Date;
+  status: string;
+  cancelledAt: Date | null;
   createdAt: Date;
+  saleNumber: string;
+  customerId?: string;
   customerName: string;
+  customerCedula: string;
+  customerEmail?: string;
+  totalAmount: number;
+  establishmentCode: string;
+  emissionPointCode: string;
+  cashierUserId?: string;
+  cashierName?: string;
+  cashierUsername?: string;
+  cashierEmployeeId?: string;
+  customerNameSnapshot?: string;
+  customerCedulaSnapshot?: string;
+  customerEmailSnapshot?: string;
+  cashierNameSnapshot?: string;
+  cashierUsernameSnapshot?: string;
+  cashierEmployeeIdSnapshot?: string;
 }
 
 export interface InvoiceItemResult {
@@ -43,6 +79,9 @@ export interface InvoiceItemResult {
   quantity: number;
   price: number;
   productName: string;
+  productNameSnapshot?: string;
+  taxPercentage?: number;
+  taxAmount?: number;
 }
 
 export interface InvoiceTotalResult {

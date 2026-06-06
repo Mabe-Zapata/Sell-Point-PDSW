@@ -5,6 +5,7 @@ export type { IErrorLogRepository, ErrorLogFilters } from './error-log.repositor
 export type { IInvoiceRepository, InvoiceFilters } from './invoice.repository.interface';
 export type { IInvoiceSeriesRepository, InvoiceSeriesFilters } from './invoice-series.repository.interface';
 export type { IInvoiceItemRepository } from './invoice-item.repository.interface';
+export type { IInvoiceAuditLogRepository, InvoiceAuditLogEntry, InvoiceAuditAction } from './invoice-audit-log.repository.interface';
 export type { IProductRepository, ProductFilters } from './product.repository.interface';
 export type { IRoleRepository } from './role.repository.interface';
 export type { ISaleRepository, SaleFilters } from './sale.repository.interface';

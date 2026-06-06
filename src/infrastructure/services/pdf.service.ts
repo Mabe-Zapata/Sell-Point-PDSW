@@ -51,6 +51,7 @@ export class PdfService implements IPdfService {
         this.renderMeta(doc, invoice);
         this.renderDivider(doc);
         this.renderCustomer(doc, invoice);
+        this.renderSeller(doc, invoice);
         this.renderItemsTable(doc, items);
         this.renderTotals(doc, invoice);
         this.renderFooter(doc);
@@ -184,6 +185,48 @@ export class PdfService implements IPdfService {
 
     // Section divider before table
     doc.y = y + 68;
+  }
+
+  // ─── Seller block ─────────────────────────────────────────────────────────────
+  private renderSeller(doc: PDFKitDocument, invoice: Invoice): void {
+    const y = doc.y + 10;
+    // Prioritize historical snapshot over live JOIN
+    const sellerName = invoice.cashierNameSnapshot?.trim()
+      || invoice.cashierName?.trim()
+      || 'Vendedor';
+    // Prefer employee ID (EMP-XXXX) over the UUID
+    const sellerId = invoice.cashierEmployeeIdSnapshot?.trim()
+      || invoice.cashierUserId?.trim()
+      || '';
+    const sellerUsername = invoice.cashierUsernameSnapshot?.trim() || '';
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(8)
+      .fillColor('#888888')
+      .text('VENDEDOR', this.ML, y);
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(11)
+      .fillColor('#111111')
+      .text(sellerName, this.ML, y + 14);
+
+    let idLine = '';
+    if (sellerId) {
+      idLine = `ID: ${sellerId}`;
+    } else if (sellerUsername) {
+      idLine = `Usuario: ${sellerUsername}`;
+    }
+    if (idLine) {
+      doc
+        .font('Helvetica')
+        .fontSize(9)
+        .fillColor('#444444')
+        .text(idLine, this.ML, y + 30);
+    }
+
+    doc.y = y + 46;
   }
 
   // ─── Items table ──────────────────────────────────────────────────────────────

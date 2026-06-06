@@ -37,7 +37,8 @@ import type { IPdfService } from '../../application/services/pdf-service.interfa
 import type { IEmailService } from '../../application/ports/IEmailService';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
-import type { IInvoiceItemRepository } from '../../domain/repositories';
+import { CUSTOMER_REPOSITORY, USER_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import type { ICustomerRepository, IInvoiceItemRepository, IUserRepository } from '../../domain/repositories';
 import { BusinessRuleException } from '../../domain/exceptions';
 import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
 
@@ -45,6 +46,7 @@ import { CreateInvoiceCommand } from '../../application/cqrs/invoice/commands/cr
 import { CancelInvoiceCommand } from '../../application/cqrs/invoice/commands/cancel-invoice/cancel-invoice.command';
 import { GetInvoiceQuery } from '../../application/cqrs/invoice/queries/get-invoice/get-invoice.query';
 import { ListInvoicesQuery } from '../../application/cqrs/invoice/queries/list-invoices/list-invoices.query';
+import { GetSaleQuery } from '../../application/cqrs/sale/queries/get-sale/get-sale.query';
 
 @ApiTags('invoices')
 @ApiBearerAuth('access-token')
@@ -57,6 +59,8 @@ export class InvoiceController {
     @Inject(PDF_SERVICE) private readonly pdfService: IPdfService,
     @Inject(INVOICE_ITEM_REPOSITORY) private readonly invoiceItemRepository: IInvoiceItemRepository,
     @Inject(EMAIL_SERVICE) private readonly emailService: IEmailService,
+    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepository: ICustomerRepository,
+    @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
   ) {}
 
   @Post()
@@ -78,10 +82,33 @@ export class InvoiceController {
   })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createInvoiceDto: CreateInvoiceDto): Promise<InvoiceResponseDto> {
+    const sale = await this.queryBus.execute(new GetSaleQuery(createInvoiceDto.saleId));
+    if (!sale) {
+      throw new EntityNotFoundException('Sale', createInvoiceDto.saleId);
+    }
+
+    const customer = sale.customerId
+      ? await this.customerRepository.findById(sale.customerId)
+      : null;
+    const customerName = customer
+      ? [customer.firstName, customer.lastName].filter(Boolean).join(' ')
+      : 'Consumidor Final';
+
+    const cashier = await this.userRepository.findById(sale.cashierUserId);
+    const cashierName = cashier && cashier.firstName && cashier.lastName
+      ? `${cashier.firstName} ${cashier.lastName}`.trim()
+      : cashier?.username ?? 'Cajero';
+
     const result = await this.commandBus.execute(
       new CreateInvoiceCommand(
         createInvoiceDto.saleId,
         createInvoiceDto.branchId,
+        customer?.email,
+        customerName,
+        customer?.cedula,
+        cashierName,
+        cashier?.username,
+        cashier?.employeeId,
       ),
     );
 
@@ -152,6 +179,16 @@ export class InvoiceController {
       customerCedula: invoiceData.customerCedula,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
+      // Cashier info
+      cashierUserId: invoiceData.cashierUserId,
+      cashierName: invoiceData.cashierName,
+      // Audit snapshots (if available)
+      customerNameSnapshot: invoiceData.customerNameSnapshot,
+      customerCedulaSnapshot: invoiceData.customerCedulaSnapshot,
+      customerEmailSnapshot: invoiceData.customerEmailSnapshot,
+      cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+      cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
     });
     const pdfBuffer = await this.pdfService.generateInvoicePdf(invoice, items);
     const result = await this.emailService.sendInvoice(email, id, {
@@ -226,6 +263,13 @@ export class InvoiceController {
       customerCedula: invoiceData.customerCedula,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
+      // Audit snapshots (if available)
+      customerNameSnapshot: invoiceData.customerNameSnapshot,
+      customerCedulaSnapshot: invoiceData.customerCedulaSnapshot,
+      customerEmailSnapshot: invoiceData.customerEmailSnapshot,
+      cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+      cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
     });
 
     // Fetch items
@@ -272,11 +316,18 @@ export class InvoiceController {
       total: invoiceData.total,
       saleNumber: invoiceData.saleNumber,
       customerName: invoiceData.customerName,
-      customerId: invoiceData.customerCedula,
+      customerId: invoiceData.customerId ?? invoiceData.customerCedula,
       customerCedula: invoiceData.customerCedula,
       establishmentCode: invoiceData.establishmentCode,
       emissionPointCode: invoiceData.emissionPointCode,
       invoiceDate: invoiceData.issueDate,
+      // Audit snapshots (if available) — PDF service uses these for historical accuracy
+      customerNameSnapshot: invoiceData.customerNameSnapshot,
+      customerCedulaSnapshot: invoiceData.customerCedulaSnapshot,
+      customerEmailSnapshot: invoiceData.customerEmailSnapshot,
+      cashierNameSnapshot: invoiceData.cashierNameSnapshot,
+      cashierUsernameSnapshot: invoiceData.cashierUsernameSnapshot,
+      cashierEmployeeIdSnapshot: invoiceData.cashierEmployeeIdSnapshot,
     });
 
     const items = await this.invoiceItemRepository.findByInvoiceId(id);
