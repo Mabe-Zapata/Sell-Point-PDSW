@@ -40,6 +40,10 @@ export class SaleConfirmedInvoiceListener implements IEventHandler<SaleConfirmed
           event.branchId,
           event.customerEmail,
           event.customerName,
+          undefined, // customerCedula — not available in event
+          event.cashierName,
+          event.cashierUsername,
+          event.cashierEmployeeId,
         ),
       );
     } catch (error) {

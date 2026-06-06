@@ -47,6 +47,18 @@ export class ListInvoicesHandler {
 
     const data: InvoiceListItem[] = headers.map(header => {
       const totalResult = totalsByInvoice.get(header.id);
+      const subtotal = Number(totalResult?.subtotal ?? 0);
+      const iva = Number(totalResult?.iva ?? 0);
+      const total = subtotal + iva;
+      const issueDate = header.issueDate instanceof Date
+        ? header.issueDate
+        : new Date(header.issueDate);
+      const createdAt = header.createdAt instanceof Date
+        ? header.createdAt
+        : new Date(header.createdAt);
+      const cancelledAt = header.cancelledAt
+        ? (header.cancelledAt instanceof Date ? header.cancelledAt : new Date(header.cancelledAt))
+        : null;
 
       return {
         id: header.id,
@@ -54,22 +66,24 @@ export class ListInvoicesHandler {
         seriesId: header.seriesId,
         invoiceNumber: header.invoiceNumber,
         authorizationNumber: header.authorizationNumber,
-        issueDate: header.issueDate,
+        issueDate,
         status: header.status,
-        cancelledAt: header.cancelledAt,
-        createdAt: header.createdAt,
+        cancelledAt,
+        createdAt,
         saleNumber: header.saleNumber,
+        customerId: header.customerId,
         customerName: header.customerName,
         customerCedula: header.customerCedula,
         customerEmail: header.customerEmail,
-        subtotal: totalResult?.subtotal ?? 0,
-        iva: totalResult?.iva ?? 0,
-        total: header.totalAmount,
+        subtotal,
+        iva,
+        total,
         establishmentCode: header.establishmentCode,
         emissionPointCode: header.emissionPointCode,
         cashierName: header.cashierName,
         cashierUsername: header.cashierUsername,
         cashierEmployeeId: header.cashierEmployeeId,
+        cashierUserId: header.cashierUserId,
         customerNameSnapshot: header.customerNameSnapshot,
         customerCedulaSnapshot: header.customerCedulaSnapshot,
         customerEmailSnapshot: header.customerEmailSnapshot,

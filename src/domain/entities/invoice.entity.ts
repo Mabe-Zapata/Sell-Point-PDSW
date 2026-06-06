@@ -19,6 +19,8 @@ export class Invoice {
   customerName?: string;
   customerId?: string;
   customerCedula?: string;
+  cashierUserId?: string;
+  cashierName?: string;
   establishmentCode?: string;
   emissionPointCode?: string;
 

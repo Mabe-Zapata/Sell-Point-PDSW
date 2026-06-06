@@ -9,6 +9,7 @@ export class InvoiceListResponseDto {
   cancelledAt: Date | null;
   createdAt: Date;
   saleNumber: string;
+  customerId?: string;
   customerName: string;
   customerCedula: string;
   customerEmail?: string;
@@ -18,6 +19,7 @@ export class InvoiceListResponseDto {
   total: number;
   establishmentCode: string;
   emissionPointCode: string;
+  cashierUserId?: string;
   cashierName?: string;
   cashierUsername?: string;
   cashierEmployeeId?: string;
@@ -39,6 +41,7 @@ export class InvoiceListResponseDto {
     cancelledAt: Date | null;
     createdAt: Date;
     saleNumber: string;
+    customerId?: string;
     customerName: string;
     customerCedula: string;
     customerEmail?: string;
@@ -47,6 +50,7 @@ export class InvoiceListResponseDto {
     total: number;
     establishmentCode: string;
     emissionPointCode: string;
+    cashierUserId?: string;
     cashierName?: string;
     cashierUsername?: string;
     cashierEmployeeId?: string;
@@ -67,6 +71,7 @@ export class InvoiceListResponseDto {
     this.cancelledAt = data.cancelledAt;
     this.createdAt = data.createdAt;
     this.saleNumber = data.saleNumber;
+    this.customerId = data.customerId;
     this.customerName = data.customerName;
     this.customerCedula = data.customerCedula;
     this.customerEmail = data.customerEmail;
@@ -75,6 +80,7 @@ export class InvoiceListResponseDto {
     this.total = data.total;
     this.establishmentCode = data.establishmentCode;
     this.emissionPointCode = data.emissionPointCode;
+    this.cashierUserId = data.cashierUserId;
     this.cashierName = data.cashierName;
     this.cashierUsername = data.cashierUsername;
     this.cashierEmployeeId = data.cashierEmployeeId;
@@ -97,6 +103,7 @@ export class InvoiceListResponseDto {
     cancelledAt: Date | null;
     createdAt: Date;
     saleNumber: string;
+    customerId?: string;
     customerName: string;
     customerCedula: string;
     customerEmail?: string;
@@ -105,6 +112,7 @@ export class InvoiceListResponseDto {
     total: number;
     establishmentCode: string;
     emissionPointCode: string;
+    cashierUserId?: string;
     cashierName?: string;
     cashierUsername?: string;
     cashierEmployeeId?: string;
@@ -129,6 +137,7 @@ export class InvoiceListResponseDto {
     cancelledAt: Date | null;
     createdAt: Date;
     saleNumber: string;
+    customerId?: string;
     customerName: string;
     customerCedula: string;
     customerEmail?: string;
@@ -137,6 +146,7 @@ export class InvoiceListResponseDto {
     total: number;
     establishmentCode: string;
     emissionPointCode: string;
+    cashierUserId?: string;
     cashierName?: string;
     cashierUsername?: string;
     cashierEmployeeId?: string;

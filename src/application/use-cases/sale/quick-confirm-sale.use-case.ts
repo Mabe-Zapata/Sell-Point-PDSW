@@ -234,6 +234,9 @@ export class QuickConfirmSaleUseCase {
       await this.uow.commit();
 
       // Dispatch event after successful commit
+      const cashierName = user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`.trim()
+        : user.username;
       this.uow.dispatchEvent(
         new SaleConfirmedEvent(
           saleId,
@@ -250,6 +253,9 @@ export class QuickConfirmSaleUseCase {
           })),
           invoice.id,
           user.defaultBranchId,
+          cashierName,
+          user.username,
+          user.employeeId,
         ),
       );
 

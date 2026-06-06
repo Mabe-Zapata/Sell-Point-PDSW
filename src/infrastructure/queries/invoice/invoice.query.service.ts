@@ -73,6 +73,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       'i.cancelledAt AS "cancelledAt"',
       'i.createdAt AS "createdAt"',
       'sal.saleNumber AS "saleNumber"',
+      'sal.customerId AS "customerId"',
       'ser.establishmentCode AS "establishmentCode"',
       'ser.emissionPointCode AS "emissionPointCode"',
       'COALESCE("totals"."SUBTOTAL", 0) AS "subtotal"',
@@ -86,6 +87,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
       `COALESCE(i.cashierNameSnapshot, TRIM(COALESCE(usr.firstName, '') || ' ' || COALESCE(usr.lastName, ''))) AS "cashierName"`,
       `COALESCE(i.cashierUsernameSnapshot, usr.username) AS "cashierUsername"`,
       `COALESCE(i.cashierEmployeeIdSnapshot, usr.employeeId) AS "cashierEmployeeId"`,
+      'sal.cashierUserId AS "cashierUserId"',
       // Raw snapshot columns (nullable — old invoices won't have them)
       'i.customerNameSnapshot AS "customerNameSnapshot"',
       'i.customerCedulaSnapshot AS "customerCedulaSnapshot"',
@@ -99,12 +101,14 @@ export class InvoiceQueryService implements IInvoiceQueryService {
   private normalizeRow(row: InvoiceListItem): InvoiceListItem {
     return {
       ...row,
-      subtotal: Number(row.subtotal),
-      iva: Number(row.iva),
-      total: Number(row.total),
+      subtotal: Number(row.subtotal ?? 0),
+      iva: Number(row.iva ?? 0),
+      total: Number(row.total ?? (Number(row.subtotal ?? 0) + Number(row.iva ?? 0))),
+      customerId: row.customerId ?? undefined,
       customerName: row.customerName ?? '',
       customerCedula: row.customerCedula ?? '',
       customerEmail: row.customerEmail ?? undefined,
+      cashierUserId: row.cashierUserId ?? undefined,
       cashierName: row.cashierName ?? undefined,
       cashierUsername: row.cashierUsername ?? undefined,
       cashierEmployeeId: row.cashierEmployeeId ?? undefined,
@@ -241,6 +245,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         'i.cancelledAt AS "cancelledAt"',
         'i.createdAt AS "createdAt"',
         'sal.saleNumber AS "saleNumber"',
+        'sal.customerId AS "customerId"',
         'sal.total AS "totalAmount"',
         'ser.establishmentCode AS "establishmentCode"',
         'ser.emissionPointCode AS "emissionPointCode"',
@@ -252,6 +257,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
         `COALESCE(i.cashierNameSnapshot, TRIM(COALESCE(usr.firstName, '') || ' ' || COALESCE(usr.lastName, ''))) AS "cashierName"`,
         `COALESCE(i.cashierUsernameSnapshot, usr.username) AS "cashierUsername"`,
         `COALESCE(i.cashierEmployeeIdSnapshot, usr.employeeId) AS "cashierEmployeeId"`,
+        'sal.cashierUserId AS "cashierUserId"',
         'i.cashierNameSnapshot AS "cashierNameSnapshot"',
         'i.cashierUsernameSnapshot AS "cashierUsernameSnapshot"',
         'i.cashierEmployeeIdSnapshot AS "cashierEmployeeIdSnapshot"',
@@ -307,14 +313,18 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     return this.batchIds(invoiceIds, 1000, (batch) =>
       this.invoiceItemRepository
         .createQueryBuilder('ii')
-        .innerJoin(ProductTypeOrmEntity, 'p', 'p.id = ii.productId')
+        .leftJoin(ProductTypeOrmEntity, 'p', 'p.id = ii.productId')
         .where('ii.invoiceId IN (:...batch)', { batch })
         .select([
           'ii.id AS "id"',
           'ii.invoiceId AS "invoiceId"',
           'ii.quantity AS "quantity"',
           'ii.unitPrice AS "price"',
-          'p.name AS "productName"',
+          // Use snapshot as historical record; fallback to live product name
+          'COALESCE(ii.productNameSnapshot, p.name) AS "productName"',
+          'ii.productNameSnapshot AS "productNameSnapshot"',
+          'ii.taxPercentage AS "taxPercentage"',
+          'ii.taxAmount AS "taxAmount"',
         ])
         .getRawMany<InvoiceItemResult>(),
     );

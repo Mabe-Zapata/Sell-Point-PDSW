@@ -15,9 +15,19 @@ export class InvoiceResponseDto {
   subtotal?: number;
   iva?: number;
   saleNumber?: string;
+  customerId?: string;
   customerName?: string;
   customerCedula?: string;
+  cashierUserId?: string;
+  cashierName?: string;
   items?: InvoiceItemResponseDto[];
+  // Audit snapshots
+  customerNameSnapshot?: string;
+  customerCedulaSnapshot?: string;
+  customerEmailSnapshot?: string;
+  cashierNameSnapshot?: string;
+  cashierUsernameSnapshot?: string;
+  cashierEmployeeIdSnapshot?: string;
 
   constructor(invoice: Invoice, items?: InvoiceItemResponseDto[]) {
     this.id = invoice.id;
@@ -33,9 +43,17 @@ export class InvoiceResponseDto {
     this.subtotal = invoice.subtotal;
     this.iva = invoice.iva;
     this.saleNumber = invoice.saleNumber;
-    this.customerName = invoice.customerName;
-    this.customerCedula = invoice.customerCedula;
+    this.customerId = invoice.customerId;
+    this.cashierName = invoice.cashierName;
+    this.cashierUserId = invoice.cashierUserId;
     this.items = items;
+    // Audit snapshots
+    this.customerNameSnapshot = invoice.customerNameSnapshot;
+    this.customerCedulaSnapshot = invoice.customerCedulaSnapshot;
+    this.customerEmailSnapshot = invoice.customerEmailSnapshot;
+    this.cashierNameSnapshot = invoice.cashierNameSnapshot;
+    this.cashierUsernameSnapshot = invoice.cashierUsernameSnapshot;
+    this.cashierEmployeeIdSnapshot = invoice.cashierEmployeeIdSnapshot;
   }
 
   static fromEntity(invoice: Invoice, items?: InvoiceItemResponseDto[]): InvoiceResponseDto {

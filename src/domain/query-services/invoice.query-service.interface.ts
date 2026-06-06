@@ -9,6 +9,7 @@ export interface InvoiceListItem {
   cancelledAt: Date | null;
   createdAt: Date;
   saleNumber: string;
+  customerId?: string;
   customerName: string;
   customerCedula: string;
   customerEmail?: string;
@@ -20,6 +21,7 @@ export interface InvoiceListItem {
   emissionPointCode: string;
   // Audit snapshots (nullable — old invoices won't have them)
   // Resolved values (COALESCE: snapshot > live JOIN)
+  cashierUserId?: string;
   cashierName?: string;
   cashierUsername?: string;
   cashierEmployeeId?: string;
@@ -52,12 +54,14 @@ export interface InvoiceHeaderResult {
   cancelledAt: Date | null;
   createdAt: Date;
   saleNumber: string;
+  customerId?: string;
   customerName: string;
   customerCedula: string;
   customerEmail?: string;
   totalAmount: number;
   establishmentCode: string;
   emissionPointCode: string;
+  cashierUserId?: string;
   cashierName?: string;
   cashierUsername?: string;
   cashierEmployeeId?: string;
@@ -75,6 +79,9 @@ export interface InvoiceItemResult {
   quantity: number;
   price: number;
   productName: string;
+  productNameSnapshot?: string;
+  taxPercentage?: number;
+  taxAmount?: number;
 }
 
 export interface InvoiceTotalResult {

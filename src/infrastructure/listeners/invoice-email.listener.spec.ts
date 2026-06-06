@@ -30,7 +30,6 @@ describe('InvoiceEmailListener', () => {
     };
 
     mockInvoiceQueryService = {
-      listInvoices: jest.fn(),
       getInvoiceBySaleId: jest.fn(),
       getInvoiceById: jest.fn().mockResolvedValue({
         id: 'inv-456',
@@ -51,8 +50,13 @@ describe('InvoiceEmailListener', () => {
         total: 150,
         establishmentCode: '001',
         emissionPointCode: '002',
-      }),
-    };
+      } as any),
+      getInvoiceKpis: jest.fn(),
+      listInvoiceHeaders: jest.fn(),
+      countInvoiceHeaders: jest.fn(),
+      listInvoiceItems: jest.fn(),
+      listInvoiceTotals: jest.fn(),
+    } as unknown as jest.Mocked<IInvoiceQueryService>;
 
     mockInvoiceItemRepository = {
       createMany: jest.fn(),
