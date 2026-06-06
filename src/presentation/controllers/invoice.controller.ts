@@ -47,6 +47,7 @@ import { CancelInvoiceCommand } from '../../application/cqrs/invoice/commands/ca
 import { GetInvoiceQuery } from '../../application/cqrs/invoice/queries/get-invoice/get-invoice.query';
 import { ListInvoicesQuery } from '../../application/cqrs/invoice/queries/list-invoices/list-invoices.query';
 import { GetSaleQuery } from '../../application/cqrs/sale/queries/get-sale/get-sale.query';
+import { Roles } from '../decorators/roles.decorator';
 
 @ApiTags('invoices')
 @ApiBearerAuth('access-token')
@@ -138,7 +139,16 @@ export class InvoiceController {
   }
 
   @Post(':id/cancel')
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Cancel an invoice',
+    description: 'Cancels a confirmed invoice. Financially critical — only ADMIN role can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Invoice UUID', type: String })
+  @ApiResponse({ status: 200, description: 'Invoice cancelled successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
   async cancel(@Param('id') id: string): Promise<{ success: boolean; invoiceId: string }> {
     await this.commandBus.execute(new CancelInvoiceCommand(id));
     return { success: true, invoiceId: id };

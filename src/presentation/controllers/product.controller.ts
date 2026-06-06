@@ -41,6 +41,7 @@ import { ProductWithStockResponseDto } from '../../application/dto/product/produ
 import { AdjustStockDto } from '../../application/dto/stock/adjust-stock.dto';
 import { StockMovementResponseDto } from '../../application/dto/stock/stock-movement-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { Roles } from '../decorators/roles.decorator';
 
 @ApiTags('products')
 @ApiBearerAuth('access-token')
@@ -54,6 +55,7 @@ export class ProductController {
   ) {}
 
   @Post()
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Create a new product',
     description: 'Registers a new product in the inventory. Ensures product code uniqueness and validates pricing constraints.',
@@ -65,6 +67,7 @@ export class ProductController {
     type: ProductResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() createProductDto: CreateProductDto,
@@ -177,6 +180,7 @@ export class ProductController {
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Update a product',
     description: 'Updates an existing product in the inventory. Throws 404 if the product is not found.',
@@ -189,6 +193,7 @@ export class ProductController {
     type: ProductResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async update(
     @Param('id') id: string,
@@ -201,6 +206,7 @@ export class ProductController {
   }
 
   @Patch(':id/activate')
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Activate a product',
     description: 'Sets a product as active. Only ADMIN role can perform this action.',
@@ -211,6 +217,7 @@ export class ProductController {
     description: 'Product activated successfully',
     type: ProductResponseDto,
   })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async activate(@Param('id') id: string): Promise<ProductResponseDto> {
     const product = await this.commandBus.execute(
@@ -220,6 +227,7 @@ export class ProductController {
   }
 
   @Patch(':id/deactivate')
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Deactivate a product',
     description: 'Sets a product as inactive. Only ADMIN role can perform this action.',
@@ -230,6 +238,7 @@ export class ProductController {
     description: 'Product deactivated successfully',
     type: ProductResponseDto,
   })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async deactivate(@Param('id') id: string): Promise<ProductResponseDto> {
     const product = await this.commandBus.execute(
