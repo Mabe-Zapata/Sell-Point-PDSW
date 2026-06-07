@@ -79,8 +79,8 @@ export class InvoiceController {
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 404, description: 'Sale or Product not found' })
   @ApiResponse({
-    status: 422,
-    description: 'Insufficient stock or transaction error',
+    status: 409,
+    description: 'Insufficient stock or duplicate invoice conflict',
   })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createInvoiceDto: CreateInvoiceDto): Promise<InvoiceResponseDto> {

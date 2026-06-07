@@ -253,7 +253,7 @@ export class ProductController {
   @ApiParam({ name: 'id', description: 'Product UUID' })
   @ApiBody({ type: AdjustStockDto })
   @ApiResponse({ status: 200, description: 'Stock adjusted successfully' })
-  @ApiResponse({ status: 422, description: 'Insufficient stock' })
+  @ApiResponse({ status: 409, description: 'Insufficient stock' })
   async adjustStock(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdjustStockDto,
