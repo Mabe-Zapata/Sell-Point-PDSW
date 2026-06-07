@@ -36,6 +36,7 @@ import { UpdateCustomerDto } from '../../application/dto/customer/update-custome
 import { CustomerResponseDto } from '../../application/dto/customer/customer-response.dto';
 import { CustomerListResponseDto } from '../../application/dto/customer/customer-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 
 @ApiTags('customers')
 @ApiBearerAuth('access-token')
@@ -90,8 +91,7 @@ export class CustomerController {
     description: 'List of customers retrieved successfully',
   })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('q') searchQuery?: string,
     @Query('cedula') cedula?: string,
     @Query('isActive') isActive?: string,
@@ -104,8 +104,8 @@ export class CustomerController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const result = await this.queryBus.execute(

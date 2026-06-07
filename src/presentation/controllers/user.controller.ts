@@ -34,6 +34,7 @@ import { User } from '../../domain/entities/user.entity';
 import { PaginatedResult } from '../../domain/repositories/pagination.types';
 import { Roles } from '../decorators/roles.decorator';
 import { AuthService } from '../../infrastructure/services/auth.service';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
@@ -57,8 +58,7 @@ export class UserController {
   @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Lista de usuarios', type: UserResponseDto, isArray: true })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('q') q?: string,
     @Query('role') role?: string,
     @Query('status') status?: string,
@@ -66,8 +66,8 @@ export class UserController {
     @Query('createdTo') createdTo?: string,
   ): Promise<{ data: UserResponseDto[]; total: number; page: number; limit: number }> {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const filters: UserFilters = {

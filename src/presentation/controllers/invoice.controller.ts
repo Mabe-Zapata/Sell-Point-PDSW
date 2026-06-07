@@ -36,6 +36,7 @@ import type { IInvoiceQueryService } from '../../domain/query-services/invoice.q
 import type { IPdfService } from '../../application/services/pdf-service.interface';
 import type { IEmailService } from '../../application/ports/IEmailService';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 import { INVOICE_ITEM_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 import { CUSTOMER_REPOSITORY, USER_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 import type { ICustomerRepository, IInvoiceItemRepository, IUserRepository } from '../../domain/repositories';
@@ -369,8 +370,7 @@ export class InvoiceController {
     description: 'List of invoices retrieved successfully',
   })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('branchId') branchId?: string,
     @Query('status') status?: string,
     @Query('invoiceNumber') invoiceNumber?: string,
@@ -383,8 +383,8 @@ export class InvoiceController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const result = await this.queryBus.execute(

@@ -35,6 +35,7 @@ import { CreateCategoryDto } from '../../application/dto/category/create-categor
 import { UpdateCategoryDto } from '../../application/dto/category/update-category.dto';
 import { CategoryResponseDto } from '../../application/dto/category/category-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 
 @ApiTags('categories')
 @ApiBearerAuth('access-token')
@@ -82,8 +83,7 @@ export class CategoryController {
     description: 'List of categories retrieved successfully',
   })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('q') searchQuery?: string,
     @Query('isActive') isActive?: string,
   ): Promise<{
@@ -93,8 +93,8 @@ export class CategoryController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const isAct = isActive === undefined ? undefined : isActive === 'true';
