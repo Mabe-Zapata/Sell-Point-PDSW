@@ -3,10 +3,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { typeormConfig } from './config/typeorm.config';
+import { buildCorsOptions } from './config/cors.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.getHttpAdapter().getInstance().set('trust proxy', true);
+  const configService = app.get(ConfigService);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // WARN: synchronize enabled check
@@ -20,8 +22,8 @@ async function bootstrap() {
     );
   }
 
-  // Enable CORS for frontend requests
-  app.enableCors();
+  // Enable CORS only for explicitly allowed origins
+  app.enableCors(buildCorsOptions(configService));
 
   // Enable validation
   app.useGlobalPipes(
@@ -35,7 +37,6 @@ async function bootstrap() {
   // Setup Swagger
   await AppModule.setupSwagger(app);
 
-  const configService = app.get(ConfigService);
   const port = configService.get<number>('app.port') || 3000;
 
   await app.listen(port);

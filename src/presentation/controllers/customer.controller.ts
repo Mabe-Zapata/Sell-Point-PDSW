@@ -36,6 +36,7 @@ import { UpdateCustomerDto } from '../../application/dto/customer/update-custome
 import { CustomerResponseDto } from '../../application/dto/customer/customer-response.dto';
 import { CustomerListResponseDto } from '../../application/dto/customer/customer-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { Roles } from '../decorators/roles.decorator';
 
 @ApiTags('customers')
 @ApiBearerAuth('access-token')
@@ -48,6 +49,7 @@ export class CustomerController {
   ) {}
 
   @Post()
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Create a new customer',
     description: 'Registers a new customer in the system. The identification number (cedula) must be unique across all active customers.',
@@ -59,6 +61,7 @@ export class CustomerController {
     type: CustomerResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({
     status: 409,
     description: 'Customer with this cedula already exists',
@@ -165,6 +168,7 @@ export class CustomerController {
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Update a customer',
     description: 'Updates an existing customer profile. Throws 404 if the customer is not found or 409 if the new cedula is already taken.',
@@ -177,6 +181,7 @@ export class CustomerController {
     type: CustomerResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Customer not found' })
   @ApiResponse({
     status: 409,
