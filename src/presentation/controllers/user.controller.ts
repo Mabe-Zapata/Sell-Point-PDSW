@@ -8,6 +8,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -119,7 +120,7 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario encontrado', type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  async findOne(@Param('id') id: string): Promise<UserResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
     const user = await this.queryBus.execute<GetUserQuery, User>(new GetUserQuery(id));
     return UserResponseDto.fromEntity(user);
   }
@@ -131,7 +132,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Usuario actualizado', type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<UpdateUserCommand, User>(new UpdateUserCommand(id, dto));
@@ -143,7 +144,7 @@ export class UserController {
   @ApiOperation({ summary: 'Activar usuario (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario activado', type: UserResponseDto })
-  async activate(@Param('id') id: string): Promise<UserResponseDto> {
+  async activate(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<ActivateUserCommand, User>(new ActivateUserCommand(id));
     return UserResponseDto.fromEntity(user);
   }
@@ -153,7 +154,7 @@ export class UserController {
   @ApiOperation({ summary: 'Desactivar usuario (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario desactivado', type: UserResponseDto })
-  async deactivate(@Param('id') id: string): Promise<UserResponseDto> {
+  async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<DeactivateUserCommand, User>(new DeactivateUserCommand(id));
     return UserResponseDto.fromEntity(user);
   }

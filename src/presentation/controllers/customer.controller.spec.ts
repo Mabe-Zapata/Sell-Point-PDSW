@@ -5,6 +5,7 @@ import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/que
 import { GetCustomerQuery } from '../../application/cqrs/customer/queries/get-customer/get-customer.query';
 import { CreateCustomerCommand } from '../../application/cqrs/customer/commands/create-customer/create-customer.command';
 import { CUSTOMER_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import { ROLES_KEY } from '../decorators/roles.decorator';
 
 describe('CustomerController', () => {
   let controller: CustomerController;
@@ -88,6 +89,12 @@ describe('CustomerController', () => {
   });
 
   describe('create', () => {
+    it('should require ADMIN role', () => {
+      const roles = Reflect.getMetadata(ROLES_KEY, CustomerController.prototype.create) as string[];
+
+      expect(roles).toEqual(['ADMIN']);
+    });
+
     it('should call commandBus.execute with CreateCustomerCommand', async () => {
       const mockCustomer = {
         id: 'cust-123',
@@ -108,6 +115,14 @@ describe('CustomerController', () => {
         new CreateCustomerCommand(createDto),
       );
       expect(result).toEqual(mockCustomer);
+    });
+  });
+
+  describe('update', () => {
+    it('should require ADMIN role', () => {
+      const roles = Reflect.getMetadata(ROLES_KEY, CustomerController.prototype.update) as string[];
+
+      expect(roles).toEqual(['ADMIN']);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, HttpCode, HttpStatus, ParseUUIDPipe } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
 import { ListRolesQuery } from '../../application/cqrs/role/queries/list-roles/list-roles.query';
@@ -35,7 +35,7 @@ export class RoleController {
   @ApiParam({ name: 'id', description: 'UUID del rol' })
   @ApiResponse({ status: 200, description: 'Rol encontrado', type: RoleResponseDto })
   @ApiResponse({ status: 404, description: 'Rol no encontrado' })
-  async findOne(@Param('id') id: string): Promise<RoleResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<RoleResponseDto> {
     const role = await this.queryBus.execute<GetRoleQuery, Role>(new GetRoleQuery(id));
     return RoleResponseDto.fromEntity(role);
   }
@@ -61,7 +61,7 @@ export class RoleController {
   @ApiResponse({ status: 200, description: 'Rol actualizado', type: RoleResponseDto })
   @ApiResponse({ status: 404, description: 'Rol no encontrado' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateRoleDto,
   ): Promise<RoleResponseDto> {
     const role = await this.commandBus.execute<UpdateRoleCommand, Role>(new UpdateRoleCommand(id, dto));

@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
@@ -174,7 +175,7 @@ export class ProductController {
     type: ProductResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ProductResponseDto> {
     const product = await this.queryBus.execute(new GetProductQuery(id));
     return ProductResponseDto.fromEntity(product);
   }
@@ -196,7 +197,7 @@ export class ProductController {
   @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProductDto: UpdateProductDto,
   ): Promise<ProductResponseDto> {
     const product = await this.commandBus.execute(
@@ -219,7 +220,7 @@ export class ProductController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async activate(@Param('id') id: string): Promise<ProductResponseDto> {
+  async activate(@Param('id', ParseUUIDPipe) id: string): Promise<ProductResponseDto> {
     const product = await this.commandBus.execute(
       new ActivateProductCommand(id),
     );
@@ -240,7 +241,7 @@ export class ProductController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async deactivate(@Param('id') id: string): Promise<ProductResponseDto> {
+  async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<ProductResponseDto> {
     const product = await this.commandBus.execute(
       new DeactivateProductCommand(id),
     );
@@ -252,9 +253,9 @@ export class ProductController {
   @ApiParam({ name: 'id', description: 'Product UUID' })
   @ApiBody({ type: AdjustStockDto })
   @ApiResponse({ status: 200, description: 'Stock adjusted successfully' })
-  @ApiResponse({ status: 422, description: 'Insufficient stock' })
+  @ApiResponse({ status: 409, description: 'Insufficient stock' })
   async adjustStock(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdjustStockDto,
   ): Promise<StockMovementResponseDto> {
     const movement = await this.commandBus.execute(
@@ -270,7 +271,7 @@ export class ProductController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by movement type' })
   async findMovements(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Query() paginationQuery: PaginationQueryDto,
     @Query('type') type?: string,
   ): Promise<{ data: StockMovementResponseDto[]; total: number; page: number; limit: number }> {

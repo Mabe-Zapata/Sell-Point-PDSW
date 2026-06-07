@@ -1,7 +1,7 @@
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
 import { StockMovement, StockMovementType } from '../../../domain/entities';
 import { SaleCancelledEvent } from '../../../domain/events/sale-cancelled.event';
-import { BusinessRuleException } from '../../../domain/exceptions';
+import { EntityNotFoundException } from '../../../domain/exceptions';
 
 export class CancelSaleUseCase {
   constructor(private readonly uow: IUnitOfWork) {}
@@ -14,7 +14,7 @@ export class CancelSaleUseCase {
       const sale = await this.uow.sales.findByIdWithDetails(saleId);
 
       if (!sale) {
-        throw new BusinessRuleException(`Sale with ID '${saleId}' not found`);
+        throw new EntityNotFoundException('Sale', saleId);
       }
 
       // Process each sale detail to restore stock

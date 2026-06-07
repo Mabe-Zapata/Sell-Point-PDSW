@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { CreateInvoiceSeriesDto } from '../../application/dto/invoice-series/create-invoice-series.dto';
@@ -79,7 +80,7 @@ export class InvoiceSeriesController {
   @Put(':id')
   @Roles('ADMIN')
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateInvoiceSeriesDto,
   ): Promise<InvoiceSeriesResponseDto> {
     const existing = await this.invoiceSeriesRepository.findById(id);
@@ -110,7 +111,7 @@ export class InvoiceSeriesController {
 
   @Patch(':id/activate')
   @Roles('ADMIN')
-  async activate(@Param('id') id: string): Promise<InvoiceSeriesResponseDto> {
+  async activate(@Param('id', ParseUUIDPipe) id: string): Promise<InvoiceSeriesResponseDto> {
     const existing = await this.invoiceSeriesRepository.findById(id);
     if (!existing) {
       throw new EntityNotFoundException('InvoiceSeries', id);
@@ -122,7 +123,7 @@ export class InvoiceSeriesController {
 
   @Patch(':id/deactivate')
   @Roles('ADMIN')
-  async deactivate(@Param('id') id: string): Promise<InvoiceSeriesResponseDto> {
+  async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<InvoiceSeriesResponseDto> {
     const existing = await this.invoiceSeriesRepository.findById(id);
     if (!existing) {
       throw new EntityNotFoundException('InvoiceSeries', id);

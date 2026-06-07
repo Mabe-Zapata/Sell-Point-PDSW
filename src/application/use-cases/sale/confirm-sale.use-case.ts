@@ -1,6 +1,6 @@
 import type { IUnitOfWork } from '../../unit-of-work/unit-of-work.interface';
 import { SaleConfirmedEvent } from '../../../domain/events/sale-confirmed.event';
-import { BusinessRuleException } from '../../../domain/exceptions';
+import { BusinessRuleException, InsufficientStockException } from '../../../domain/exceptions';
 
 export class ConfirmSaleUseCase {
   constructor(private readonly uow: IUnitOfWork) {}
@@ -28,8 +28,10 @@ export class ConfirmSaleUseCase {
         }
 
         if ((product.currentStock ?? 0) < detail.quantity) {
-          throw new BusinessRuleException(
-            `Insufficient stock for product ${product.name}. Available: ${product.currentStock ?? 0}, Requested: ${detail.quantity}`,
+          throw new InsufficientStockException(
+            product.name,
+            detail.quantity,
+            product.currentStock ?? 0,
           );
         }
       }

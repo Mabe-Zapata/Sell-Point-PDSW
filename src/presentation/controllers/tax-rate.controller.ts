@@ -8,6 +8,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -99,7 +100,7 @@ export class TaxRateController {
   @ApiParam({ name: 'id', description: 'Tax rate UUID', type: String })
   @ApiResponse({ status: 200, description: 'Tax rate found', type: TaxRateResponseDto })
   @ApiResponse({ status: 404, description: 'Tax rate not found' })
-  async findOne(@Param('id') id: string): Promise<TaxRateResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<TaxRateResponseDto> {
     const taxRate = await this.queryBus.execute<GetTaxRateQuery, TaxRate | null>(
       new GetTaxRateQuery(id),
     );
@@ -115,7 +116,7 @@ export class TaxRateController {
   @ApiResponse({ status: 200, description: 'Tax rate updated', type: TaxRateResponseDto })
   @ApiResponse({ status: 404, description: 'Tax rate not found' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTaxRateDto,
   ): Promise<TaxRateResponseDto> {
     const taxRate = await this.commandBus.execute<UpdateTaxRateCommand, TaxRate>(
