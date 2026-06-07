@@ -44,6 +44,8 @@ export class InvoiceResponseDto {
     this.iva = invoice.iva;
     this.saleNumber = invoice.saleNumber;
     this.customerId = invoice.customerId;
+    this.customerName = invoice.customerName;
+    this.customerCedula = invoice.customerCedula;
     this.cashierName = invoice.cashierName;
     this.cashierUserId = invoice.cashierUserId;
     this.items = items;
