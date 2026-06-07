@@ -37,6 +37,7 @@ import { UpdateCategoryDto } from '../../application/dto/category/update-categor
 import { CategoryResponseDto } from '../../application/dto/category/category-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { Roles } from '../decorators/roles.decorator';
 
 @ApiTags('categories')
 @ApiBearerAuth('access-token')
@@ -49,8 +50,9 @@ export class CategoryController {
   ) {}
 
   @Post()
+  @Roles('ADMIN')
   @ApiOperation({
-    summary: 'Create a new category',
+    summary: 'Create a new category (ADMIN only)',
     description: 'Registers a new category in the system. Ensures category name uniqueness.',
   })
   @ApiBody({ type: CreateCategoryDto })
@@ -148,8 +150,9 @@ export class CategoryController {
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   @ApiOperation({
-    summary: 'Update a category',
+    summary: 'Update a category (ADMIN only)',
     description: 'Updates an existing category. Throws 404 if the category is not found.',
   })
   @ApiParam({ name: 'id', description: 'Category UUID', type: String })
@@ -172,8 +175,9 @@ export class CategoryController {
   }
 
   @Patch(':id/activate')
+  @Roles('ADMIN')
   @ApiOperation({
-    summary: 'Activate a category',
+    summary: 'Activate a category (ADMIN only)',
     description: 'Sets a category as active.',
   })
   @ApiParam({ name: 'id', description: 'Category UUID', type: String })
@@ -191,8 +195,9 @@ export class CategoryController {
   }
 
   @Patch(':id/deactivate')
+  @Roles('ADMIN')
   @ApiOperation({
-    summary: 'Deactivate a category',
+    summary: 'Deactivate a category (ADMIN only)',
     description: 'Sets a category as inactive (logical soft delete).',
   })
   @ApiParam({ name: 'id', description: 'Category UUID', type: String })

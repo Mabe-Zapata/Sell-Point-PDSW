@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { StockMovementType } from '../../../domain/entities/enums/stock-movement-type.enum';
 
 export class AdjustStockDto {
@@ -7,6 +7,7 @@ export class AdjustStockDto {
   type: StockMovementType;
 
   @IsNumber({ allowInfinity: false, allowNaN: false })
+  @Min(1)
   @IsNotEmpty()
   quantity: number;
 
