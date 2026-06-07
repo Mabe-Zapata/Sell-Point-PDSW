@@ -74,7 +74,6 @@ export class SaleRepositoryImpl implements ISaleRepository {
   async findByIdWithDetails(id: string): Promise<Sale | null> {
     const saleEntity = await this.qr.manager
       .createQueryBuilder('SaleTypeOrmEntity', 'sale')
-      .leftJoinAndSelect('sale.customer', 'customer')
       .where('sale.id = :id', { id })
       .setLock('pessimistic_write')
       .getOne();
@@ -88,13 +87,24 @@ export class SaleRepositoryImpl implements ISaleRepository {
 
     const sale = this.mapToDomain(saleEntity);
     sale.details = detailEntities.map((e: any) => this.mapDetailToDomain(e));
-    // denormalized customer fields for event emission
-    // eslint-disable-next-line @typescript-eslint/nounsafe-assignment
-    sale.customerEmail = saleEntity.customer?.email;
-    // eslint-disable-next-line @typescript-eslint/nounsafe-assignment
-    sale.customerName = saleEntity.customer
-      ? `${saleEntity.customer.firstName ?? ''} ${saleEntity.customer.lastName ?? ''}`.trim()
-      : 'Customer';
+
+    if (saleEntity.customerId) {
+      const customer = await this.qr.manager.findOne('CustomerTypeOrmEntity', {
+        where: { id: saleEntity.customerId },
+      }) as {
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+      } | null;
+
+      sale.customerEmail = customer?.email;
+      sale.customerName = customer
+        ? `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim() || 'Customer'
+        : 'Customer';
+    } else {
+      sale.customerName = 'Customer';
+    }
+
     return sale;
   }
 

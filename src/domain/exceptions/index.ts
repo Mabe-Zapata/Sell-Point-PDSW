@@ -6,3 +6,4 @@ export { DuplicateCustomerFieldsException } from './duplicate-customer-fields.ex
 export { DuplicateInvoiceForSaleException } from './duplicate-invoice-for-sale.exception';
 export { InsufficientStockException } from './insufficient-stock.exception';
 export { BusinessRuleException } from './business-rule.exception';
+export { SaleStateConflictException } from './sale-state-conflict.exception';
