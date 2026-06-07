@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CommandBus } from '@nestjs/cqrs';
@@ -175,7 +175,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Unlock a blocked user (admin only)' })
   @ApiParam({ name: 'id', description: 'User ID to unlock' })
   @ApiResponse({ status: 200, description: 'User unlocked successfully' })
-  async unlockUser(@Param('id') id: string): Promise<{ message: string }> {
+  async unlockUser(@Param('id', ParseUUIDPipe) id: string): Promise<{ message: string }> {
     await this.authService.unlockUser(id);
     return { message: 'User unlocked successfully' };
   }

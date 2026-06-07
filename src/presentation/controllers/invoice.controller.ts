@@ -8,6 +8,7 @@ import {
   Res,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -149,7 +150,7 @@ export class InvoiceController {
   @ApiResponse({ status: 200, description: 'Invoice cancelled successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden — ADMIN role required' })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
-  async cancel(@Param('id') id: string): Promise<{ success: boolean; invoiceId: string }> {
+  async cancel(@Param('id', ParseUUIDPipe) id: string): Promise<{ success: boolean; invoiceId: string }> {
     await this.commandBus.execute(new CancelInvoiceCommand(id));
     return { success: true, invoiceId: id };
   }
@@ -157,7 +158,7 @@ export class InvoiceController {
   @Post(':id/resend-email')
   @HttpCode(HttpStatus.OK)
   async resendEmail(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() body?: { email?: string },
   ): Promise<{ success: boolean; invoiceId: string; email: string }> {
     const invoiceData = await this.invoiceQueryService.getInvoiceById(id);
@@ -252,7 +253,7 @@ export class InvoiceController {
     type: InvoiceResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
-  async findOne(@Param('id') id: string): Promise<InvoiceResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<InvoiceResponseDto> {
     const invoiceData = await this.queryBus.execute(new GetInvoiceQuery(id));
 
     const invoice = new Invoice({
@@ -304,7 +305,7 @@ export class InvoiceController {
     schema: { type: 'file' },
   })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
-  async getPdf(@Param('id') id: string, @Res() res: Response): Promise<void> {
+  async getPdf(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response): Promise<void> {
     const invoiceData = await this.invoiceQueryService.getInvoiceById(id);
     if (!invoiceData) {
       res.status(404).send('Invoice not found');

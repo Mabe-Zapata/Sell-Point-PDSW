@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -162,7 +163,7 @@ export class CustomerController {
     type: CustomerResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Customer not found' })
-  async findOne(@Param('id') id: string): Promise<CustomerResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<CustomerResponseDto> {
     const customer = await this.queryBus.execute(new GetCustomerQuery(id));
     return CustomerResponseDto.fromEntity(customer);
   }
@@ -188,7 +189,7 @@ export class CustomerController {
     description: 'Customer with this cedula already exists',
   })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCustomerDto: UpdateCustomerDto,
   ): Promise<CustomerResponseDto> {
     const customer = await this.commandBus.execute(
@@ -209,7 +210,7 @@ export class CustomerController {
     type: CustomerResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Customer not found' })
-  async activate(@Param('id') id: string): Promise<CustomerResponseDto> {
+  async activate(@Param('id', ParseUUIDPipe) id: string): Promise<CustomerResponseDto> {
     const customer = await this.commandBus.execute(
       new ActivateCustomerCommand(id),
     );
@@ -228,7 +229,7 @@ export class CustomerController {
     type: CustomerResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Customer not found' })
-  async deactivate(@Param('id') id: string): Promise<CustomerResponseDto> {
+  async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<CustomerResponseDto> {
     const customer = await this.commandBus.execute(
       new DeactivateCustomerCommand(id),
     );

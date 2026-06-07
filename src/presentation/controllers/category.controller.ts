@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
@@ -141,7 +142,7 @@ export class CategoryController {
     type: CategoryResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  async findOne(@Param('id') id: string): Promise<CategoryResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<CategoryResponseDto> {
     const category = await this.queryBus.execute(new GetCategoryQuery(id));
     return CategoryResponseDto.fromEntity(category);
   }
@@ -161,7 +162,7 @@ export class CategoryController {
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ): Promise<CategoryResponseDto> {
     const category = await this.commandBus.execute(
@@ -182,7 +183,7 @@ export class CategoryController {
     type: CategoryResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  async activate(@Param('id') id: string): Promise<CategoryResponseDto> {
+  async activate(@Param('id', ParseUUIDPipe) id: string): Promise<CategoryResponseDto> {
     const category = await this.commandBus.execute(
       new ActivateCategoryCommand(id),
     );
@@ -201,7 +202,7 @@ export class CategoryController {
     type: CategoryResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  async deactivate(@Param('id') id: string): Promise<CategoryResponseDto> {
+  async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<CategoryResponseDto> {
     const category = await this.commandBus.execute(
       new DeactivateCategoryCommand(id),
     );
