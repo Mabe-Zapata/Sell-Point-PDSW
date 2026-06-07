@@ -1,6 +1,6 @@
 import { SaleStatus, PaymentMethod } from './enums';
 import { SaleDetail } from './sale-detail.entity';
-import { BusinessRuleException } from '../exceptions';
+import { BusinessRuleException, SaleStateConflictException } from '../exceptions';
 
 export class Sale {
   id!: string;
@@ -50,7 +50,7 @@ export class Sale {
 
   confirm(): void {
     if (!this.isConfirmable) {
-      throw new BusinessRuleException(
+      throw new SaleStateConflictException(
         'Sale cannot be confirmed. Only DRAFT sales can be confirmed.',
       );
     }
@@ -64,7 +64,7 @@ export class Sale {
 
   cancel(): void {
     if (!this.isCancellable) {
-      throw new BusinessRuleException(
+      throw new SaleStateConflictException(
         'Sale cannot be cancelled. Only CONFIRMED sales can be cancelled.',
       );
     }

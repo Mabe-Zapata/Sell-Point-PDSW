@@ -7,7 +7,7 @@ import type { ICustomerRepository } from '../../../domain/repositories/customer.
 import type { QuickConfirmSalePayload } from '../../cqrs/sale/commands/quick-confirm-sale/quick-confirm-sale.command';
 import { SaleConfirmedEvent } from '../../../domain/events/sale-confirmed.event';
 import { InvoiceIssuedEvent } from '../../../domain/events/invoice-issued.event';
-import { BusinessRuleException } from '../../../domain/exceptions';
+import { BusinessRuleException, InsufficientStockException } from '../../../domain/exceptions';
 import { InvoiceItem } from '../../../domain/entities';
 import { CreateInvoiceCommand } from '../../cqrs/invoice/commands/create-invoice/create-invoice.command';
 import { CreateInvoiceHandler } from '../../cqrs/invoice/commands/create-invoice/create-invoice.handler';
@@ -136,8 +136,10 @@ export class QuickConfirmSaleUseCase {
 
         const currentStock = product.currentStock ?? 0;
         if (currentStock < detail.quantity) {
-          throw new BusinessRuleException(
-            `Insufficient stock for product ${product.name}. Available: ${currentStock}, Requested: ${detail.quantity}`,
+          throw new InsufficientStockException(
+            product.name,
+            detail.quantity,
+            currentStock,
           );
         }
 

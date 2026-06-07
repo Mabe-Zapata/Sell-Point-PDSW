@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SwaggerModule } from '@nestjs/swagger';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configuration } from './config/configuration';
@@ -241,6 +242,13 @@ const entities = [
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'login',
+        ttl: 60000,
+        limit: 5,
+      },
+    ]),
     RedisModule,
     CqrsModule,
     EmailModule,

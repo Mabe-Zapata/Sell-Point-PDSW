@@ -8,6 +8,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -34,6 +35,7 @@ import { User } from '../../domain/entities/user.entity';
 import { PaginatedResult } from '../../domain/repositories/pagination.types';
 import { Roles } from '../decorators/roles.decorator';
 import { AuthService } from '../../infrastructure/services/auth.service';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
@@ -57,8 +59,7 @@ export class UserController {
   @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Lista de usuarios', type: UserResponseDto, isArray: true })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('q') q?: string,
     @Query('role') role?: string,
     @Query('status') status?: string,
@@ -66,8 +67,8 @@ export class UserController {
     @Query('createdTo') createdTo?: string,
   ): Promise<{ data: UserResponseDto[]; total: number; page: number; limit: number }> {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const filters: UserFilters = {
@@ -119,7 +120,7 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario encontrado', type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  async findOne(@Param('id') id: string): Promise<UserResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
     const user = await this.queryBus.execute<GetUserQuery, User>(new GetUserQuery(id));
     return UserResponseDto.fromEntity(user);
   }
@@ -131,7 +132,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Usuario actualizado', type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<UpdateUserCommand, User>(new UpdateUserCommand(id, dto));
@@ -143,7 +144,7 @@ export class UserController {
   @ApiOperation({ summary: 'Activar usuario (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario activado', type: UserResponseDto })
-  async activate(@Param('id') id: string): Promise<UserResponseDto> {
+  async activate(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<ActivateUserCommand, User>(new ActivateUserCommand(id));
     return UserResponseDto.fromEntity(user);
   }
@@ -153,7 +154,7 @@ export class UserController {
   @ApiOperation({ summary: 'Desactivar usuario (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'UUID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario desactivado', type: UserResponseDto })
-  async deactivate(@Param('id') id: string): Promise<UserResponseDto> {
+  async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
     const user = await this.commandBus.execute<DeactivateUserCommand, User>(new DeactivateUserCommand(id));
     return UserResponseDto.fromEntity(user);
   }

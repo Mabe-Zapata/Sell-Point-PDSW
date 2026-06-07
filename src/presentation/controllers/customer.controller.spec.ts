@@ -5,6 +5,7 @@ import { ListCustomersWithStockQuery } from '../../application/cqrs/customer/que
 import { GetCustomerQuery } from '../../application/cqrs/customer/queries/get-customer/get-customer.query';
 import { CreateCustomerCommand } from '../../application/cqrs/customer/commands/create-customer/create-customer.command';
 import { CUSTOMER_REPOSITORY } from '../../infrastructure/common/injection-tokens';
+import { ROLES_KEY } from '../decorators/roles.decorator';
 
 describe('CustomerController', () => {
   let controller: CustomerController;
@@ -42,7 +43,7 @@ describe('CustomerController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      const result = await controller.findAll('1', '20', 'john', '9999999999999');
+      const result = await controller.findAll({ page: 1, limit: 20 }, 'john', '9999999999999');
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(ListCustomersWithStockQuery),
@@ -63,7 +64,7 @@ describe('CustomerController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      await controller.findAll(undefined, undefined, undefined, undefined);
+      await controller.findAll({}, undefined, undefined);
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(ListCustomersWithStockQuery),
@@ -88,6 +89,12 @@ describe('CustomerController', () => {
   });
 
   describe('create', () => {
+    it('should require ADMIN role', () => {
+      const roles = Reflect.getMetadata(ROLES_KEY, CustomerController.prototype.create) as string[];
+
+      expect(roles).toEqual(['ADMIN']);
+    });
+
     it('should call commandBus.execute with CreateCustomerCommand', async () => {
       const mockCustomer = {
         id: 'cust-123',
@@ -108,6 +115,14 @@ describe('CustomerController', () => {
         new CreateCustomerCommand(createDto),
       );
       expect(result).toEqual(mockCustomer);
+    });
+  });
+
+  describe('update', () => {
+    it('should require ADMIN role', () => {
+      const roles = Reflect.getMetadata(ROLES_KEY, CustomerController.prototype.update) as string[];
+
+      expect(roles).toEqual(['ADMIN']);
     });
   });
 });

@@ -1,7 +1,8 @@
 import { CancelSaleUseCase } from '../../../../use-cases/sale/cancel-sale.use-case';
-import { BusinessRuleException } from '../../../../../domain/exceptions/business-rule.exception';
+import { EntityNotFoundException, SaleStateConflictException } from '../../../../../domain/exceptions';
 import { Sale } from '../../../../../domain/entities/sale.entity';
 import { Product } from '../../../../../domain/entities/product.entity';
+import { SaleStatus } from '../../../../../domain/entities/enums';
 import type { IUnitOfWork } from '../../../../unit-of-work/unit-of-work.interface';
 
 describe('CancelSaleUseCase', () => {
@@ -75,10 +76,10 @@ describe('CancelSaleUseCase', () => {
   });
 
   describe('execute', () => {
-    it('should throw BusinessRuleException when sale does not exist', async () => {
+    it('should throw EntityNotFoundException when sale does not exist', async () => {
       findSaleByIdWithDetailsMock.mockResolvedValue(null);
 
-      await expect(useCase.execute('sale-inexistente')).rejects.toThrow(BusinessRuleException);
+      await expect(useCase.execute('sale-inexistente')).rejects.toThrow(EntityNotFoundException);
       expect(rollbackMock).toHaveBeenCalledTimes(1);
       expect(commitMock).not.toHaveBeenCalled();
     });
@@ -108,6 +109,21 @@ describe('CancelSaleUseCase', () => {
       expect(commitMock).toHaveBeenCalledTimes(1);
       expect(rollbackMock).not.toHaveBeenCalled();
       expect(cancelMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should surface conflict when sale is not cancellable', async () => {
+      const mockSale = new Sale({
+        id: 'sale-123',
+        saleNumber: 'V-001',
+        status: SaleStatus.DRAFT,
+        details: [],
+      });
+
+      findSaleByIdWithDetailsMock.mockResolvedValue(mockSale);
+
+      await expect(useCase.execute('sale-123')).rejects.toThrow(SaleStateConflictException);
+      expect(rollbackMock).toHaveBeenCalledTimes(1);
+      expect(commitMock).not.toHaveBeenCalled();
     });
 
     it('should rollback when an error occurs during execution', async () => {

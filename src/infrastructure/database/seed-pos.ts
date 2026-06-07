@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { v5 as uuidv5 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { dataSource } from '../../config/typeorm.config';
 import { CategoryTypeOrmEntity } from './entities/category.typeorm.entity';
 import { ProductTypeOrmEntity } from './entities/product.typeorm.entity';
@@ -59,7 +60,7 @@ async function main() {
       }
     } else {
       category = await categoryRepo.save(
-        categoryRepo.create({ ...catData, isActive: true }),
+        categoryRepo.create({ id: randomUUID(), ...catData, isActive: true }),
       );
       console.log(`Category "${catData.name}" created with tax rate.`);
     }
@@ -108,6 +109,7 @@ async function main() {
     } else {
       const product = await productRepo.save(
         productRepo.create({
+          id: randomUUID(),
           categoryId: savedCategories[prodData.categoryIndex].id,
           code: prodData.code,
           name: prodData.name,
@@ -137,7 +139,7 @@ async function main() {
       console.log(`Customer "${custData.firstName} ${custData.lastName}" already exists, skipping.`);
     } else {
       await customerRepo.save(
-        customerRepo.create({ ...custData, isActive: true }),
+        customerRepo.create({ id: randomUUID(), ...custData, isActive: true }),
       );
       usedCedulas.add(custData.cedula);
       usedEmails.add(custData.email);
@@ -154,6 +156,7 @@ async function main() {
   if (!existingSeries) {
     await dataSource.getRepository(InvoiceSeriesTypeOrmEntity).save(
       dataSource.getRepository(InvoiceSeriesTypeOrmEntity).create({
+        id: randomUUID(),
         branchId: adminBranchId,
         establishmentCode: '001',
         emissionPointCode: '001',

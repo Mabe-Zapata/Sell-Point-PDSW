@@ -17,6 +17,7 @@ import {
   DuplicateInvoiceForSaleException,
   InsufficientStockException,
   BusinessRuleException,
+  SaleStateConflictException,
 } from '../../domain/exceptions';
 import { EmailAlreadyExistsException } from '../../application/exceptions/email-already-exists.exception';
 import { UsernameAlreadyExistsException } from '../../application/exceptions/username-already-exists.exception';
@@ -70,6 +71,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof InsufficientStockException) {
+        status = HttpStatus.CONFLICT;
+        message = exception.message;
+      } else if (exception instanceof SaleStateConflictException) {
         status = HttpStatus.CONFLICT;
         message = exception.message;
       } else if (exception instanceof BusinessRuleException) {

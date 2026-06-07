@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CommandBus } from '@nestjs/cqrs';
@@ -15,6 +15,7 @@ import { Roles } from '../decorators/roles.decorator';
 import { AuthMeResponseDto } from '../../application/dto/auth/auth-me-response.dto';
 import { UserListResponseDto } from '../../application/dto/user/user-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 import { RegisterEmployeeDto } from '../../application/dto/auth/register-employee.dto';
 import { RequestPasswordResetDto } from '../../application/dto/auth/request-password-reset.dto';
 import { ResetPasswordDto } from '../../application/dto/auth/reset-password.dto';
@@ -26,6 +27,7 @@ import { RequestPasswordResetValidator } from '../../application/cqrs/auth/handl
 import { ResetPasswordValidator } from '../../application/cqrs/auth/handlers/reset-password/reset-password.validator';
 import { resolvePublicIpv4 } from '../../infrastructure/http/request-ip.util';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { LoginThrottlerGuard } from '../guards/login-throttler.guard';
 import type { Request } from 'express';
 import { Inject } from '@nestjs/common';
 import { PasswordResetTokenRepository } from '../../infrastructure/repositories/password-reset-token.repository';
@@ -53,6 +55,7 @@ export class AuthController {
 
   @Post('login')
   @Public()
+  @UseGuards(LoginThrottlerGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authenticate with email and password' })
   async login(@Body() dto: LoginDto) {
@@ -175,7 +178,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Unlock a blocked user (admin only)' })
   @ApiParam({ name: 'id', description: 'User ID to unlock' })
   @ApiResponse({ status: 200, description: 'User unlocked successfully' })
-  async unlockUser(@Param('id') id: string): Promise<{ message: string }> {
+  async unlockUser(@Param('id', ParseUUIDPipe) id: string): Promise<{ message: string }> {
     await this.authService.unlockUser(id);
     return { message: 'User unlocked successfully' };
   }
@@ -195,8 +198,7 @@ export class AuthController {
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully', type: UserListResponseDto, isArray: true })
   async listUsers(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('q') q?: string,
     @Query('employeeId') employeeId?: string,
     @Query('username') username?: string,
@@ -206,8 +208,8 @@ export class AuthController {
     @Query('isActive') isActive?: string,
   ): Promise<{ data: UserListResponseDto[]; total: number; page: number; limit: number }> {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const result = await this.authService.listUsers(pagination, {

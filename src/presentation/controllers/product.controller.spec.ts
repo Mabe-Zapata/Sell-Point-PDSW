@@ -49,7 +49,7 @@ describe('ProductController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      const result = await controller.findAll('1', '20', 'test', undefined, 'true');
+      const result = await controller.findAll({ page: 1, limit: 20 }, 'test', undefined, 'true');
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(ListProductsWithStockQuery),
@@ -71,7 +71,7 @@ describe('ProductController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      await controller.findAll(undefined, undefined, undefined, undefined, undefined);
+      await controller.findAll({}, undefined, undefined, undefined);
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(ListProductsWithStockQuery),
@@ -171,7 +171,7 @@ describe('ProductController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      const result = await controller.findMovements('prod-123', '1', '20', 'IN');
+      const result = await controller.findMovements('prod-123', { page: 1, limit: 20 }, 'IN');
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(GetMovementsHistoryQuery),
@@ -194,7 +194,7 @@ describe('ProductController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      await controller.findMovements('prod-123', undefined, undefined, undefined);
+      await controller.findMovements('prod-123', {}, undefined);
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(GetMovementsHistoryQuery),

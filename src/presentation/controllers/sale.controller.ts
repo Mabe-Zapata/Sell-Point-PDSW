@@ -10,6 +10,7 @@ import {
   Inject,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -30,6 +31,7 @@ import { ListSalesQuery } from '../../application/cqrs/sale/queries/list-sales/l
 
 import { ConfirmSaleRequestDto } from '../../application/dto/sale/sale-confirm-request.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 import { SaleResponseDto } from '../../application/dto/sale/sale-response.dto';
 import { InvoiceResponseDto } from '../../application/dto/invoice/invoice-response.dto';
 import { InvoiceItemResponseDto } from '../../application/dto/invoice/invoice-item.dto';
@@ -116,14 +118,14 @@ cashierUserId: invoiceData.cashierUserId,
   @ApiResponse({ status: 200, description: 'Sale cancelled' })
   @ApiResponse({ status: 404, description: 'Sale not found' })
   async cancel(
-    @Param('saleId') saleId: string,
+    @Param('saleId', ParseUUIDPipe) saleId: string,
   ): Promise<{ success: boolean; saleId: string }> {
     await this.commandBus.execute(new CancelSaleCommand(saleId));
     return { success: true, saleId };
   }
 
   @Get(':saleId/invoice')
-  async findInvoiceBySale(@Param('saleId') saleId: string): Promise<InvoiceResponseDto> {
+  async findInvoiceBySale(@Param('saleId', ParseUUIDPipe) saleId: string): Promise<InvoiceResponseDto> {
     const invoiceData = await this.invoiceQueryService.getInvoiceBySaleId(saleId);
     if (!invoiceData) {
       throw new EntityNotFoundException('Invoice', `sale ${saleId}`);
@@ -134,7 +136,7 @@ cashierUserId: invoiceData.cashierUserId,
 
   @Post(':saleId/invoice/retry')
   @HttpCode(HttpStatus.OK)
-  async retryInvoiceForSale(@Param('saleId') saleId: string): Promise<InvoiceResponseDto> {
+  async retryInvoiceForSale(@Param('saleId', ParseUUIDPipe) saleId: string): Promise<InvoiceResponseDto> {
     const existingInvoice = await this.invoiceQueryService.getInvoiceBySaleId(saleId);
     if (existingInvoice) {
       return this.toInvoiceResponse(existingInvoice);
@@ -186,7 +188,7 @@ cashierUserId: invoiceData.cashierUserId,
   @ApiParam({ name: 'id', description: 'Sale UUID', type: String })
   @ApiResponse({ status: 200, description: 'Sale found', type: SaleResponseDto })
   @ApiResponse({ status: 404, description: 'Sale not found' })
-  async findOne(@Param('id') id: string): Promise<SaleResponseDto | null> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<SaleResponseDto | null> {
     return this.queryBus.execute(new GetSaleQuery(id));
   }
 
@@ -201,8 +203,7 @@ cashierUserId: invoiceData.cashierUserId,
   @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({ status: 200, description: 'List of sales' })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('q') searchQuery?: string,
     @Query('customerId') customerId?: string,
     @Query('status') status?: string,
@@ -210,8 +211,8 @@ cashierUserId: invoiceData.cashierUserId,
     @Query('createdTo') createdTo?: string,
   ) {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const result = await this.queryBus.execute(
