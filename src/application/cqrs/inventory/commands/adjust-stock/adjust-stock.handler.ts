@@ -4,6 +4,7 @@ import type { IStockMovementRepository } from '../../../../../domain/repositorie
 import { StockMovement } from '../../../../../domain/entities/stock-movement.entity';
 import { StockMovementType } from '../../../../../domain/entities/enums/stock-movement-type.enum';
 import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
+import { InsufficientStockException } from '../../../../../domain/exceptions/insufficient-stock.exception';
 
 export class AdjustStockHandler {
   constructor(
@@ -39,13 +40,21 @@ export class AdjustStockHandler {
         movementType = StockMovementType.ADJUSTMENT;
     }
 
+    // Reject if the resulting stock would be negative
+    const newStock = previousStock + delta;
+    if (newStock < 0) {
+      throw new InsufficientStockException(
+        product.name,
+        Math.abs(delta),
+        previousStock,
+      );
+    }
+
     if (delta >= 0) {
       await this.productRepository.incrementStock(command.productId, delta);
     } else {
       await this.productRepository.decrementStock(command.productId, -delta);
     }
-
-    const newStock = previousStock + delta;
 
     return this.stockMovementRepository.create(
       new StockMovement({
