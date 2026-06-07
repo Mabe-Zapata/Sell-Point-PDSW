@@ -31,7 +31,9 @@ import { UpdateTaxRateDto } from '../../application/dto/tax-rate/update-tax-rate
 import { TaxRateResponseDto } from '../../application/dto/tax-rate/tax-rate-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { TaxRate } from '../../domain/entities/tax-rate.entity';
+import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
 import { Roles } from '../decorators/roles.decorator';
+import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
 
 @ApiTags('tax-rates')
 @ApiBearerAuth('access-token')
@@ -59,14 +61,11 @@ export class TaxRateController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List tax rates with pagination' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'q', required: false, type: String })
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @ApiResponse({ status: 200, description: 'List of tax rates' })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationQuery: PaginationQueryDto,
     @Query('q') searchQuery?: string,
     @Query('isActive') isActive?: string,
   ): Promise<{
@@ -76,8 +75,8 @@ export class TaxRateController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: paginationQuery.page ?? 1,
+      limit: paginationQuery.limit ?? 20,
     };
 
     const isAct = isActive === undefined ? undefined : isActive === 'true';
@@ -104,7 +103,10 @@ export class TaxRateController {
     const taxRate = await this.queryBus.execute<GetTaxRateQuery, TaxRate | null>(
       new GetTaxRateQuery(id),
     );
-    return TaxRateResponseDto.fromEntity(taxRate!);
+    if (!taxRate) {
+      throw new EntityNotFoundException('TaxRate', id);
+    }
+    return TaxRateResponseDto.fromEntity(taxRate);
   }
 
   @Put(':id')
