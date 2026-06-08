@@ -42,7 +42,7 @@ describe('CookieService', () => {
   };
 
   describe('setRefreshTokenCookie', () => {
-    it('writes the refreshToken cookie with HttpOnly, SameSite=Strict, Path=/, maxAge=604800 (7d) in dev', () => {
+    it('writes the refreshToken cookie with HttpOnly, SameSite=Strict, Path=/, maxAge=604800000 (7d in ms) in dev', () => {
       const configService = buildConfigService();
       const service = new CookieService(configService);
       const res = buildResponse();
@@ -58,7 +58,7 @@ describe('CookieService', () => {
           httpOnly: true,
           sameSite: 'strict',
           path: '/',
-          maxAge: 604800,
+          maxAge: 604800 * 1000,
         }),
       );
       expect(options.secure).toBeUndefined();
@@ -94,7 +94,7 @@ describe('CookieService', () => {
       service.setRefreshTokenCookie(res, 'uuid-remember', true);
 
       const [, , options] = (res.cookie as jest.Mock).mock.calls[0];
-      expect(options.maxAge).toBe(2592000);
+      expect(options.maxAge).toBe(2592000 * 1000);
     });
 
     it('forwards domain when configured', () => {

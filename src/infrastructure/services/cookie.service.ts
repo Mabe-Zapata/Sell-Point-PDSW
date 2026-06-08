@@ -21,12 +21,15 @@ export class CookieService {
   }
 
   setRefreshTokenCookie(res: Response, token: string, rememberMe: boolean): void {
-    const maxAge = rememberMe ? this.config.rememberMeMaxAge : this.config.maxAge;
+    const maxAgeSeconds = rememberMe ? this.config.rememberMeMaxAge : this.config.maxAge;
+    // Express `res.cookie({ maxAge })` is documented in MILLISECONDS, but our
+    // config block exposes SECONDS (matches the spec: 604800 = 7 days,
+    // 2592000 = 30 days). Convert before handing to Express.
     const options: Record<string, unknown> = {
       httpOnly: true,
       sameSite: this.config.sameSite,
       path: this.config.path,
-      maxAge,
+      maxAge: maxAgeSeconds * 1000,
     };
     if (this.config.secure) {
       options.secure = true;

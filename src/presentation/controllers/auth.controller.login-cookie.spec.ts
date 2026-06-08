@@ -6,7 +6,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from '../../infrastructure/services/auth.service';
 import { CookieService } from '../../infrastructure/services/cookie.service';
 import { PASSWORD_RESET_TOKEN_REPOSITORY } from '../../infrastructure/common/injection-tokens';
-import type { Response, Request } from 'express';
+import type { Response } from 'express';
 
 describe('AuthController - login cookie contract (T4)', () => {
   let controller: AuthController;
@@ -115,6 +115,3 @@ describe('AuthController - login cookie contract (T4)', () => {
     expect(mockCookieService.setRefreshTokenCookie).not.toHaveBeenCalled();
   });
 });
-
-// Silence unused-import warning in some configs
-void (null as unknown as Request | undefined);
