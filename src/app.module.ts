@@ -183,7 +183,7 @@ import {
   ProductQueryService, SaleQueryService,
   ErrorLogQueryService,
 } from './infrastructure/queries';
-import { PdfService, AuthService } from './infrastructure/services';
+import { PdfService, AuthService, CookieService } from './infrastructure/services';
 import { IdempotencyService } from './infrastructure/services/idempotency.service';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { EmailModule } from './infrastructure/email/email.module';
@@ -300,6 +300,7 @@ const entities = [
     // Infrastructure - Services
     { provide: PDF_SERVICE, useClass: PdfService },
     AuthService,
+    CookieService,
     // Unit of Work
     { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
     TypeOrmUnitOfWork,
