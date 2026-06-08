@@ -178,12 +178,15 @@ import {
   InvoiceSeriesRepository, RoleRepository, PasswordResetTokenRepository,
   InvoiceAuditLogRepository,
 } from './infrastructure/repositories';
+import { AuditLogRepository } from './infrastructure/repositories/audit-log.repository';
 import {
   DashboardQueryService, InvoiceQueryService, CustomerQueryService,
   ProductQueryService, SaleQueryService,
   ErrorLogQueryService,
 } from './infrastructure/queries';
 import { PdfService, AuthService, CookieService } from './infrastructure/services';
+import { AuditService } from './infrastructure/services/audit.service';
+import { ListAuditLogsHandler, GetAuditLogHandler, GetAuditSummaryHandler } from './infrastructure/cqrs';
 import { IdempotencyService } from './infrastructure/services/idempotency.service';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { EmailModule } from './infrastructure/email/email.module';
@@ -199,14 +202,16 @@ import {
   UserRoleTypeOrmEntity, PasswordResetTokenTypeOrmEntity,
   IdempotencyEntryTypeOrmEntity,
 } from './infrastructure/database/entities';
+import { AuditLogTypeOrmEntity } from './infrastructure/database/entities/audit-log.typeorm.entity';
 
 // Presentation
 import {
   CustomerController, ProductController, InvoiceController, DashboardController,
   AuthController, CategoryController, UserController, RoleController,
   ErrorLogController, SaleController, TaxRateController, InvoiceSeriesController,
+  AuditController,
 } from './presentation/controllers';
-import { GlobalExceptionFilter, PaginationInterceptor } from './presentation';
+import { GlobalExceptionFilter, PaginationInterceptor, AuditInterceptor } from './presentation';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 // Infrastructure - Event Listeners
 import {
@@ -225,6 +230,7 @@ const entities = [
   ErrorLogTypeOrmEntity, IdempotencyEntryTypeOrmEntity,
   InvoiceTypeOrmEntity, InvoiceSeriesTypeOrmEntity,
   InvoiceItemTypeOrmEntity, InvoiceAuditLogTypeOrmEntity,
+  AuditLogTypeOrmEntity,
   ProductTypeOrmEntity, RoleTypeOrmEntity, SaleTypeOrmEntity,
   SaleDetailTypeOrmEntity, StockMovementTypeOrmEntity,
   TaxRateTypeOrmEntity, UserTypeOrmEntity, UserBranchTypeOrmEntity,
@@ -265,8 +271,8 @@ const entities = [
   controllers: [
     AppController, CustomerController, ProductController, InvoiceController,
     DashboardController, AuthController, CategoryController, UserController,
-    RoleController,   ErrorLogController, SaleController, TaxRateController,
-    InvoiceSeriesController,
+    RoleController, ErrorLogController, SaleController, TaxRateController,
+    InvoiceSeriesController, AuditController,
   ],
   providers: [
     AppService,
@@ -290,6 +296,7 @@ const entities = [
     { provide: 'INVOICE_SERIES_REPOSITORY', useClass: InvoiceSeriesRepository },
     { provide: 'PASSWORD_RESET_TOKEN_REPOSITORY', useClass: PasswordResetTokenRepository },
     { provide: 'INVOICE_AUDIT_LOG_REPOSITORY', useClass: InvoiceAuditLogRepository },
+    { provide: 'AUDIT_LOG_REPOSITORY', useClass: AuditLogRepository },
     // Infrastructure - pg Query Services (token-mapped)
     { provide: PRODUCT_QUERY_SERVICE, useClass: ProductQueryService },
     { provide: CUSTOMER_QUERY_SERVICE, useClass: CustomerQueryService },
@@ -301,6 +308,7 @@ const entities = [
     { provide: PDF_SERVICE, useClass: PdfService },
     AuthService,
     CookieService,
+    AuditService,
     // Unit of Work
     { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
     TypeOrmUnitOfWork,
@@ -317,6 +325,7 @@ const entities = [
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
     { provide: APP_INTERCEPTOR, useClass: CorrelationInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
 
     // CQRS Handlers (from infrastructure/cqrs - NestJS wrappers)
     CreateCustomerHandler,
@@ -359,6 +368,10 @@ const entities = [
     GetMovementsHistoryHandler,
     GetErrorLogHandler,
     ListErrorLogsHandler,
+    // Audit Queries
+    ListAuditLogsHandler,
+    GetAuditLogHandler,
+    GetAuditSummaryHandler,
     GetDashboardStatsHandler,
     // Invoice Commands
     CreateInvoiceHandler,

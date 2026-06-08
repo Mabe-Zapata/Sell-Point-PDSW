@@ -14,3 +14,4 @@ export type { IStockMovementRepository, StockMovementFilters } from './stock-mov
 export type { ITaxRateRepository, TaxRateFilters } from './tax-rate.repository.interface';
 export type { IUserRepository, UserFilters } from './user.repository.interface';
 export type { PaginationParams, PaginatedResult } from './pagination.types';
+export type { IAuditLogRepository, AuditLogEntry, AuditLogFilters, AuditSummary } from './audit-log.repository.interface';
