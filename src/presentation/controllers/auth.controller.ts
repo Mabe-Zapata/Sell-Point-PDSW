@@ -135,30 +135,31 @@ export class AuthController {
   @Post('refresh')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiBody({ type: RefreshTokenDto })
-  @ApiOperation({ summary: 'Refresh access token using a valid refresh token' })
-  async refresh(@Body() dto: RefreshTokenDto) {
-    const refreshToken = dto.refreshToken;
-    if (!refreshToken) {
+  @ApiOperation({ summary: 'Refresh access token using the refreshToken HttpOnly cookie' })
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const oldRefreshToken = this.cookieService.readRefreshTokenCookie(req);
+    if (!oldRefreshToken) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'auth.errors.invalid_credentials',
       });
     }
 
-    const payload = await this.authService.validateRefreshToken(refreshToken);
-    if (!payload) {
+    const rotated = await this.authService.rotateRefreshToken(oldRefreshToken);
+    if (!rotated) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'auth.errors.invalid_credentials',
       });
     }
 
-    const accessToken = this.authService.generateAccessToken(payload);
+    this.cookieService.setRefreshTokenCookie(res, rotated.refreshToken, false);
 
     return {
-      accessToken,
-      refreshToken,
+      accessToken: rotated.accessToken,
       expiresIn: 900,
     };
   }
