@@ -27,7 +27,7 @@ describe('FirebaseAuthService', () => {
   });
 
   it('should initialize firebase admin from the SDK file when no app exists', async () => {
-    jest.spyOn(admin, 'apps', 'get').mockReturnValue([] as any);
+    jest.spyOn(admin, 'apps', 'get').mockReturnValue([]);
     const credential = { projectId: 'test' } as any;
     const certSpy = jest.spyOn(admin.credential, 'cert').mockReturnValue(credential);
     const applicationDefaultSpy = jest.spyOn(admin.credential, 'applicationDefault').mockReturnValue(credential);

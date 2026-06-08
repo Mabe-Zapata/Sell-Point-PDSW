@@ -33,7 +33,7 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
         new InvoiceRepositoryImpl(queryRunner),
         new InvoiceItemRepositoryImpl(queryRunner),
         new InvoiceSeriesRepositoryImpl(queryRunner),
-        new SaleDetailRepositoryImpl(queryRunner) as unknown as ISaleDetailRepository,
+        new SaleDetailRepositoryImpl(queryRunner),
       );
 
       const result = await appHandler.execute(command);

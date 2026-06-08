@@ -159,7 +159,7 @@ describe('AuthController', () => {
 
       await controller.linkGoogle(
         { idToken: 'google-id-token' },
-        { user: { employeeId: 'user-123' } } as any,
+        { user: { employeeId: 'user-123' } },
       );
 
       expect(mockAuthService.getAuthenticatedUser).toHaveBeenCalledWith('user-123');

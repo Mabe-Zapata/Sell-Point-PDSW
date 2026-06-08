@@ -15,15 +15,15 @@ export class TypeormQueryLogger implements Logger {
 
   private printBlock(title: string, query: string, parameters?: unknown[], extra?: string): void {
     const suffix = extra ? ` ${extra}` : '';
-    // eslint-disable-next-line no-console
+     
     console.log(`\n[TYPEORM][${this.dbLabel}] ${title}${suffix}`);
-    // eslint-disable-next-line no-console
+     
     console.log('SQL>');
-    // eslint-disable-next-line no-console
+     
     console.log(query);
-    // eslint-disable-next-line no-console
+     
     console.log('PARAMS>');
-    // eslint-disable-next-line no-console
+     
     console.log(this.formatParams(parameters));
   }
 
@@ -42,17 +42,17 @@ export class TypeormQueryLogger implements Logger {
   }
 
   logSchemaBuild(message: string, _queryRunner?: QueryRunner): void {
-    // eslint-disable-next-line no-console
+     
     console.log(`[TYPEORM][${this.dbLabel}] SCHEMA ${message}`);
   }
 
   logMigration(message: string, _queryRunner?: QueryRunner): void {
-    // eslint-disable-next-line no-console
+     
     console.log(`[TYPEORM][${this.dbLabel}] MIGRATION ${message}`);
   }
 
   log(level: 'log' | 'info' | 'warn', message: unknown, _queryRunner?: QueryRunner): void {
-    // eslint-disable-next-line no-console
+     
     console[level](`[TYPEORM][${this.dbLabel}] ${String(message)}`);
   }
 }

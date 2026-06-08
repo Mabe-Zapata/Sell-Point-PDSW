@@ -147,7 +147,7 @@ export class SaleRepository implements ISaleRepository {
   }
 
   async update(sale: Sale): Promise<Sale> {
-    await this.repo.update(sale.id, this.mapToEntity(sale) as any);
+    await this.repo.update(sale.id, this.mapToEntity(sale));
     const updated = await this.repo.findOne({ where: { id: sale.id } });
     if (!updated) throw new Error('Sale not found after update');
     return this.mapToDomain(updated);
