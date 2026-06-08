@@ -141,7 +141,14 @@ export class UserRepository implements IUserRepository {
 
     if (q) {
       queryBuilder.andWhere(
-        '(LOWER(user.employeeId) LIKE LOWER(:q) OR LOWER(user.email) LIKE LOWER(:q) OR LOWER(user.username) LIKE LOWER(:q))',
+        // Search across the human-readable identity fields (firstName,
+        // lastName, cedula) AND the operational identifiers
+        // (employeeId, email, username). The original implementation
+        // only searched the operational identifiers, so a user typing
+        // a real name like "Juan" or "Pérez" got zero results even
+        // when matching records existed. Mirrors the search shape
+        // used by customer/product/category repositories.
+        '(LOWER(user.firstName) LIKE LOWER(:q) OR LOWER(user.lastName) LIKE LOWER(:q) OR LOWER(user.cedula) LIKE LOWER(:q) OR LOWER(user.employeeId) LIKE LOWER(:q) OR LOWER(user.email) LIKE LOWER(:q) OR LOWER(user.username) LIKE LOWER(:q))',
         {
           q: `%${q}%`,
         },

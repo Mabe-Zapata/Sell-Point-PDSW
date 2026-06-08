@@ -21,7 +21,7 @@ import type { IInvoiceSeriesRepository } from '../../domain/repositories';
 import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
 import { INVOICE_SERIES_REPOSITORY } from '../../infrastructure/common/injection-tokens';
 import { Roles } from '../decorators/roles.decorator';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListInvoiceSeriesQueryDto } from '../dto/invoice-series/list-invoice-series-query.dto';
 
 @Controller('invoice-series')
 export class InvoiceSeriesController {
@@ -32,17 +32,15 @@ export class InvoiceSeriesController {
 
   @Get()
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('branchId') branchId?: string,
-    @Query('isActive') isActive?: string,
+    @Query() query: ListInvoiceSeriesQueryDto,
   ): Promise<{ data: InvoiceSeriesResponseDto[]; total: number; page: number; limit: number }> {
     const pagination = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
     const result = await this.invoiceSeriesRepository.findAll(pagination, {
-      branchId,
-      isActive: isActive === undefined ? undefined : isActive === 'true',
+      branchId: query.branchId,
+      isActive: query.isActive === undefined ? undefined : query.isActive === 'true',
     });
 
     return {

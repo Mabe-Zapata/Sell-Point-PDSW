@@ -36,7 +36,7 @@ import { CreateCategoryDto } from '../../application/dto/category/create-categor
 import { UpdateCategoryDto } from '../../application/dto/category/update-category.dto';
 import { CategoryResponseDto } from '../../application/dto/category/category-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListCategoriesQueryDto } from '../dto/category/list-categories-query.dto';
 import { Roles } from '../decorators/roles.decorator';
 
 @ApiTags('categories')
@@ -86,9 +86,7 @@ export class CategoryController {
     description: 'List of categories retrieved successfully',
   })
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('q') searchQuery?: string,
-    @Query('isActive') isActive?: string,
+    @Query() query: ListCategoriesQueryDto,
   ): Promise<{
     data: CategoryResponseDto[];
     total: number;
@@ -96,14 +94,14 @@ export class CategoryController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
-    const isAct = isActive === undefined ? undefined : isActive === 'true';
+    const isAct = query.isActive === undefined ? undefined : query.isActive === 'true';
 
     const result = await this.queryBus.execute(
-      new ListCategoriesQuery(pagination, searchQuery, isAct),
+      new ListCategoriesQuery(pagination, query.q, isAct),
     );
 
     return {

@@ -37,7 +37,7 @@ import { UpdateCustomerDto } from '../../application/dto/customer/update-custome
 import { CustomerResponseDto } from '../../application/dto/customer/customer-response.dto';
 import { CustomerListResponseDto } from '../../application/dto/customer/customer-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListCustomersQueryDto } from '../dto/customer/list-customers-query.dto';
 import { Roles } from '../decorators/roles.decorator';
 
 @ApiTags('customers')
@@ -92,15 +92,10 @@ export class CustomerController {
   @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({
     status: 200,
-    description: 'List of customers retrieved successfully',
+    description: 'List of invoices retrieved successfully',
   })
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('q') searchQuery?: string,
-    @Query('cedula') cedula?: string,
-    @Query('isActive') isActive?: string,
-    @Query('createdFrom') createdFrom?: string,
-    @Query('createdTo') createdTo?: string,
+    @Query() query: ListCustomersQueryDto,
   ): Promise<{
     data: CustomerListResponseDto[];
     total: number;
@@ -108,18 +103,18 @@ export class CustomerController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
     const result = await this.queryBus.execute(
       new ListCustomersWithStockQuery(
         pagination,
-        searchQuery,
-        cedula,
-        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
-        createdFrom ? new Date(createdFrom) : undefined,
-        createdTo ? new Date(createdTo) : undefined,
+        query.q,
+        query.cedula,
+        query.isActive === 'true' ? true : query.isActive === 'false' ? false : undefined,
+        query.createdFrom ? new Date(query.createdFrom) : undefined,
+        query.createdTo ? new Date(query.createdTo) : undefined,
       ),
     );
 

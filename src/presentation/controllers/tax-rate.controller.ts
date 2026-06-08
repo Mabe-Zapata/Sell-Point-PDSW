@@ -33,7 +33,7 @@ import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { TaxRate } from '../../domain/entities/tax-rate.entity';
 import { EntityNotFoundException } from '../../domain/exceptions/entity-not-found.exception';
 import { Roles } from '../decorators/roles.decorator';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListTaxRatesQueryDto } from '../dto/tax-rate/list-tax-rates-query.dto';
 
 @ApiTags('tax-rates')
 @ApiBearerAuth('access-token')
@@ -65,9 +65,7 @@ export class TaxRateController {
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @ApiResponse({ status: 200, description: 'List of tax rates' })
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('q') searchQuery?: string,
-    @Query('isActive') isActive?: string,
+    @Query() query: ListTaxRatesQueryDto,
   ): Promise<{
     data: TaxRateResponseDto[];
     total: number;
@@ -75,14 +73,14 @@ export class TaxRateController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
-    const isAct = isActive === undefined ? undefined : isActive === 'true';
+    const isAct = query.isActive === undefined ? undefined : query.isActive === 'true';
 
     const result = await this.queryBus.execute(
-      new ListTaxRatesQuery(pagination, searchQuery, isAct),
+      new ListTaxRatesQuery(pagination, query.q, isAct),
     );
 
     return {

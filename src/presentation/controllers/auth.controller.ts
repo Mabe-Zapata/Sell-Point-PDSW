@@ -16,7 +16,7 @@ import { Roles } from '../decorators/roles.decorator';
 import { AuthMeResponseDto } from '../../application/dto/auth/auth-me-response.dto';
 import { UserListResponseDto } from '../../application/dto/user/user-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListUsersQueryDto } from '../dto/auth/list-users-query.dto';
 import { RegisterEmployeeDto } from '../../application/dto/auth/register-employee.dto';
 import { RequestPasswordResetDto } from '../../application/dto/auth/request-password-reset.dto';
 import { ResetPasswordDto } from '../../application/dto/auth/reset-password.dto';
@@ -225,28 +225,21 @@ export class AuthController {
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully', type: UserListResponseDto, isArray: true })
   async listUsers(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('q') q?: string,
-    @Query('employeeId') employeeId?: string,
-    @Query('username') username?: string,
-    @Query('email') email?: string,
-    @Query('role') role?: string,
-    @Query('status') status?: string,
-    @Query('isActive') isActive?: string,
+    @Query() query: ListUsersQueryDto,
   ): Promise<{ data: UserListResponseDto[]; total: number; page: number; limit: number }> {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
     const result = await this.authService.listUsers(pagination, {
-      q,
-      employeeId,
-      username,
-      email,
-      role,
-      status,
-      isActive: isActive === undefined ? undefined : isActive === 'true',
+      q: query.q,
+      employeeId: query.employeeId,
+      username: query.username,
+      email: query.email,
+      role: query.role,
+      status: query.status,
+      isActive: query.isActive === undefined ? undefined : query.isActive === 'true',
     });
 
     return {

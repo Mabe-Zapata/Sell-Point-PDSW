@@ -43,7 +43,12 @@ describe('CustomerController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      const result = await controller.findAll({ page: 1, limit: 20 }, 'john', '9999999999999');
+      const result = await controller.findAll({
+        page: 1,
+        limit: 20,
+        q: 'john',
+        cedula: '9999999999999',
+      } as any);
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(ListCustomersWithStockQuery),
@@ -64,7 +69,7 @@ describe('CustomerController', () => {
       };
       mockQueryBus.execute.mockResolvedValue(mockResult);
 
-      await controller.findAll({}, undefined, undefined);
+      await controller.findAll({} as any);
 
       expect(mockQueryBus.execute).toHaveBeenCalledWith(
         expect.any(ListCustomersWithStockQuery),

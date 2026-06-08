@@ -23,7 +23,7 @@ import { ErrorLogResponseDto } from '../../application/dto/error-log/error-log-r
 import { PaginationParams, PaginatedResult } from '../../domain/repositories/pagination.types';
 import { ErrorLog } from '../../domain/entities';
 import { Roles } from '../decorators/roles.decorator';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListErrorLogsQueryDto } from '../dto/error-log/list-error-logs-query.dto';
 
 @ApiTags('error-logs')
 @ApiBearerAuth('access-token')
@@ -42,18 +42,15 @@ export class ErrorLogController {
   @ApiQuery({ name: 'userId', required: false, type: String })
   @ApiResponse({ status: 200, type: ErrorLogResponseDto, isArray: true })
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('q') q?: string,
-    @Query('exceptionType') exceptionType?: string,
-    @Query('userId') userId?: string,
+    @Query() query: ListErrorLogsQueryDto,
   ): Promise<{ data: ErrorLogResponseDto[]; total: number; page: number; limit: number }> {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
     const result = await this.queryBus.execute<ListErrorLogsQuery, PaginatedResult<ErrorLog>>(
-      new ListErrorLogsQuery(pagination, q, exceptionType, userId),
+      new ListErrorLogsQuery(pagination, query.q, query.exceptionType, query.userId),
     );
 
     return {

@@ -31,7 +31,7 @@ import { ListSalesQuery } from '../../application/cqrs/sale/queries/list-sales/l
 
 import { ConfirmSaleRequestDto } from '../../application/dto/sale/sale-confirm-request.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListSalesQueryDto } from '../dto/sale/list-sales-query.dto';
 import { SaleResponseDto } from '../../application/dto/sale/sale-response.dto';
 import { InvoiceResponseDto } from '../../application/dto/invoice/invoice-response.dto';
 import { InvoiceItemResponseDto } from '../../application/dto/invoice/invoice-item.dto';
@@ -203,28 +203,23 @@ cashierUserId: invoiceData.cashierUserId,
   @ApiQuery({ name: 'createdTo', description: 'Filter by creation date to (ISO 8601)', required: false, type: String })
   @ApiResponse({ status: 200, description: 'List of sales' })
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('q') searchQuery?: string,
-    @Query('customerId') customerId?: string,
-    @Query('status') status?: string,
-    @Query('createdFrom') createdFrom?: string,
-    @Query('createdTo') createdTo?: string,
+    @Query() query: ListSalesQueryDto,
   ) {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
     const result = await this.queryBus.execute(
       new ListSalesQuery(
         pagination,
-        searchQuery,
+        query.q,
         undefined,
-        customerId,
+        query.customerId,
         undefined,
-        status,
-        createdFrom ? new Date(createdFrom) : undefined,
-        createdTo ? new Date(createdTo) : undefined,
+        query.status,
+        query.createdFrom ? new Date(query.createdFrom) : undefined,
+        query.createdTo ? new Date(query.createdTo) : undefined,
       ),
     );
 

@@ -43,7 +43,8 @@ import { AdjustStockDto } from '../../application/dto/stock/adjust-stock.dto';
 import { StockMovementResponseDto } from '../../application/dto/stock/stock-movement-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { Roles } from '../decorators/roles.decorator';
-import { PaginationQueryDto } from '../dto/pagination/pagination-query.dto';
+import { ListProductsQueryDto } from '../dto/product/list-products-query.dto';
+import { ListProductMovementsQueryDto } from '../dto/product/list-product-movements-query.dto';
 
 @ApiTags('products')
 @ApiBearerAuth('access-token')
@@ -107,12 +108,7 @@ export class ProductController {
     description: 'List of products retrieved successfully',
   })
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('q') searchQuery?: string,
-    @Query('categoryId') categoryId?: string,
-    @Query('isActive') isActive?: string,
-    @Query('createdFrom') createdFrom?: string,
-    @Query('createdTo') createdTo?: string,
+    @Query() query: ListProductsQueryDto,
   ): Promise<{
     data: ProductWithStockResponseDto[];
     total: number;
@@ -120,18 +116,18 @@ export class ProductController {
     limit: number;
   }> {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
     const result = await this.queryBus.execute(
       new ListProductsWithStockQuery(
         pagination,
-        searchQuery,
-        categoryId,
-        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
-        createdFrom ? new Date(createdFrom) : undefined,
-        createdTo ? new Date(createdTo) : undefined,
+        query.q,
+        query.categoryId,
+        query.isActive === 'true' ? true : query.isActive === 'false' ? false : undefined,
+        query.createdFrom ? new Date(query.createdFrom) : undefined,
+        query.createdTo ? new Date(query.createdTo) : undefined,
       ),
     );
 
@@ -272,16 +268,15 @@ export class ProductController {
   @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by movement type' })
   async findMovements(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() paginationQuery: PaginationQueryDto,
-    @Query('type') type?: string,
+    @Query() query: ListProductMovementsQueryDto,
   ): Promise<{ data: StockMovementResponseDto[]; total: number; page: number; limit: number }> {
     const pagination: PaginationParams = {
-      page: paginationQuery.page ?? 1,
-      limit: paginationQuery.limit ?? 20,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     };
 
     const result = await this.queryBus.execute(
-      new GetMovementsHistoryQuery(pagination, undefined, id, type),
+      new GetMovementsHistoryQuery(pagination, undefined, id, query.type),
     );
 
     return {
