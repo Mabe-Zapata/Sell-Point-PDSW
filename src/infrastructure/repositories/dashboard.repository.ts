@@ -1,0 +1,90 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CustomerTypeOrmEntity } from '../database/entities/customer.typeorm.entity';
+import { ProductTypeOrmEntity } from '../database/entities/product.typeorm.entity';
+import { InvoiceTypeOrmEntity } from '../database/entities/invoice.typeorm.entity';
+import { IDashboardRepository } from '../../domain/repositories/dashboard.repository.interface';
+import { LOW_STOCK_THRESHOLD } from '../../domain/constants/inventory.constants';
+
+@Injectable()
+export class DashboardRepository implements IDashboardRepository {
+  constructor(
+    @InjectRepository(CustomerTypeOrmEntity)
+    private readonly customerRepository: Repository<CustomerTypeOrmEntity>,
+    @InjectRepository(ProductTypeOrmEntity)
+    private readonly productRepository: Repository<ProductTypeOrmEntity>,
+    @InjectRepository(InvoiceTypeOrmEntity)
+    private readonly invoiceRepository: Repository<InvoiceTypeOrmEntity>,
+  ) {}
+
+  async countActiveCustomers(): Promise<number> {
+    return this.customerRepository
+      .createQueryBuilder('customer')
+      .where('customer.deletedAt IS NULL')
+      .getCount();
+  }
+
+  async countActiveProducts(): Promise<number> {
+    return this.productRepository
+      .createQueryBuilder('product')
+      .where('product.deletedAt IS NULL')
+      .getCount();
+  }
+
+  async countActiveInvoices(): Promise<number> {
+    return this.invoiceRepository
+      .createQueryBuilder('invoice')
+      .where('invoice.deletedAt IS NULL')
+      .getCount();
+  }
+
+  async sumSalesByDate(date: Date): Promise<number> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await this.invoiceRepository
+      .createQueryBuilder('invoice')
+      .innerJoin('invoice.sale', 'sale')
+      .select('SUM(sale.total)', 'total')
+      .where('invoice.deletedAt IS NULL')
+      .andWhere('invoice.issueDate >= :startOfDay', { startOfDay })
+      .andWhere('invoice.issueDate <= :endOfDay', { endOfDay })
+      .getRawOne();
+
+    return Number(result?.total) || 0;
+  }
+
+  async sumSalesByMonth(year: number, month: number): Promise<number> {
+    // Use date range instead of YEAR()/MONTH() for engine-agnostic queries
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const result = await this.invoiceRepository
+      .createQueryBuilder('invoice')
+      .innerJoin('invoice.sale', 'sale')
+      .select('SUM(sale.total)', 'total')
+      .where('invoice.deletedAt IS NULL')
+      .andWhere('invoice.issueDate >= :startDate', { startDate })
+      .andWhere('invoice.issueDate <= :endDate', { endDate })
+      .getRawOne();
+
+    return Number(result?.total) || 0;
+  }
+
+  async countProductsWithLowStock(): Promise<number> {
+    const result = await this.productRepository
+      .createQueryBuilder('product')
+      .where('product.deletedAt IS NULL')
+      .andWhere('product.currentStock < :threshold', { threshold: LOW_STOCK_THRESHOLD })
+      .getCount();
+
+    return result;
+  }
+}

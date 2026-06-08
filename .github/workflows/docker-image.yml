@@ -1,0 +1,56 @@
+name: Docker Image CI
+
+on:
+  pull_request:
+    branches: [ "develop" ]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ "develop" ] # Se dispara cuando el PR es aprobado y se fusiona en develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # 1. Este paso genera las etiquetas (tags) de manera inteligente
+    - name: Extract Docker metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: meliodasdev/sellpoint-backend
+        tags: |
+          # Si es un Pull Request, crea un tag: pr-42
+          type=ref,event=pr,prefix=pr-
+          # Si se hace un push/merge en develop, crea el tag: latest
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' && github.event_name == 'push' }}
+          # Opcional: tag basado en el hash corto del commit para trazabilidad exacta
+          type=sha,format=short,prefix=commit-
+
+    # 2. Construcción y publicación multiplataforma
+    - name: Build and push Multi-platform Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true # Cambiar a true para que suba los tags generados
+        # Aquí pasamos los tags calculados automáticamente por el paso 'meta'
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

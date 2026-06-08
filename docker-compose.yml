@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sellpoint-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # oracle:
+  #   image: container-registry.oracle.com/database/enterprise:21.3.0.0
+  #   container_name: sellpoint-oracle
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1521:1521"
+  #   environment:
+  #     # 1. Variables requeridas nativamente por la imagen oficial Enterprise:
+  #     - ORACLE_PWD=${ORACLE_PASSWORD}      # Contraseña de SYS/SYSTEM
+  #     - ORACLE_SID=ORCLCDB
+  #     - ORACLE_PDB=${ORACLE_DATABASE}     # Aquí se le pasará "ORCLPDB1"
+
+  #     # 2. Variables explícitas requeridas por TU script shell de inicialización:
+  #     - APP_USER=${ORACLE_APP_USER}         # Tomará "SELL_POINT" de tu .env
+  #     - APP_USER_PASSWORD=${ORACLE_APP_PASSWORD} # Tomará "sellpoint123" de tu .env
+  #     - ORACLE_DATABASE=${ORACLE_DATABASE}   # Tomará "ORCLPDB1" de tu .env
+  #   volumes:
+  #     - oracle_data:/opt/oracle/oradata
+  #     # Oracle Enterprise image executes setup-time scripts from this directory.
+  #     - ./docker/oracle/startdb:/opt/oracle/scripts/extensions/setup
+  #   healthcheck:
+  #     test: ["CMD", "healthcheck.sh"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 120s
+
+  redis:
+    image: redis:7-alpine
+    container_name: sellpoint-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  oracle_data:
+  redis_data:

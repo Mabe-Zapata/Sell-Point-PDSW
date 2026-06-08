@@ -1,0 +1,281 @@
+# ============================================================
+# Sell-Point — Deployment Docker Compose
+# ============================================================
+# Usa imagenes prebuilt para backend y frontend.
+# Run from Sell-Point-PDSW/ so it picks the same .env file.
+#
+# Usage:
+#   docker compose -f docker-compose.deploy.yml up -d
+#   docker compose -f docker-compose.deploy.yml down -v
+#
+# Puertos:
+#   frontend  -> http://localhost:80
+#   backend   -> http://localhost:3000 (solo accesible via nginx del frontend)
+#   swagger   -> http://localhost:80/api/docs
+#
+# IMPORTANTE: Necesitas un archivo .env en Sell-Point-PDSW/ con:
+#   - Variables de DB (POSTGRES_*)
+#   - Variables de JWT (JWT_SECRET)
+#   - Variable de Firebase Admin (FIREBASE_ADMIN_SDK_PATH, opcional)
+#   - Variables de Brevo (BREVO_*)
+#
+# NOTA: Las credenciales Firebase del frontend (PUBLIC_FIREBASE_*) estan
+#       quemadas en la imagen published.
+#
+# ============================================================
+# ESCENARIOS DE DESPLIEGUE
+# ============================================================
+#
+# ESCENARIO 1: Docker completo (frontend + backend en la misma maquina/VM)
+#   - BACKEND_URL default: http://backend:3000
+#   - Funciona out-of-the-box con docker network interno
+#
+# ESCENARIO 2: Backend en VM Linux, Frontend en Windows (tu PC)
+#   - Ejecutar SOLO el contenedor de backend en la VM Linux:
+#     docker run -d --name sellpoint-backend \
+#       -p 3000:3000 \
+#       -e DB_TYPE=postgres \
+#       -e POSTGRES_HOST=<IP_LINUX_VM> \
+#       ... (resto de variables de entorno)
+#       meliodasdev/sellpoint-backend:latest
+#   - En tu PC Windows, ejecutar SOLO el frontend:
+#     docker run -d --name sellpoint-frontend \
+#       -p 80:80 \
+#       -e BACKEND_URL=http://<IP_LINUX_VM>:3000 \
+#       meliodasdev/sellpoint-frontend:latest
+#
+# ESCENARIO 3: Tu backend en Linux, frontend en maquina de tu companero (Windows)
+#   - Mismo procedimiento que Escenario 2, pero con la IP de tu Linux
+#   - BACKEND_URL=http://<TU_IP_LINUX>:3000
+#
+# IMPORTANTE: La variable BACKEND_URL controla la comunicacion frontend->backend
+#   - Valor por defecto (sin configurar): http://backend:3000 (para docker-compose completo)
+#   - En escenarios separados, usar la IP del host donde corre el backend
+# ============================================================
+# Usa imagenes prebuilt para backend y frontend.
+# Run from Sell-Point-PDSW/ so it picks the same .env file.
+#
+# Usage:
+#   docker compose -f docker-compose.deploy.yml up -d
+#   docker compose -f docker-compose.deploy.yml down -v
+#
+# Puertos:
+#   frontend  -> http://localhost:80
+#   backend   -> http://localhost:3000 (solo accesible via nginx del frontend)
+#   swagger   -> http://localhost:80/api/docs
+#
+# IMPORTANTE: Necesitas un archivo .env en Sell-Point-PDSW/ con:
+#   - Variables de DB (POSTGRES_*)
+#   - Variables de JWT (JWT_SECRET)
+#   - Variable de Firebase Admin (FIREBASE_ADMIN_SDK_PATH, opcional)
+#
+# NOTA: Las credenciales Firebase del frontend (PUBLIC_FIREBASE_*) estan
+#       quemadas en la imagen published. Si necesitas cambiarlas,
+#       hay que rebuildar el frontend localmente.
+#
+# ============================================================
+# ESCENARIOS DE DESPLIEGUE
+# ============================================================
+#
+# ESCENARIO 1: Docker completo (frontend + backend en la misma maquina/VM)
+#   - BACKEND_URL default: http://backend:3000
+#   - Funciona out-of-the-box con docker network interno
+#
+# ESCENARIO 2: Backend en VM Linux, Frontend en Windows (tu PC)
+#   - Ejecutar SOLO el contenedor de backend en la VM Linux:
+#     docker run -d --name sellpoint-backend \
+#       -p 3000:3000 \
+#       -e DB_TYPE=postgres \
+#       -e POSTGRES_HOST=<IP_LINUX_VM> \
+#       ... (resto de variables de entorno)
+#       meliodasdev/sellpoint-backend:latest
+#   - En tu PC Windows, ejecutar SOLO el frontend:
+#     docker run -d --name sellpoint-frontend \
+#       -p 80:80 \
+#       -e BACKEND_URL=http://<IP_LINUX_VM>:3000 \
+#       meliodasdev/sellpoint-frontend:latest
+#
+# ESCENARIO 3: Tu backend en Linux, frontend en maquina de tu companero (Windows)
+#   - Mismo procedimiento que Escenario 2, pero con la IP de tu Linux
+#   - BACKEND_URL=http://<TU_IP_LINUX>:3000
+#
+# IMPORTANTE: La variable BACKEND_URL controla la comunicacion frontend->backend
+#   - Valor por defecto (sin configurar): http://backend:3000 (para docker-compose completo)
+#   - En escenarios separados, usar la IP del host donde corre el backend
+# ============================================================
+# Build local del frontend + servicios.
+# Run from Sell-Point-PDSW/ so it picks the same .env file.
+#
+# Usage:
+#   docker compose -f docker-compose.deploy.yml up -d --build
+#   docker compose -f docker-compose.deploy.yml down -v
+#
+# Puertos:
+#   frontend  -> http://localhost:80
+#   backend   -> http://localhost:3000 (solo accesible via nginx del frontend)
+#   swagger   -> http://localhost:80/api/docs
+#
+# IMPORTANTE: Necesitas un archivo .env en Sell-Point-PDSW/ con:
+#   - Variables de Firebase (PUBLIC_FIREBASE_*)
+#   - Variables de DB (POSTGRES_*)
+#   - Variables de JWT (JWT_SECRET)
+#   - Variable de Firebase Admin (FIREBASE_ADMIN_SDK_PATH, opcional)
+#
+# ============================================================
+# ESCENARIOS DE DESPLIEGUE
+# ============================================================
+#
+# ESCENARIO 1: Docker completo (frontend + backend en la misma maquina/VM)
+#   - BACKEND_URL default: http://backend:3000
+#   - Funciona out-of-the-box con docker network interno
+#
+# ESCENARIO 2: Backend en VM Linux, Frontend en Windows (tu PC)
+#   - Ejecutar SOLO el contenedor de backend en la VM Linux:
+#     docker run -d --name sellpoint-backend \
+#       -p 3000:3000 \
+#       -e DB_TYPE=postgres \
+#       -e POSTGRES_HOST=<IP_LINUX_VM> \
+#       ... (resto de variables de entorno)
+#       meliodasdev/sellpoint-backend:latest
+#   - En tu PC Windows, ejecutar SOLO el frontend (compilado localmente):
+#     docker run -d --name sellpoint-frontend \
+#       -p 80:80 \
+#       -e BACKEND_URL=http://<IP_LINUX_VM>:3000 \
+#       meliodasdev/sellpoint-frontend:latest
+#
+# ESCENARIO 3: Tu backend en Linux, frontend en maquina de tu companero (Windows)
+#   - Mismo procedimiento que Escenario 2, pero con la IP de tu Linux
+#   - BACKEND_URL=http://<TU_IP_LINUX>:3000
+#
+# IMPORTANTE: La variable BACKEND_URL controla la comunicacion frontend->backend
+#   - Valor por defecto (sin configurar): http://backend:3000 (para docker-compose completo)
+#   - En escenarios separados, usar la IP del host donde corre el backend
+# ============================================================
+
+services:
+  backend:
+    image: meliodasdev/sellpoint-backend:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      APP_MODE: ${APP_MODE:-local}
+      PORT: ${PORT:-3000}
+      DB_TYPE: ${DB_TYPE:-postgres}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-sellpoint}
+      POSTGRES_USER: ${POSTGRES_USER:-sellpoint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sellpoint}
+      POSTGRES_URL: ${POSTGRES_URL:-}
+      POSTGRES_URL_PROD: ${POSTGRES_URL_PROD:-}
+      POSTGRES_CLOUD_URL: ${POSTGRES_CLOUD_URL:-}
+      ORACLE_HOST: ${ORACLE_HOST:-localhost}
+      ORACLE_PORT: ${ORACLE_PORT:-1521}
+      ORACLE_DATABASE: ${ORACLE_DATABASE:-FREEPDB1}
+      ORACLE_APP_USER: ${ORACLE_APP_USER:-SELL_POINT}
+      ORACLE_APP_PASSWORD: ${ORACLE_APP_PASSWORD:-sellpoint123}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_URL_PROD: ${REDIS_URL_PROD:-}
+      IVA_PERCENTAGE: ${IVA_PERCENTAGE:-15}
+      ADMIN_EMPLOYEE_ID: ${ADMIN_EMPLOYEE_ID:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@billflow.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
+      ADMIN_ROLE: ${ADMIN_ROLE:-ADMIN}
+      # Firebase Admin SDK - Path al archivo JSON del service account
+      # Requiere montar el volumen correspondiente
+      FIREBASE_ADMIN_SDK_PATH: ${FIREBASE_ADMIN_SDK_PATH:-/run/secrets/firebase-admin-sdk.json}
+      # Brevo Email
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-noreply@sellpoint.com}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-Sell Point}
+      BREVO_TEMPLATE_ORDER_CONFIRMATION_ID: ${BREVO_TEMPLATE_ORDER_CONFIRMATION_ID:-1}
+      BREVO_TEMPLATE_SALE_CANCELLED_ID: ${BREVO_TEMPLATE_SALE_CANCELLED_ID:-2}
+      BREVO_TEMPLATE_INVOICE_ID: ${BREVO_TEMPLATE_INVOICE_ID:-3}
+    volumes:
+      # Montar el archivo de credenciales de Firebase Admin
+      # Ejemplo: ./firebase-admin-sdk.json:/run/secrets/firebase-admin-sdk.json:ro
+      - ${FIREBASE_ADMIN_SDK_VOLUME:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/docs || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - sellpoint-network
+
+  frontend:
+    image: meliodasdev/sellpoint-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      # URL del backend - configurable por escenario
+      # Escenario 1 (Docker completo): http://backend:3000
+      # Escenario 2 (Backend en otra VM/host): http://<IP_BACKEND>:3000
+      - BACKEND_URL=${BACKEND_URL:-http://backend:3000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - sellpoint-network
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sellpoint}
+      POSTGRES_USER: ${POSTGRES_USER:-sellpoint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sellpoint}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sellpoint} -d ${POSTGRES_DB:-sellpoint}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - sellpoint-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-} ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - sellpoint-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  sellpoint-network:
+    driver: bridge

@@ -1,0 +1,48 @@
+export interface SaleConfirmedEventItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+export class SaleConfirmedEvent {
+  saleId: string;
+  confirmedAt: Date;
+  total: number;
+  customerEmail?: string;
+  customerName: string;
+  details: SaleConfirmedEventItem[];
+  invoiceId?: string;
+  branchId?: string;
+  // Cashier audit fields
+  cashierName?: string;
+  cashierUsername?: string;
+  cashierEmployeeId?: string;
+
+  constructor(
+    saleId: string,
+    confirmedAt: Date,
+    total: number,
+    customerEmail: string | undefined,
+    customerName: string,
+    details: SaleConfirmedEventItem[],
+    invoiceId?: string,
+    branchId?: string,
+    cashierName?: string,
+    cashierUsername?: string,
+    cashierEmployeeId?: string,
+  ) {
+    this.saleId = saleId;
+    this.confirmedAt = confirmedAt;
+    this.total = total;
+    this.customerEmail = customerEmail;
+    this.customerName = customerName;
+    this.details = details;
+    this.invoiceId = invoiceId;
+    this.branchId = branchId;
+    this.cashierName = cashierName;
+    this.cashierUsername = cashierUsername;
+    this.cashierEmployeeId = cashierEmployeeId;
+  }
+}
