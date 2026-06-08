@@ -26,7 +26,7 @@ export class PaginationQueryDto {
   @Min(1, { message: 'El límite debe ser mayor o igual a 1' })
   @Max(100, { message: 'El límite máximo por página es 100' })
   @Transform(
-    ({ value }) => {
+    ({ value }: { value: unknown }): number => {
       // The NestJS ValidationPipe (with `transform: true`) calls
       // class-transformer with the raw query object. When the param is
       // absent the value is `undefined`; the property initializer
@@ -39,7 +39,7 @@ export class PaginationQueryDto {
       if (value === undefined || value === null || value === '') {
         return PAGINATION_DEFAULT_LIMIT;
       }
-      return value;
+      return value as number;
     },
     { toClassOnly: true },
   )

@@ -79,16 +79,25 @@ describe('Paginated Response Contract (e2e)', () => {
    * The contract: 5 top-level fields, no envelope.
    */
   function assertFlatShape(body: unknown) {
-    expect(body).toEqual(
+    const typed = body as {
+      data: unknown[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+    expect(typed).toEqual(
       expect.objectContaining({
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment */
         data: expect.any(Array),
         total: expect.any(Number),
         page: expect.any(Number),
         limit: expect.any(Number),
         totalPages: expect.any(Number),
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment */
       }),
     );
-    expect(body).not.toHaveProperty('pagination');
+    expect(typed).not.toHaveProperty('pagination');
   }
 
   // Each test is skipped if the login step failed (DB not seeded in the
@@ -105,18 +114,25 @@ describe('Paginated Response Contract (e2e)', () => {
     it('returns the flat shape with default limit=25 and page=1 when authed', async () => {
       if (!loginAvailable) return;
       const res = await authedGet('/products').expect(200);
+      const body = res.body as {
+        limit: number;
+        page: number;
+        total: number;
+        totalPages: number;
+      };
       assertFlatShape(res.body);
-      expect(res.body.limit).toBe(25);
-      expect(res.body.page).toBe(1);
-      expect(res.body.totalPages).toBe(Math.ceil(res.body.total / res.body.limit));
+      expect(body.limit).toBe(25);
+      expect(body.page).toBe(1);
+      expect(body.totalPages).toBe(Math.ceil(body.total / body.limit));
     });
 
     it('honors ?limit=10 override when authed', async () => {
       if (!loginAvailable) return;
       const res = await authedGet('/products?limit=10').expect(200);
+      const body = res.body as { limit: number; total: number; totalPages: number };
       assertFlatShape(res.body);
-      expect(res.body.limit).toBe(10);
-      expect(res.body.totalPages).toBe(Math.ceil(res.body.total / res.body.limit));
+      expect(body.limit).toBe(10);
+      expect(body.totalPages).toBe(Math.ceil(body.total / body.limit));
     });
   });
 

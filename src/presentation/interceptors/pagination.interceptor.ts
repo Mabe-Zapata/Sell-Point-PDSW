@@ -36,13 +36,13 @@ export class PaginationInterceptor<T> implements NestInterceptor<
     next: CallHandler,
   ): Observable<FlatPaginatedResponse<T> | T> {
     return next.handle().pipe(
-      map((result: any) => {
+      map((result: unknown): FlatPaginatedResponse<T> | T => {
         if (!isPaginatedResult(result)) {
-          return result;
+          return result as T;
         }
 
         return {
-          data: result.data,
+          data: result.data as T[],
           total: result.total,
           page: result.page,
           limit: result.limit,
