@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { typeormConfig } from './config/typeorm.config';
 import { buildCorsOptions } from './config/cors.config';
@@ -21,6 +22,10 @@ async function bootstrap() {
         'npm run typeorm:migration:run',
     );
   }
+
+  // cookie-parser MUST be registered before useGlobalPipes / enableCors so that
+  // req.cookies is populated for every controller (auth, ssr fallback, etc.).
+  app.use(cookieParser());
 
   // Enable CORS only for explicitly allowed origins
   app.enableCors(buildCorsOptions(configService));
