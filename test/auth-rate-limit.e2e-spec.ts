@@ -17,6 +17,20 @@ describe('POST /auth/login Rate Limiting (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+
+    // Reset throttler storage BEFORE this suite starts, in case a prior
+    // e2e file in the same Jest worker already exhausted the IP quota.
+    // Without this, the very first test (5 invalid attempts) sees the
+    // 6th request return 429 instead of the 5-401-then-1-429 pattern.
+    try {
+      const storage = app.get(ThrottlerStorage);
+      const internal = (storage as unknown as { storage?: Map<string, unknown> }).storage;
+      if (internal && typeof internal.clear === 'function') {
+        internal.clear();
+      }
+    } catch {
+      // ThrottlerStorage token unavailable; rely on Jest worker isolation.
+    }
   });
 
   afterAll(async () => {

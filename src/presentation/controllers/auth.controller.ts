@@ -2,11 +2,12 @@
  
  
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthService } from '../../infrastructure/services/auth.service';
+import { CookieService } from '../../infrastructure/services/cookie.service';
 import { LoginDto } from '../dto/login.dto';
 import { LinkGoogleDto } from '../dto/auth/google-link.dto';
 import { LoginGoogleDto } from '../dto/auth/google-login.dto';
@@ -28,7 +29,7 @@ import { ResetPasswordValidator } from '../../application/cqrs/auth/handlers/res
 import { resolvePublicIpv4 } from '../../infrastructure/http/request-ip.util';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { LoginThrottlerGuard } from '../guards/login-throttler.guard';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { Inject } from '@nestjs/common';
 import { PasswordResetTokenRepository } from '../../infrastructure/repositories/password-reset-token.repository';
 import { PASSWORD_RESET_TOKEN_REPOSITORY } from '../../infrastructure/common/injection-tokens';
@@ -49,6 +50,7 @@ export class RefreshTokenDto {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly cookieService: CookieService,
     private readonly commandBus: CommandBus,
     @Inject(PASSWORD_RESET_TOKEN_REPOSITORY) private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
   ) {}
@@ -58,7 +60,7 @@ export class AuthController {
   @UseGuards(LoginThrottlerGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authenticate with email and password' })
-  async login(@Body() dto: LoginDto) {
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.login(dto.email, dto.password, dto.rememberMe);
     if (!tokens) {
       throw new UnauthorizedException({
@@ -66,7 +68,11 @@ export class AuthController {
         message: 'auth.errors.invalid_credentials',
       });
     }
-    return tokens;
+    this.cookieService.setRefreshTokenCookie(res, tokens.refreshToken, dto.rememberMe === true);
+    return {
+      accessToken: tokens.accessToken,
+      expiresIn: 900,
+    };
   }
 
   @Post('link-google')
@@ -114,7 +120,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: LoginGoogleDto })
   @ApiOperation({ summary: 'Authenticate with a Google ID token' })
-  async loginGoogle(@Body() dto: LoginGoogleDto) {
+  async loginGoogle(@Body() dto: LoginGoogleDto, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.loginGoogle(dto.idToken);
     if (!tokens) {
       throw new UnauthorizedException({
@@ -123,38 +129,59 @@ export class AuthController {
       });
     }
 
-    return tokens;
+    this.cookieService.setRefreshTokenCookie(res, tokens.refreshToken, false);
+
+    return {
+      accessToken: tokens.accessToken,
+      expiresIn: 900,
+    };
   }
 
   @Post('refresh')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiBody({ type: RefreshTokenDto })
-  @ApiOperation({ summary: 'Refresh access token using a valid refresh token' })
-  async refresh(@Body() dto: RefreshTokenDto) {
-    const refreshToken = dto.refreshToken;
-    if (!refreshToken) {
+  @ApiOperation({ summary: 'Refresh access token using the refreshToken HttpOnly cookie' })
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const oldRefreshToken = this.cookieService.readRefreshTokenCookie(req);
+    if (!oldRefreshToken) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'auth.errors.invalid_credentials',
       });
     }
 
-    const payload = await this.authService.validateRefreshToken(refreshToken);
-    if (!payload) {
+    const rotated = await this.authService.rotateRefreshToken(oldRefreshToken);
+    if (!rotated) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'auth.errors.invalid_credentials',
       });
     }
 
-    const accessToken = this.authService.generateAccessToken(payload);
+    this.cookieService.setRefreshTokenCookie(res, rotated.refreshToken, false);
 
     return {
-      accessToken,
-      refreshToken,
+      accessToken: rotated.accessToken,
       expiresIn: 900,
     };
+  }
+
+  @Post('logout')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Logout: revoke refresh token in Redis and clear the HttpOnly cookie (idempotent)' })
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const token = this.cookieService.readRefreshTokenCookie(req);
+    if (token) {
+      await this.authService.revokeRefreshToken(token);
+    }
+    this.cookieService.clearRefreshTokenCookie(res);
   }
 
   @Get('me')

@@ -149,6 +149,27 @@ export class AuthService {
     };
   }
 
+  async rotateRefreshToken(oldToken: string): Promise<AuthTokens | null> {
+    const existing = await this.redisService.getRefreshToken(oldToken);
+    if (!existing) return null;
+
+    await this.redisService.deleteRefreshToken(oldToken);
+
+    const payload: TokenPayload = {
+      employeeId: existing.employeeId,
+      employeeCode: existing.employeeCode,
+      role: existing.role,
+    };
+    const accessToken = this.generateAccessToken(payload);
+    const refreshToken = await this.generateRefreshToken(payload, false);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: 900,
+    };
+  }
+
   async revokeRefreshToken(uuid: string): Promise<void> {
     await this.redisService.deleteRefreshToken(uuid);
   }
