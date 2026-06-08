@@ -164,6 +164,21 @@ export class AuthController {
     };
   }
 
+  @Post('logout')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Logout: revoke refresh token in Redis and clear the HttpOnly cookie (idempotent)' })
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const token = this.cookieService.readRefreshTokenCookie(req);
+    if (token) {
+      await this.authService.revokeRefreshToken(token);
+    }
+    this.cookieService.clearRefreshTokenCookie(res);
+  }
+
   @Get('me')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get the currently authenticated user' })
