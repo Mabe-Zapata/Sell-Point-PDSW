@@ -98,6 +98,11 @@ export { ListInvoicesHandler } from './invoice/queries/list-invoices/ListInvoice
 // Dashboard Queries
 export { GetDashboardStatsHandler } from './dashboard/queries/get-dashboard-stats/GetDashboardStatsHandler';
 
+// Audit Queries
+export { ListAuditLogsHandler } from './audit/queries/list-audit-logs/ListAuditLogsHandler';
+export { GetAuditLogHandler } from './audit/queries/get-audit-log/GetAuditLogHandler';
+export { GetAuditSummaryHandler } from './audit/queries/get-audit-summary/GetAuditSummaryHandler';
+
 // Auth Handlers
 export { RegisterEmployeeHandler } from './auth/handlers/register-employee/RegisterEmployeeHandler';
 export { RequestPasswordResetHandler } from './auth/handlers/request-password-reset/RequestPasswordResetHandler';

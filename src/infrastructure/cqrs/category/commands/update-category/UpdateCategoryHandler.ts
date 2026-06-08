@@ -4,6 +4,8 @@ import { UpdateCategoryCommand } from '../../../../../application/cqrs/category/
 import { UpdateCategoryHandler as ApplicationUpdateCategoryHandler } from '../../../../../application/cqrs/category/commands/update-category/update-category.handler';
 import { CategoryRepository } from '../../../../repositories/category.repository';
 import { CATEGORY_REPOSITORY } from '../../../../common/injection-tokens';
+import { AuditService } from '../../../../services/audit.service';
+import { AuditAction } from '../../../../../domain/entities/audit-log.entity';
 
 @CommandHandler(UpdateCategoryCommand)
 export class UpdateCategoryHandler implements ICommandHandler<UpdateCategoryCommand> {
@@ -11,11 +13,20 @@ export class UpdateCategoryHandler implements ICommandHandler<UpdateCategoryComm
 
   constructor(
     @Inject(CATEGORY_REPOSITORY) categoryRepository: CategoryRepository,
+    private readonly auditService: AuditService,
   ) {
     this.appHandler = new ApplicationUpdateCategoryHandler(categoryRepository);
   }
 
   async execute(command: UpdateCategoryCommand) {
-    return this.appHandler.execute(command);
+    const result = await this.appHandler.execute(command);
+    this.auditService.audit({
+      tableName: 'CATEGORIES',
+      recordId: command.id,
+      action: AuditAction.UPDATE,
+      changedColumns: ['name'],
+      newValues: { name: command.payload.name },
+    });
+    return result;
   }
 }

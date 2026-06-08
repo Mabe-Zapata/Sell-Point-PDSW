@@ -12,5 +12,6 @@ export { Invoice } from './invoice.entity';
 export { InvoiceItem } from './invoice-item.entity';
 export { InvoiceSeries } from './invoice-series.entity';
 export { Customer } from './customer.entity';
+export { AuditLog } from './audit-log.entity';
 
 export * from './enums';

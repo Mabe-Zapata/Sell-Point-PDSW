@@ -11,6 +11,8 @@ import { UserRepository } from '../repositories/user.repository';
 import { RedisService, RefreshTokenPayload } from '../redis/redis.service';
 import type { IFirebaseAuth } from '../../application/ports/firebase-auth.interface';
 import { FIREBASE_AUTH_TOKEN } from '../common/injection-tokens';
+import { AuditService } from './audit.service';
+import { AuditAction } from '../../domain/entities/audit-log.entity';
 
 export interface TokenPayload {
   employeeId: string;
@@ -46,6 +48,7 @@ export class AuthService {
     private readonly redisService: RedisService,
     private readonly configService: ConfigService,
     @Inject(FIREBASE_AUTH_TOKEN) private readonly firebaseAuth: IFirebaseAuth,
+    private readonly auditService: AuditService,
   ) {
     this.maxFailedAttempts = this.configService.get<number>('auth.maxFailedAttempts') ?? 5;
   }
@@ -89,12 +92,24 @@ export class AuthService {
       if (newAttempts >= this.maxFailedAttempts) {
         user.block();
         await this.userRepository.update(user);
+        this.auditService.audit({
+          tableName: 'USERS',
+          recordId: user.id,
+          action: AuditAction.UPDATE,
+          metadata: { event: 'LOGIN_FAILED_BLOCKED', email },
+        });
         throw new UnauthorizedException({
           code: 'USER_BLOCKED',
           message: 'auth.errors.user_blocked',
         });
       }
 
+      this.auditService.audit({
+        tableName: 'USERS',
+        recordId: user.id,
+        action: AuditAction.UPDATE,
+        metadata: { event: 'LOGIN_FAILED', attempts: newAttempts, email },
+      });
       return null;
     }
 
@@ -108,6 +123,13 @@ export class AuthService {
 
     const accessToken = this.generateAccessToken(payload);
     const refreshToken = await this.generateRefreshToken(payload, rememberMe);
+
+    this.auditService.audit({
+      tableName: 'USERS',
+      recordId: user.id,
+      action: AuditAction.UPDATE,
+      metadata: { event: 'LOGIN', email },
+    });
 
     return {
       accessToken,
@@ -170,8 +192,16 @@ export class AuthService {
     };
   }
 
-  async revokeRefreshToken(uuid: string): Promise<void> {
+  async revokeRefreshToken(uuid: string, userId?: string): Promise<void> {
     await this.redisService.deleteRefreshToken(uuid);
+    if (userId) {
+      this.auditService.audit({
+        tableName: 'USERS',
+        recordId: userId,
+        action: AuditAction.UPDATE,
+        metadata: { event: 'LOGOUT' },
+      });
+    }
   }
 
   verifyAccessToken(token: string): TokenPayload | null {
