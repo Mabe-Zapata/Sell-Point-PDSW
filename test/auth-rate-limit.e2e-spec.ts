@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
@@ -19,6 +20,21 @@ describe('POST /auth/login Rate Limiting (e2e)', () => {
   });
 
   afterAll(async () => {
+    // Reset in-memory throttler storage to prevent test pollution across
+    // e2e suites that share the same Jest worker. The contract lockdown
+    // suite (`paginated-response-contract.e2e-spec.ts`) and any other
+    // auth-touching suite would otherwise inherit a 429 throttled state
+    // for ~60s after this suite exhausts the IP quota.
+    try {
+      const storage = app.get(ThrottlerStorage);
+      const internal = (storage as unknown as { storage?: Map<string, unknown> }).storage;
+      if (internal && typeof internal.clear === 'function') {
+        internal.clear();
+      }
+    } catch {
+      // ThrottlerStorage token unavailable (e.g. ThrottlerModule not loaded);
+      // rely on Jest worker isolation between files.
+    }
     await app.close();
   });
 
