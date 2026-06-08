@@ -120,5 +120,14 @@ export const configuration = () => {
         invoice: intFrom(process.env.BREVO_TEMPLATE_INVOICE_ID, '3'),
       },
     },
+    cookie: {
+      name: process.env.COOKIE_NAME || 'refreshToken',
+      path: process.env.COOKIE_PATH || '/',
+      maxAge: intFrom(process.env.COOKIE_MAX_AGE, '604800'),
+      rememberMeMaxAge: intFrom(process.env.COOKIE_REMEMBER_ME_MAX_AGE, '2592000'),
+      sameSite: (process.env.COOKIE_SAME_SITE || 'strict') as 'strict' | 'lax' | 'none',
+      secure: appMode === 'production',
+      domain: process.env.COOKIE_DOMAIN || undefined,
+    },
   };
 };

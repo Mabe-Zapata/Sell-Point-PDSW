@@ -82,7 +82,7 @@ describe('UpdateCustomerHandler (application layer)', () => {
         email: 'alice@test.com',
         firstName: 'Alicia',
       },
-    } as any);
+    });
 
     expect(mockRepository.findByEmail).not.toHaveBeenCalled();
     expect(mockRepository.update).toHaveBeenCalled();

@@ -56,7 +56,7 @@ describe('InvoiceEmailListener', () => {
       countInvoiceHeaders: jest.fn(),
       listInvoiceItems: jest.fn(),
       listInvoiceTotals: jest.fn(),
-    } as unknown as jest.Mocked<IInvoiceQueryService>;
+    };
 
     mockInvoiceItemRepository = {
       createMany: jest.fn(),

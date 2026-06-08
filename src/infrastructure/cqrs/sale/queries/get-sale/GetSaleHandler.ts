@@ -16,7 +16,7 @@ export class GetSaleHandler implements IQueryHandler<GetSaleQuery> {
     @Inject(SALE_DETAIL_REPOSITORY) saleDetailRepository: SaleDetailRepository,
   ) {
     this.appHandler = new ApplicationGetSaleHandler(
-      saleRepository as unknown as ISaleRepository,
+      saleRepository,
       saleDetailRepository as unknown as ISaleDetailRepository,
     );
   }

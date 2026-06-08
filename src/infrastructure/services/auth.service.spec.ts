@@ -275,6 +275,15 @@ describe('AuthService', () => {
 
       expect(result).toBeNull();
     });
+
+    it('should throw UnauthorizedException (401) when user is INACTIVE', async () => {
+      const inactiveUser = { ...mockUser, status: 'INACTIVE' };
+      mockUserRepository.findByEmail.mockResolvedValue(inactiveUser);
+
+      await expect(authService.login('admin@test.com', 'password123', false)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
   });
 
   describe('rememberMe does not affect access token TTL', () => {

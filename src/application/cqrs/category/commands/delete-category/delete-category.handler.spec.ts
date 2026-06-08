@@ -18,7 +18,7 @@ describe('DeleteCategoryHandler', () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
-    } as any;
+    };
 
     mockProductRepository = {
       findAll: jest.fn(),

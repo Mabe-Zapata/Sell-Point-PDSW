@@ -50,7 +50,7 @@ describe('CreateCustomerHandler (application layer)', () => {
         address: 'Test address',
       };
 
-      const result = await handler.execute({ payload: dto } as any);
+      const result = await handler.execute({ payload: dto });
 
       expect(mockRepository.findByIdentificationNumber).toHaveBeenCalledWith('0901234567');
       expect(mockRepository.create).toHaveBeenCalled();
@@ -74,7 +74,7 @@ describe('CreateCustomerHandler (application layer)', () => {
 
     it('should reject duplicate email', async () => {
       mockRepository.findByIdentificationNumber.mockResolvedValue(null);
-      mockRepository.findByEmail.mockResolvedValue({ id: 'cust-existing', email: 'foo@bar.com' } as Customer);
+      mockRepository.findByEmail.mockResolvedValue({ id: 'cust-existing', email: 'foo@bar.com' });
 
       const dto = {
         cedula: '0901234567',

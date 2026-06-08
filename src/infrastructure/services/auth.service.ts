@@ -73,6 +73,13 @@ export class AuthService {
       });
     }
 
+    if (user.status === UserStatus.INACTIVE) {
+      throw new UnauthorizedException({
+        code: 'USER_INACTIVE',
+        message: 'auth.errors.user_inactive',
+      });
+    }
+
     const valid = await this.verifyPassword(password, user.passwordHash);
 
     if (!valid) {
@@ -139,6 +146,27 @@ export class AuthService {
       employeeId: payload.employeeId,
       employeeCode: payload.employeeCode,
       role: payload.role,
+    };
+  }
+
+  async rotateRefreshToken(oldToken: string): Promise<AuthTokens | null> {
+    const existing = await this.redisService.getRefreshToken(oldToken);
+    if (!existing) return null;
+
+    await this.redisService.deleteRefreshToken(oldToken);
+
+    const payload: TokenPayload = {
+      employeeId: existing.employeeId,
+      employeeCode: existing.employeeCode,
+      role: existing.role,
+    };
+    const accessToken = this.generateAccessToken(payload);
+    const refreshToken = await this.generateRefreshToken(payload, false);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: 900,
     };
   }
 

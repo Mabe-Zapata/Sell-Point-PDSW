@@ -60,7 +60,7 @@ describe('CreateProductHandler (application layer)', () => {
         isActive: true,
       };
 
-      const result = await handler.execute({ payload: dto } as any);
+      const result = await handler.execute({ payload: dto });
 
       expect(mockCategoryRepository.findById).toHaveBeenCalledWith('cat-123');
       expect(mockProductRepository.create).toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('CreateProductHandler (application layer)', () => {
         costPrice: 50,
       };
 
-      const result = await handler.execute({ payload: dto } as any);
+      const result = await handler.execute({ payload: dto });
 
       expect(mockProductRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ isActive: true }),

@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
+ 
+ 
 import { Inject, Optional } from '@nestjs/common';
 import type { IErrorLogRepository } from '../../domain/repositories';
 import { ERROR_LOG_REPOSITORY } from '../common/injection-tokens';

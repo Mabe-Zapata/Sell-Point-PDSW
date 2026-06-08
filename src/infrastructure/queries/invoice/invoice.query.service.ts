@@ -34,7 +34,7 @@ export class InvoiceQueryService implements IInvoiceQueryService {
     const results: T[] = [];
     for (let i = 0; i < ids.length; i += batchSize) {
       const batch = ids.slice(i, i + batchSize);
-      // eslint-disable-next-line no-await-in-loop
+       
       const batchResults = await fetchFn(batch);
       results.push(...batchResults);
     }

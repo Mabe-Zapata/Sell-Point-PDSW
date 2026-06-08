@@ -8,16 +8,12 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PaginatedResult } from '../../domain/repositories/pagination.types';
 
-export interface PaginationMetadata {
+export interface FlatPaginatedResponse<T> {
+  data: T[];
   total: number;
   page: number;
   limit: number;
   totalPages: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: PaginationMetadata;
 }
 
 function isPaginatedResult(result: any): result is PaginatedResult<any> {
@@ -33,29 +29,24 @@ function isPaginatedResult(result: any): result is PaginatedResult<any> {
 @Injectable()
 export class PaginationInterceptor<T> implements NestInterceptor<
   PaginatedResult<T>,
-  PaginatedResponse<T> | T
+  FlatPaginatedResponse<T> | T
 > {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<PaginatedResponse<T> | T> {
+  ): Observable<FlatPaginatedResponse<T> | T> {
     return next.handle().pipe(
-      map((result: any) => {
+      map((result: unknown): FlatPaginatedResponse<T> | T => {
         if (!isPaginatedResult(result)) {
-          // No es un resultado paginado — devolver tal cual
-          return result;
+          return result as T;
         }
 
-        const totalPages = Math.ceil(result.total / result.limit);
-
         return {
-          data: result.data,
-          pagination: {
-            total: result.total,
-            page: result.page,
-            limit: result.limit,
-            totalPages,
-          },
+          data: result.data as T[],
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: Math.ceil(result.total / result.limit),
         };
       }),
     );

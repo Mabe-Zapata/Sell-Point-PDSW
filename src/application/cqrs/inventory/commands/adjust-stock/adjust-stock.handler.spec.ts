@@ -51,7 +51,7 @@ describe('AdjustStockHandler', () => {
       findById: jest.fn(),
       findAll: jest.fn(),
       create: jest.fn(),
-    } as any;
+    };
 
     handler = new AdjustStockHandler(mockProductRepository, mockStockMovementRepository);
   });

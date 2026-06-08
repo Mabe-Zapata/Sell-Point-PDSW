@@ -1,5 +1,5 @@
 import { validate } from 'class-validator';
-import { plainToClass } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { PaginationQueryDto } from './pagination-query.dto';
 
 describe('PaginationQueryDto', () => {
@@ -73,10 +73,27 @@ describe('PaginationQueryDto', () => {
       expect(errors.length).toBe(0);
     });
 
-    it('should use default values when not provided', async () => {
+    it('should use default values when not provided (plainToClass)', async () => {
       const dto = plainToClass(PaginationQueryDto, {});
       expect(dto.page).toBe(1);
-      expect(dto.limit).toBe(20);
+      expect(dto.limit).toBe(25);
+    });
+
+    // Mirrors the NestJS ValidationPipe flow (plainToInstance, the
+    // modern class-transformer API). This is the path the e2e suite
+    // exercises, so the default must hold there too.
+    it('should use default values when not provided (plainToInstance — ValidationPipe path)', () => {
+      const dto = plainToInstance(PaginationQueryDto, {});
+      expect(dto.page).toBe(1);
+      expect(dto.limit).toBe(25);
+    });
+
+    it('should apply the default when limit is omitted from the query', () => {
+      // Mirrors GET /products — no `limit` param at all. The @Transform
+      // catches the undefined value that class-transformer would otherwise
+      // leave on the DTO and re-applies the documented default of 25.
+      const dto = plainToInstance(PaginationQueryDto, {});
+      expect(dto.limit).toBe(25);
     });
   });
 
