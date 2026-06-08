@@ -73,6 +73,13 @@ export class AuthService {
       });
     }
 
+    if (user.status === UserStatus.INACTIVE) {
+      throw new UnauthorizedException({
+        code: 'USER_INACTIVE',
+        message: 'auth.errors.user_inactive',
+      });
+    }
+
     const valid = await this.verifyPassword(password, user.passwordHash);
 
     if (!valid) {
