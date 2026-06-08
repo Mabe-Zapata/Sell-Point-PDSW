@@ -120,7 +120,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: LoginGoogleDto })
   @ApiOperation({ summary: 'Authenticate with a Google ID token' })
-  async loginGoogle(@Body() dto: LoginGoogleDto) {
+  async loginGoogle(@Body() dto: LoginGoogleDto, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.loginGoogle(dto.idToken);
     if (!tokens) {
       throw new UnauthorizedException({
@@ -129,7 +129,12 @@ export class AuthController {
       });
     }
 
-    return tokens;
+    this.cookieService.setRefreshTokenCookie(res, tokens.refreshToken, false);
+
+    return {
+      accessToken: tokens.accessToken,
+      expiresIn: 900,
+    };
   }
 
   @Post('refresh')
