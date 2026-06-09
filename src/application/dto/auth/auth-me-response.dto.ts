@@ -8,6 +8,7 @@ export class AuthMeResponseDto {
   employeeId: string;
   username: string;
   email: string;
+  cedula?: string;
   role?: string;
   status: string;
   isActive: boolean;
@@ -24,6 +25,7 @@ export class AuthMeResponseDto {
     this.employeeId = user.employeeId;
     this.username = user.username;
     this.email = user.email;
+    this.cedula = user.cedula;
     this.role = user.role;
     this.status = user.status;
     this.isActive = user.isActive;

@@ -107,3 +107,4 @@ export { GetAuditSummaryHandler } from './audit/queries/get-audit-summary/GetAud
 export { RegisterEmployeeHandler } from './auth/handlers/register-employee/RegisterEmployeeHandler';
 export { RequestPasswordResetHandler } from './auth/handlers/request-password-reset/RequestPasswordResetHandler';
 export { ResetPasswordHandler } from './auth/handlers/reset-password/ResetPasswordHandler';
+export { ChangePasswordHandler } from './auth/handlers/change-password/ChangePasswordHandler';
