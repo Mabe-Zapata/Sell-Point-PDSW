@@ -157,6 +157,7 @@ import {
   RegisterEmployeeHandler,
   RequestPasswordResetHandler,
   ResetPasswordHandler,
+  ChangePasswordHandler,
 } from './infrastructure/cqrs';
 
 // Application - DI Tokens
@@ -393,6 +394,7 @@ const entities = [
     RegisterEmployeeHandler,
     RequestPasswordResetHandler,
     ResetPasswordHandler,
+    ChangePasswordHandler,
 
     // CQRS Validators (from application/cqrs - pure TypeScript)
     CreateCustomerValidator,

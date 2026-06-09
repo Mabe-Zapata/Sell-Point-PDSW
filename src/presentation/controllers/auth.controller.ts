@@ -2,7 +2,7 @@
  
  
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, Get, Query, Param, Headers, UseGuards, Delete, ParseUUIDPipe, Patch } from '@nestjs/common';
 import { ApiBody, ApiBearerAuth, ApiOperation, ApiTags, ApiProperty, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CommandBus } from '@nestjs/cqrs';
@@ -14,6 +14,8 @@ import { LoginGoogleDto } from '../dto/auth/google-login.dto';
 import { Public } from '../decorators/public.decorator';
 import { Roles } from '../decorators/roles.decorator';
 import { AuthMeResponseDto } from '../../application/dto/auth/auth-me-response.dto';
+import { UpdateMyProfileDto } from '../../application/dto/auth/update-my-profile.dto';
+import { ChangePasswordDto } from '../../application/dto/auth/change-password.dto';
 import { UserListResponseDto } from '../../application/dto/user/user-list-response.dto';
 import { PaginationParams } from '../../domain/repositories/pagination.types';
 import { ListUsersQueryDto } from '../dto/auth/list-users-query.dto';
@@ -23,6 +25,7 @@ import { ResetPasswordDto } from '../../application/dto/auth/reset-password.dto'
 import { RegisterEmployeeCommand } from '../../application/cqrs/auth/commands/register-employee/register-employee.command';
 import { RequestPasswordResetCommand } from '../../application/cqrs/auth/commands/request-password-reset/request-password-reset.command';
 import { ResetPasswordCommand } from '../../application/cqrs/auth/commands/reset-password/reset-password.command';
+import { ChangePasswordCommand } from '../../application/cqrs/auth/commands/change-password/change-password.command';
 import { RegisterEmployeeValidator } from '../../application/cqrs/auth/handlers/register-employee/register-employee.validator';
 import { RequestPasswordResetValidator } from '../../application/cqrs/auth/handlers/request-password-reset/request-password-reset.validator';
 import { ResetPasswordValidator } from '../../application/cqrs/auth/handlers/reset-password/reset-password.validator';
@@ -196,6 +199,44 @@ export class AuthController {
       });
     }
     return AuthMeResponseDto.fromEntity(user);
+  }
+
+  @Patch('me')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Update the currently authenticated user profile' })
+  @ApiBody({ type: UpdateMyProfileDto })
+  async updateMe(
+    @Req() req: { user?: { employeeId: string } },
+    @Body() dto: UpdateMyProfileDto,
+  ): Promise<AuthMeResponseDto> {
+    const user = await this.authService.updateAuthenticatedUserProfile(req.user?.employeeId ?? '', dto);
+    return AuthMeResponseDto.fromEntity(user);
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Change the password of the currently authenticated user' })
+  @ApiBody({ type: ChangePasswordDto })
+  @HttpCode(HttpStatus.OK)
+  async changeMyPassword(
+    @Req() req: Request & { user?: { employeeId: string } },
+    @Body() dto: ChangePasswordDto,
+    @Headers('user-agent') userAgent: string,
+  ): Promise<{ success: boolean }> {
+    const user = await this.commandBus.execute<ChangePasswordCommand, { id: string; employeeId: string }>(
+      new ChangePasswordCommand(
+        req.user?.employeeId ?? '',
+        dto.currentPassword,
+        dto.newPassword,
+        dto.confirmPassword,
+        req.ip,
+        userAgent,
+      ),
+    );
+
+    await this.authService.revokeAllUserRefreshTokens(user.employeeId);
+    return { success: true };
   }
 
   @Post('unlock/:id')
