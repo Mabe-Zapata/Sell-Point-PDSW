@@ -20,6 +20,8 @@
     "db:seed:massive:test": "cross-env POSTGRES_DB=sellpoint2 ts-node -r tsconfig-paths/register src/infrastructure/database/seed-massive.ts",
     "db:seed:pos": "ts-node -r tsconfig-paths/register src/infrastructure/database/seed-pos.ts",
     "db:seed:pos:test": "cross-env POSTGRES_DB=sellpoint2 ts-node -r tsconfig-paths/register src/infrastructure/database/seed-pos.ts",
+    "db:seed:small": "ts-node -r tsconfig-paths/register src/infrastructure/database/seed-small.ts",
+    "db:seed:small:test": "cross-env POSTGRES_DB=sellpoint2 ts-node -r tsconfig-paths/register src/infrastructure/database/seed-small.ts",
     "typeorm:migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
     "typeorm:migration:run:test": "cross-env POSTGRES_DB=sellpoint2 ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
     "typeorm:migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d src/config/typeorm.config.ts",
