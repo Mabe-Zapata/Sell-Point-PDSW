@@ -15,6 +15,13 @@ import { UsernameAlreadyExistsException } from '../../../../exceptions/username-
 import { CedulaAlreadyExistsException } from '../../../../exceptions/cedula-already-exists.exception';
 import { DuplicateUserFieldsException } from '../../../../../domain/exceptions';
 
+// The only branch the system currently operates. New users that do not
+// specify a `defaultBranchId` in the request are assigned to this one
+// automatically. Hardcoded by design: the project has a single branch
+// today; if multi-branch support is added later, the controller will
+// pass the explicit branch and the fallback will be removed.
+const FALLBACK_BRANCH_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+
 export class RegisterEmployeeHandler {
   constructor(
     protected readonly userRepository: IUserRepository,
@@ -68,7 +75,7 @@ export class RegisterEmployeeHandler {
       lastName: command.lastName,
       cedula: command.cedula,
       username,
-      defaultBranchId: command.defaultBranchId,
+      defaultBranchId: command.defaultBranchId ?? FALLBACK_BRANCH_ID,
     });
 
     const created = await this.userRepository.create(user);
