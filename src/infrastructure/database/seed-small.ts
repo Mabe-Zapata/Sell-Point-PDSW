@@ -90,6 +90,7 @@ async function seedTaxRates(repo: Repository<TaxRateTypeOrmEntity>): Promise<Tax
   const labels = ['IVA 0%', 'IVA 12%', 'IVA 15%', 'Exento', 'IVA 5%'];
   for (let i = 0; i < SMALL_TAX_RATES; i++) {
     rates.push(repo.create({
+      id: randomUUID(),
       name: labels[i] ?? `Tax ${i + 1}`,
       percentage: i === 0 ? 0 : i === 1 ? 12 : i === 2 ? 15 : i === 3 ? 0 : 5,
       isActive: true,
@@ -116,6 +117,7 @@ async function seedCategories(
 
   const categories = CATEGORIES.map((name) =>
     repo.create({
+      id: randomUUID(),
       name,
       description: `Categoría de ${name}`,
       taxRateId: taxRate.id,
@@ -216,7 +218,7 @@ async function seedRoles(repo: Repository<RoleTypeOrmEntity>): Promise<RoleTypeO
     return all;
   }
   const roles = ROLES.map((name) =>
-    repo.create({ name, description: `Role ${name}` }),
+    repo.create({ id: randomUUID(), name, description: `Role ${name}` }),
   );
   await repo.save(roles);
   process.stdout.write(`  Roles creados: ${roles.length}\n`);
@@ -373,6 +375,7 @@ async function seedSales(
 
     const invoiceSequence = invoiceSeries.currentSequence + i + 1;
     invoices.push(invoiceRepo.create({
+      id: randomUUID(),
       saleId,
       seriesId: invoiceSeries.id,
       invoiceNumber: makeInvoiceNumber(invoiceSequence),
@@ -389,7 +392,6 @@ async function seedSales(
     saleDetailsList.forEach((item) => {
       const lineSubtotal = Math.round(item.quantity * item.unitPrice * 100) / 100;
       const lineTaxAmount = Math.round(lineSubtotal * (taxRate.percentage / 100) * 100) / 100;
-      const detailId = randomUUID();
       const invoiceItemId = randomUUID();
 
       details.push(detailRepo.create({
