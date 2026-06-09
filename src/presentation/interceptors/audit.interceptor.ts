@@ -36,10 +36,20 @@ function resolveTableName(url: string): string {
 
 /**
  * Extrae el recordId desde los params de la request.
- * Si no hay :id en la ruta devuelve 'N/A'.
+ *
+ * Si no hay :id en la ruta (ej: `POST /auth/login` que no es un CRUD sobre
+ * un record específico), devolvemos el UUID zero en vez de `'N/A'` para
+ * satisfacer la columna `record_id` (typed `uuid`, NOT NULL).
+ *
+ * Los consumers que quieran distinguir "audit sin record target" pueden
+ * filtrar por `record_id = '00000000-0000-0000-0000-000000000000'`.
+ *
+ * TODO (tech debt): migrar `record_id` a nullable y devolver `null` desde
+ * acá. Eso requiere una migration que ALTER TABLE audit_logs ALTER
+ * COLUMN record_id DROP NOT NULL.
  */
 function resolveRecordId(params: Record<string, string>): string {
-  return params['id'] ?? 'N/A';
+  return params['id'] ?? '00000000-0000-0000-0000-000000000000';
 }
 
 /**

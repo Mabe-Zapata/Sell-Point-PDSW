@@ -216,6 +216,8 @@ export class QuickConfirmSaleUseCase {
         this.uow.invoiceItems,
         this.uow.invoiceSeries,
         this.uow.saleDetails,
+        this.uow.products,
+        this.uow.stockMovements,
       );
       const invoice = await invoiceHandler.execute(
         new CreateInvoiceCommand(

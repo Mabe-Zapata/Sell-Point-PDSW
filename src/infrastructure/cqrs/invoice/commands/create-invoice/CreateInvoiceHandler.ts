@@ -8,6 +8,8 @@ import { InvoiceRepositoryImpl } from '../../../../persistence/typeorm/repositor
 import { InvoiceItemRepositoryImpl } from '../../../../persistence/typeorm/repositories/invoice-item.repository.impl';
 import { InvoiceSeriesRepositoryImpl } from '../../../../persistence/typeorm/repositories/invoice-series.repository.impl';
 import { SaleDetailRepositoryImpl } from '../../../../persistence/typeorm/repositories/sale-detail.repository.impl';
+import { ProductRepositoryImpl } from '../../../../persistence/typeorm/repositories/product.repository.impl';
+import { StockMovementRepositoryImpl } from '../../../../persistence/typeorm/repositories/stock-movement.repository.impl';
 
 @CommandHandler(CreateInvoiceCommand)
 export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceCommand> {
@@ -34,6 +36,8 @@ export class CreateInvoiceHandler implements ICommandHandler<CreateInvoiceComman
         new InvoiceItemRepositoryImpl(queryRunner),
         new InvoiceSeriesRepositoryImpl(queryRunner),
         new SaleDetailRepositoryImpl(queryRunner),
+        new ProductRepositoryImpl(queryRunner),
+        new StockMovementRepositoryImpl(queryRunner),
       );
 
       const result = await appHandler.execute(command);

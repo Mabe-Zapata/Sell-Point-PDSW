@@ -23,6 +23,15 @@ describe('CreateInvoiceHandler', () => {
     findBySaleId: jest.fn(),
   };
 
+  const mockProductRepository = {
+    findByIdForUpdate: jest.fn(),
+    decrementStock: jest.fn(),
+  };
+
+  const mockStockMovementRepository = {
+    create: jest.fn(),
+  };
+
   let handler: CreateInvoiceHandler;
 
   beforeEach(() => {
@@ -32,6 +41,8 @@ describe('CreateInvoiceHandler', () => {
       mockInvoiceItemRepository as any,
       mockInvoiceSeriesRepository as any,
       mockSaleDetailRepository as any,
+      mockProductRepository as any,
+      mockStockMovementRepository as any,
     );
   });
 
@@ -68,9 +79,32 @@ describe('CreateInvoiceHandler', () => {
     }));
     mockInvoiceRepository.update.mockImplementation(async (invoice) => invoice);
     mockInvoiceItemRepository.createMany.mockImplementation(async (items) => items);
+    mockProductRepository.findByIdForUpdate.mockImplementation(async (id) => ({
+      id,
+      name: `Product ${id}`,
+      currentStock: 100,
+    }));
+    mockProductRepository.decrementStock.mockResolvedValue(undefined);
+    mockStockMovementRepository.create.mockImplementation(async (movement) => movement);
 
     const result = await handler.execute(
       new CreateInvoiceCommand('sale-1', 'branch-1'),
+    );
+
+    // Stock decrements: 2 units of prod-1, 1 unit of prod-2.
+    expect(mockProductRepository.decrementStock).toHaveBeenCalledTimes(2);
+    expect(mockProductRepository.decrementStock).toHaveBeenNthCalledWith(1, 'prod-1', 2);
+    expect(mockProductRepository.decrementStock).toHaveBeenNthCalledWith(2, 'prod-2', 1);
+    expect(mockStockMovementRepository.create).toHaveBeenCalledTimes(2);
+    expect(mockStockMovementRepository.create).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        productId: 'prod-1',
+        quantity: 2,
+        previousStock: 100,
+        newStock: 98,
+        referenceType: 'INVOICE',
+      }),
     );
 
     expect(mockSaleDetailRepository.findBySaleId).toHaveBeenCalledWith('sale-1');

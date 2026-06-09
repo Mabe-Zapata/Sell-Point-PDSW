@@ -66,6 +66,17 @@ describe('Infrastructure CreateInvoiceHandler', () => {
       if (target === InvoiceSeriesTypeOrmEntity && options.where?.id) {
         return invoiceSeries;
       }
+      if (target === 'ProductTypeOrmEntity' && options.where?.id) {
+        return {
+          id: options.where.id,
+          code: 'P001',
+          name: 'Prod 1',
+          currentStock: 100,
+          salePrice: 10,
+          costPrice: 5,
+          isActive: true,
+        };
+      }
       return null;
     });
 
