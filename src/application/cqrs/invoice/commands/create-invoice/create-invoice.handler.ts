@@ -4,8 +4,10 @@ import type { IInvoiceRepository } from '../../../../../domain/repositories/invo
 import type { IInvoiceItemRepository } from '../../../../../domain/repositories/invoice-item.repository.interface';
 import type { IInvoiceSeriesRepository } from '../../../../../domain/repositories/invoice-series.repository.interface';
 import type { ISaleDetailRepository } from '../../../../../domain/repositories/sale-detail.repository.interface';
-import { Invoice, InvoiceItem, InvoiceStatus } from '../../../../../domain/entities';
-import { EntityNotFoundException } from '../../../../../domain/exceptions/entity-not-found.exception';
+import type { IProductRepository } from '../../../../../domain/repositories/product.repository.interface';
+import type { IStockMovementRepository } from '../../../../../domain/repositories/stock-movement.repository.interface';
+import { Invoice, InvoiceItem, InvoiceStatus, StockMovement, StockMovementType } from '../../../../../domain/entities';
+import { EntityNotFoundException, InsufficientStockException } from '../../../../../domain/exceptions';
 import { DuplicateInvoiceForSaleException } from '../../../../../domain/exceptions';
 import { randomUUID } from 'crypto';
 
@@ -29,6 +31,8 @@ export class CreateInvoiceHandler {
     private readonly invoiceItemRepository: IInvoiceItemRepository,
     private readonly invoiceSeriesRepository: IInvoiceSeriesRepository,
     private readonly saleDetailRepository: ISaleDetailRepository,
+    private readonly productRepository: IProductRepository,
+    private readonly stockMovementRepository: IStockMovementRepository,
   ) {}
 
   private roundCurrency(value: number): number {
@@ -126,6 +130,48 @@ export class CreateInvoiceHandler {
     );
     const savedItems = await this.invoiceItemRepository.createMany(items);
 
+    // Decrement stock for each sale detail. The original code path
+    // (pre-slice 2 of auth-cookie-refresh) never decremented stock on
+    // sale confirmation; the `confirm-sale.use-case.ts` had a comment
+    // promising "stock and lot consumption happen atomically when the
+    // invoice is issued" but the consumption was never implemented
+    // in this handler. We fix the gap here: for each sale detail, the
+    // product's currentStock is reduced by detail.quantity, and a
+    // SALE stock movement is recorded for traceability.
+    for (const detail of saleDetails) {
+      const product = await this.productRepository.findByIdForUpdate(detail.productId);
+      if (!product) {
+        throw new EntityNotFoundException(
+          'Product',
+          `Product ${detail.productId} referenced by sale detail not found while decrementing stock`,
+        );
+      }
+
+      const previousStock = product.currentStock ?? 0;
+      if (previousStock < detail.quantity) {
+        throw new InsufficientStockException(
+          product.name,
+          detail.quantity,
+          previousStock,
+        );
+      }
+
+      await this.productRepository.decrementStock(detail.productId, detail.quantity);
+
+      await this.stockMovementRepository.create(
+        new StockMovement({
+          productId: detail.productId,
+          type: StockMovementType.SALE,
+          quantity: detail.quantity,
+          previousStock,
+          newStock: previousStock - detail.quantity,
+          description: `Sale ${command.saleId} invoice ${savedInvoice.invoiceNumber}`,
+          referenceType: 'INVOICE',
+          referenceId: savedInvoice.id,
+        }),
+      );
+    }
+
     const subtotal = this.roundCurrency(
       saleDetails.reduce((sum, detail) => sum + (detail.quantity * detail.unitPrice), 0),
     );
@@ -138,7 +184,7 @@ export class CreateInvoiceHandler {
       id: savedInvoice.id,
       saleId: savedInvoice.saleId,
       seriesId: savedInvoice.seriesId,
-      invoiceNumber: savedInvoice.invoiceNumber,
+      invoiceNumber: invoiceNumber,
       issueDate: savedInvoice.issueDate,
       status: savedInvoice.status,
       createdAt: savedInvoice.createdAt,
