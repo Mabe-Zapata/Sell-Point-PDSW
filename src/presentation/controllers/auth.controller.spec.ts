@@ -19,8 +19,10 @@ describe('AuthController', () => {
     validateRefreshToken: jest.fn(),
     rotateRefreshToken: jest.fn(),
     revokeRefreshToken: jest.fn(),
+    revokeAllUserRefreshTokens: jest.fn(),
     generateAccessToken: jest.fn(),
     getAuthenticatedUser: jest.fn(),
+    updateAuthenticatedUserProfile: jest.fn(),
     linkGoogle: jest.fn(),
   };
 
@@ -241,6 +243,62 @@ describe('AuthController', () => {
           { user: { employeeId: 'user-123' } } as any,
         ),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('updateMe', () => {
+    it('should update the authenticated profile and return the updated user', async () => {
+      const updatedUser = {
+        id: 'user-123',
+        employeeId: 'EMP-ABCDEF1234567890',
+        username: 'admin',
+        email: 'new-admin@test.com',
+        firstName: 'Nuevo',
+        lastName: 'Nombre',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+        isActive: true,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+        googleEmail: undefined,
+        googleId: undefined,
+      };
+
+      mockAuthService.updateAuthenticatedUserProfile.mockResolvedValue(updatedUser);
+
+      const result = await controller.updateMe(
+        { user: { employeeId: 'user-123' } },
+        { firstName: 'Nuevo', lastName: 'Nombre', email: 'new-admin@test.com' } as never,
+      );
+
+      expect(mockAuthService.updateAuthenticatedUserProfile).toHaveBeenCalledWith('user-123', {
+        firstName: 'Nuevo',
+        lastName: 'Nombre',
+        email: 'new-admin@test.com',
+      });
+      expect(result.id).toBe('user-123');
+      expect(result.email).toBe('new-admin@test.com');
+      expect(result.fullName).toBe('Nuevo Nombre');
+    });
+  });
+
+  describe('changeMyPassword', () => {
+    it('should execute the command and revoke refresh tokens for the user', async () => {
+      mockCommandBus.execute.mockResolvedValue({ id: 'user-123', employeeId: 'EMP-ABCDEF1234567890' });
+
+      const result = await controller.changeMyPassword(
+        { user: { employeeId: 'user-123' } } as any,
+        {
+          currentPassword: 'CurrentPass123',
+          newPassword: 'NewPass123',
+          confirmPassword: 'NewPass123',
+        } as never,
+        'test-agent',
+      );
+
+      expect(mockCommandBus.execute).toHaveBeenCalled();
+      expect(mockAuthService.revokeAllUserRefreshTokens).toHaveBeenCalledWith('EMP-ABCDEF1234567890');
+      expect(result).toEqual({ success: true });
     });
   });
 

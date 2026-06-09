@@ -13,6 +13,7 @@ import type { IFirebaseAuth } from '../../application/ports/firebase-auth.interf
 import { FIREBASE_AUTH_TOKEN } from '../common/injection-tokens';
 import { AuditService } from './audit.service';
 import { AuditAction } from '../../domain/entities/audit-log.entity';
+import { EmailAlreadyExistsException } from '../../application/exceptions/email-already-exists.exception';
 
 export interface TokenPayload {
   employeeId: string;
@@ -214,6 +215,71 @@ export class AuthService {
 
   async getAuthenticatedUser(employeeId: string): Promise<User | null> {
     return this.userRepository.findById(employeeId);
+  }
+
+  async updateAuthenticatedUserProfile(
+    employeeId: string,
+    payload: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+    },
+  ): Promise<User> {
+    const user = await this.userRepository.findById(employeeId);
+    if (!user) {
+      throw new NotFoundException({
+        code: 'USER_NOT_FOUND',
+        message: 'auth.errors.invalid_credentials',
+      });
+    }
+
+    const firstName = payload.firstName?.trim();
+    const lastName = payload.lastName?.trim();
+    const email = payload.email?.trim();
+
+    if (email && email !== user.email) {
+      const existing = await this.userRepository.findByEmail(email);
+      if (existing && existing.id !== user.id) {
+        throw new EmailAlreadyExistsException(email);
+      }
+    }
+
+    const updated = new User({
+      id: user.id,
+      employeeId: user.employeeId,
+      username: user.username,
+      email: email ?? user.email,
+      passwordHash: user.passwordHash,
+      currentPasswordHash: user.currentPasswordHash,
+      defaultBranchId: user.defaultBranchId,
+      googleId: user.googleId,
+      googleEmail: user.googleEmail,
+      passwordExpired: user.passwordExpired,
+      failedLoginAttempts: user.failedLoginAttempts,
+      role: user.role,
+      firstName: firstName ?? user.firstName,
+      lastName: lastName ?? user.lastName,
+      cedula: user.cedula,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      deletedAt: user.deletedAt,
+    });
+
+    const changed =
+      updated.firstName !== user.firstName
+      || updated.lastName !== user.lastName
+      || updated.email !== user.email;
+
+    if (!changed) {
+      return user;
+    }
+
+    return this.userRepository.update(updated);
+  }
+
+  async revokeAllUserRefreshTokens(employeeCode: string): Promise<void> {
+    await this.redisService.revokeAllUserRefreshTokens(employeeCode);
   }
 
   async unlockUser(userId: string): Promise<void> {
